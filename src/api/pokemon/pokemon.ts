@@ -1,5 +1,5 @@
 import { apiClient } from "@/lib/apiClient";
-import type { PokemonListResponse } from "@/schemas/pokemon.schema";
+import type { PokemonListResponse } from "@/schemas/pokemon/pokemon";
 
 export const getPokemons = async (
     limit: number = 20,

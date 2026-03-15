@@ -3,8 +3,8 @@ import { h } from 'vue';
 import type { ColumnDef } from '@tanstack/vue-table';
 
 import { usePokemonTable } from '@/composables/usePokemonTable';
-import { usePokemonStore } from '@/store/pokemon.store';
-import type { PokemonListItem } from '@/schemas/pokemon.schema';
+import { usePokemonStore } from '@/store/pokemon/pokemon';
+import type { PokemonListItem } from '@/schemas/pokemon/pokemon';
 
 import DataTable from '@/components/DataTable.vue';
 import { Button } from '@/components/ui/button';

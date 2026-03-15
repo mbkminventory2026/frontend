@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import type { PokemonListItem } from "@/schemas/pokemon.schema";
+import type { PokemonListItem } from "@/schemas/pokemon/pokemon";
 
 export const usePokemonStore = defineStore('pokemon', () => {
     // state

@@ -1,6 +1,6 @@
 import { ref, watch } from "vue";
-import { getPokemons } from "@/api/pokemon.api";
-import type { PokemonListItem, PokemonListResponse } from "@/schemas/pokemon.schema";
+import { getPokemons } from "@/api/pokemon/pokemon";
+import type { PokemonListItem, PokemonListResponse } from "@/schemas/pokemon/pokemon";
 
 const pokemonCache = new Map<number, PokemonListResponse>();
 
