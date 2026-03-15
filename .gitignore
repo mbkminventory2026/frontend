@@ -6,19 +6,59 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
+*.sqlite
+*.db
 
+# Dependencies & Build
 node_modules
+/vendor/
 dist
 dist-ssr
+/bin/
+/main
+/web
+/worker
+permatatex-inventory
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
 *.local
 
-# Editor directories and files
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor / IDE
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+*.code-workspace
+.idea/
+*.iml
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+AGENTS.md
+
+# Temporary files
+/tmp/
+go.work
+go.work.sum

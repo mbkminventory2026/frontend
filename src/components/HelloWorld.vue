@@ -10,7 +10,7 @@ const count = ref(0)
   <h1 class="text-5xl leading-tight font-bold">{{ msg }}</h1>
 
   <div class="p-8">
-    <button type="button" class="rounded-lg border border-transparent py-2.5 px-5 text-base font-medium bg-[#1a1a1a] dark:bg-[#f9f9f9] cursor-pointer transition-colors duration-250 hover:border-[#646cff] focus:outline-[4px_auto_-webkit-focus-ring-color]" @click="count++">
+    <button type="button" class="rounded-lg border border-transparent py-2.5 px-5 text-base font-medium bg-[#1a1a1a] dark:bg-[#f9f9f9]0 cursor-pointer transition-colors duration-250 hover:border-[#646cff] focus:outline-[4px_auto_-webkit-focus-ring-color]" @click="count++">
       count is {{ count }}
     </button>
     <p class="mt-4">
