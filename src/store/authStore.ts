@@ -1,17 +1,24 @@
+import type { LoginResponse } from "@/api/auth/auth";
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 
 export const useAuthStore = defineStore('auth', () => {
-    const username = ref<string | null>(null)
-    const isLoggedIn = computed(() => username.value !== null)
+    const token = ref<string | null>(localStorage.getItem('accessToken') || null);
+    const user = ref<LoginResponse['user'] | null>(null);
 
-    function login (name: string) {
-        username.value = name
+    const isLoggedIn = computed(() => token.value !== null);
+
+    function login(newToken: string, userData: LoginResponse['user']) {
+        token.value = newToken;
+        user.value = userData;
+        localStorage.setItem('accessToken', newToken);
     }
 
     function logout() {
-        username.value = null
+        token.value = null;
+        user.value = null;
+        localStorage.removeItem('accessToken');
     }
 
-    return{ username, isLoggedIn, login, logout }
+    return { token, user, isLoggedIn, login, logout };
 })
