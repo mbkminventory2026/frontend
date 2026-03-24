@@ -19,6 +19,7 @@ export function useLoginForm() {
     const turnstileToken = ref<string>('');
     const isLoading = ref<boolean>(false);
 
+    // disesuaikan dengan /src/components/TurnstileWidget.vue
     const handleTurnstileSuccess = (token: string) => turnstileToken.value = token;
     const handleTurnstileError = () => turnstileToken.value = '';
 
