@@ -1,6 +1,13 @@
-import { createFileRoute } from '@tanstack/vue-router'
-import PokemonListPage from '@/pages/PokemonListPage.vue'
+import { createFileRoute, redirect } from '@tanstack/vue-router'
+import LandingPage from '@/pages/landing/page.vue';
 
 export const Route = createFileRoute('/')({
-  component: PokemonListPage,
+  beforeLoad: () => {
+    const token = localStorage.getItem('accessToken');
+
+    if (token) {
+      throw redirect({ to:'/dashboard' as any })
+    };
+  },
+  component: LandingPage,
 })
