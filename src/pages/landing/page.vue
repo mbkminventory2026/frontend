@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Link } from '@tanstack/vue-router';
 import { Button } from '@/components/ui/button';
+import { Link } from '@tanstack/vue-router';
 </script>
 
 <template>
@@ -14,10 +14,14 @@ import { Button } from '@/components/ui/button';
       </p>
       
       <div class="flex justify-center gap-4">
-        <Button 
+        <Link
           to="/login" >
-          Masuk ke Sistem
-        </Button>
+          <Button
+          variant="outline"
+          >
+            Masuk ke Sistem
+          </Button>
+        </Link>
       </div>
     </div>
   </div>
