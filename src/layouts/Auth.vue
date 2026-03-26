@@ -2,7 +2,7 @@
 import { Outlet } from '@tanstack/vue-router';
 </script>
 <template>
-    <div class="min-h-screen bg-slate-50 flex flex-col">
+    <div class="min-h-screen flex flex-col">
         <header class="bg-white p-4 border-b shadow-sm font-bold text-lg">
         Sistem Inventaris ERP
         </header>

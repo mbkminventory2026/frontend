@@ -4,7 +4,7 @@ import { Link } from '@tanstack/vue-router';
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4">
+  <div class="min-h-screen flex flex-col items-center justify-center p-4">
     <div class="max-w-2xl text-center">
       <h1 class="text-5xl font-extrabold text-slate-900 mb-6">
         Sistem Inventaris
