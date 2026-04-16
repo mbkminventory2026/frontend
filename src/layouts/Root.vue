@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Outlet } from '@tanstack/vue-router'
 import AppNavbar, { type NavItem } from '@/components/AppNavbar.vue'
 import { CircleCheckIcon, CircleHelpIcon, CircleIcon } from 'lucide-vue-next'
 
@@ -56,4 +57,7 @@ const myNavigation: NavItem[] = [
   <header class="p-4 border-b">
     <AppNavbar :items="myNavigation" />
   </header>
+  <main>
+    <Outlet />
+  </main>
 </template>

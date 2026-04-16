@@ -2,7 +2,7 @@ import axios, { AxiosError } from "axios";
 
 export const apiClient = axios.create({
     // baseURL: 'https://pokeapi.co/api/v2',
-    baseURL: 'http://localhost:8080/api/v1',
+    baseURL: 'https://pokeapi.co/api/v2',
     timeout: 10000,
 });
 

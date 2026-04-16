@@ -6,6 +6,9 @@ import { usePokemonTable } from '@/composables/usePokemonTable';
 import { usePokemonStore } from '@/store/pokemon/pokemon';
 import type { PokemonListItem } from '@/schemas/pokemon/pokemon';
 
+import { PokemonKeys, PokemonLabels } from '@/schemas/pokemon/pokemon';
+import { createColumns } from '@/lib/table-utils';
+
 import DataTable from '@/components/DataTable.vue';
 import { Button } from '@/components/ui/button';
 
@@ -13,16 +16,10 @@ import { Button } from '@/components/ui/button';
 const { pokemons, isLoading, error, currentPage } = usePokemonTable();
 const pokemonStore = usePokemonStore();
 
+const baseColumns = createColumns<PokemonListItem>(PokemonKeys, PokemonLabels);
+
 const columns: ColumnDef<PokemonListItem>[] = [
-    {
-        accessorKey: 'name',
-        header: 'Nama Pokemon',
-        cell: ({row}) => h('div', { class: 'capitalize font-medium' }, row.getValue('name'))
-    },
-    {
-        accessorKey: 'url',
-        header: 'URL API',
-    },
+    ...baseColumns,
     {
         id: 'actions',
         header: () => h('div', { class: 'text-right' }, 'Aksi'),
