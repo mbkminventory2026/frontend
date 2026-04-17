@@ -1,68 +1,84 @@
 <script setup lang="ts">
-import { h } from 'vue';
-import type { ColumnDef } from '@tanstack/vue-table';
-
-import { usePokemonTable } from '@/composables/usePokemonTable';
-import { usePokemonStore } from '@/store/pokemon/pokemon';
-import type { PokemonListItem } from '@/schemas/pokemon/pokemon';
-
-import { PokemonKeys, PokemonLabels } from '@/schemas/pokemon/pokemon';
-import { createColumns } from '@/lib/table-utils';
-
+import { getPokemons } from '@/api/pokemon/pokemon';
 import DataTable from '@/components/DataTable.vue';
-import { Button } from '@/components/ui/button';
+import { useTable } from '@/composables/useTable';
+import type { PokemonListItem } from '@/schemas/pokemon/pokemon';
+import { useSearch } from '@tanstack/vue-router';
+import { ref, watch, onMounted } from 'vue';
 
-// logic dan state
-const { pokemons, isLoading, error, currentPage } = usePokemonTable();
-const pokemonStore = usePokemonStore();
+const search = useSearch({ from:'/pokemon' });
 
-const baseColumns = createColumns<PokemonListItem>(PokemonKeys, PokemonLabels);
+const data = ref<PokemonListItem[]>([]);
+const totalCount = ref(0);
+const isLoading = ref(false);
 
-const columns: ColumnDef<PokemonListItem>[] = [
-    ...baseColumns,
-    {
-        id: 'actions',
-        header: () => h('div', { class: 'text-right' }, 'Aksi'),
-        cell: ({ row }) => {
-            // row.original itu mengambil refernsi dari ColumnDef<PokemonListItem>
-            const pokemon = row.original; // mendapatkan data asli dari row
-            const isFav = pokemonStore.isFavorite(pokemon.name)
+const fetchData = async () => {
+    isLoading.value = true;
+    try {
+        const response = await getPokemons({
+            limit: search.value.pageSize,
+            offset: (search.value.page - 1) * search.value.pageSize,
+            search: search.value.filter
+        });
 
-            return h('div', { class: 'text-right' }, [
-                h(Button, {
-                    variant: isFav ? 'default' : 'outline',
-                    size: 'sm',
-                    onClick: () => pokemonStore.toggleFavorite(pokemon)
-                }, () => isFav ? 'Tersimpan' : 'Favorit')   // isi button
-            ])
-        }
+        data.value = response.results;
+        totalCount.value = response.count;
+    } catch (error) {
+        console.error("Gagal fetch pokemon:", error);
+    } finally {
+        isLoading.value = false;
     }
-]
+}
 
-// navigasi
-const nextPage = () => currentPage.value += 1;
-const prevPage = () => { if (currentPage.value > 1) currentPage.value -= 1; };
+onMounted(() => {
+    fetchData();
+});
+
+watch(() => search, () => {
+    fetchData();
+}, { deep: true });
+
+const { table, setPageSize } = useTable({
+    data: data,
+    rowCount: totalCount,
+    columns: [
+        { header: 'Nama Pokemon', accessorKey: 'name' },
+        { header: 'url', accessorKey: 'url' }
+    ],
+    search: search
+})
+
 </script>
-
 <template>
-    <div class=" p-8 max-w-4xl mx-auto space-y-6">
-        <div>
-            <h1 class="text-3xl font-bold tracking-tight">PokeDex Explorer</h1>
-        </div>
-
-        <div v-if="error" class="bg-red-100 text-red-700 p-4 rounded-md">{{ error }}
+    <div class="p-4">
+        <div class="flex gap-2 mb-4">
+            <select @change="(e) => setPageSize(Number((e.target as HTMLSelectElement).value))">
+                <option :selected="search.pageSize === 20" value="20">20</option>
+                <option :selected="search.pageSize === 50" value="50">50</option>
+                <option :selected="search.pageSize === 100" value="100">100</option>
+            </select>
+            <span v-if="isLoading">Memuat data...</span>
         </div>
 
         <DataTable
-        :data="pokemons"
-        :columns="columns"
-        :is-loading="isLoading"/>
+            :table="table"
+            :is-loading="isLoading"
+        />
 
-        <div class="flex items-center justify-between">
-            <p class="text-sm text-muted-foreground">Halaman {{ currentPage }}</p>
-            <div class="space-x-2">
-                <Button variant="outline" :disabled="currentPage === 1 || isLoading" @click="prevPage">Prev</Button>
-                <Button variant="outline" :disabled="isLoading" @click="nextPage">Next</Button>
+        <div class="flex gap-2">
+            <div class="mt-4 flex gap-2">
+                <button 
+                    :disabled="!table.getCanNextPage()"
+                    @click="table.previousPage()"
+                >Back
+                </button>
+            </div>
+            <div class="mt-4 flex gap-2">
+                <button 
+                    :disabled="!table.getCanNextPage()"
+                    @click="table.nextPage()"
+                >Next
+                </button>
             </div>
         </div>
     </div>

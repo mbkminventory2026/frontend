@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="TData, TValue">
-import { useVueTable, getCoreRowModel, FlexRender } from '@tanstack/vue-table';
+import { useVueTable, getCoreRowModel, FlexRender, type Table as TableInstance } from '@tanstack/vue-table';
 import type { ColumnDef } from '@tanstack/vue-table';
 import { 
     Table,
@@ -11,16 +11,10 @@ import {
  } from '@/components/ui/table';
 
 const props = defineProps<{
-    data: TData[],
-    columns: ColumnDef<TData, TValue>[],
+    table: TableInstance<TData>,
     isLoading?: boolean,
 }>();
 
-const table = useVueTable({
-    get data() { return props.data },
-    get columns() { return props.columns },
-    getCoreRowModel: getCoreRowModel(),
-})
 </script>
 
 <template>
@@ -40,8 +34,8 @@ const table = useVueTable({
 
             <TableBody>
                 <TableRow v-if="isLoading">
-                    <TableCell :colspan="columns.length" class="h-24 text-center text-slate-500">
-                        Sedang mengambil data Pokemon...
+                    <TableCell :colspan="table.getAllColumns().length" class="h-24 text-center text-slate-500">
+                        Sedang mengambil data...
                     </TableCell>
                 </TableRow>
 
@@ -61,7 +55,7 @@ const table = useVueTable({
                 </template>
 
                 <TableRow v-else>
-                    <TableCell :colspan="columns.length" class="h-24 text-center text-slate-500">
+                    <TableCell :colspan="table.getAllColumns.length" class="h-24 text-center text-slate-500">
                         Tidak ada data.
                     </TableCell>
                 </TableRow>
