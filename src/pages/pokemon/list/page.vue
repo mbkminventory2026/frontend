@@ -38,48 +38,20 @@ watch(() => search, () => {
     fetchData();
 }, { deep: true });
 
-const { table, setPageSize } = useTable({
+const { table } = useTable({
     data: data,
     rowCount: totalCount,
     columns: [
         { header: 'Nama Pokemon', accessorKey: 'name' },
-        { header: 'url', accessorKey: 'url' }
+        { header: 'URL', accessorKey: 'url' }
     ],
     search: search
 })
 
 </script>
 <template>
-    <div class="p-4">
-        <div class="flex gap-2 mb-4">
-            <select @change="(e) => setPageSize(Number((e.target as HTMLSelectElement).value))">
-                <option :selected="search.pageSize === 20" value="20">20</option>
-                <option :selected="search.pageSize === 50" value="50">50</option>
-                <option :selected="search.pageSize === 100" value="100">100</option>
-            </select>
-            <span v-if="isLoading">Memuat data...</span>
-        </div>
-
-        <DataTable
-            :table="table"
-            :is-loading="isLoading"
-        />
-
-        <div class="flex gap-2">
-            <div class="mt-4 flex gap-2">
-                <button 
-                    :disabled="!table.getCanNextPage()"
-                    @click="table.previousPage()"
-                >Back
-                </button>
-            </div>
-            <div class="mt-4 flex gap-2">
-                <button 
-                    :disabled="!table.getCanNextPage()"
-                    @click="table.nextPage()"
-                >Next
-                </button>
-            </div>
-        </div>
-    </div>
+    <DataTable
+        :table="table"
+        :is-loading="isLoading"
+    />
 </template>
