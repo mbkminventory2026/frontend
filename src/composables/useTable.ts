@@ -8,7 +8,9 @@ import {
     type SortingState
 } from "@tanstack/vue-table";
 import { type TableParams } from "@/schemas/table-params";
+import { stripTableDefaults } from '@/lib/table-utils';
 import { type ZodSchema } from "zod";
+import { ref, watch } from 'vue';
 
 interface UseTableOptions<TData, TSchema extends ZodSchema> {
     data: MaybeRefOrGetter<TData[]>;
@@ -32,6 +34,19 @@ export function useTable<TData, TSchema extends ZodSchema>(
         }
     });
 
+    const searchTerm = ref(safeSearch.value.filter ?? '');
+
+    watch(() => safeSearch.value.filter, (newFilter) => {
+        searchTerm.value = newFilter ?? '';
+    });
+
+    const onSearch = () => {
+        updateSearch({
+            filter: searchTerm.value,
+            page: 1
+        });
+    }
+
     const pagination = computed<PaginationState>(() => {
         const s = safeSearch.value;
         return {
@@ -53,9 +68,15 @@ export function useTable<TData, TSchema extends ZodSchema>(
             to: '.',
             search: (prev: any) => {
                 const merged = { ...prev, ...newParams };
-                return options.schema.parse(merged);
+                const parsed = options.schema.parse(merged);
+                return stripTableDefaults(parsed);
             },
         });
+    };
+
+    const clearFilter = () => {
+        searchTerm.value = '';
+        updateSearch({ filter: '', page: 1 });
     };
 
     const table = useVueTable({
@@ -69,6 +90,7 @@ export function useTable<TData, TSchema extends ZodSchema>(
         state: {
             get pagination() { return pagination.value },
             get sorting() { return sorting.value },
+            get globalFilter() { return safeSearch.value.filter },
         },
         onPaginationChange: (updater) => {
             const nextState = typeof updater === 'function' ? updater(pagination.value) : updater;
@@ -78,11 +100,20 @@ export function useTable<TData, TSchema extends ZodSchema>(
             const nexState = typeof updater === 'function' ? updater(sorting.value) : updater;
             const firstSort = nexState[0];
             updateSearch({ sortBy: firstSort?.id, sortDesc: firstSort?.desc ?? false, page: 1 })
+        },
+        onGlobalFilterChange: (updater) => {
+            const nextValue = typeof updater === 'function'
+                ? updater(safeSearch.value.filter)
+                : updater;
+            updateSearch({ filter: nextValue, page: 1 });
         }
     });
 
     return {
         table,
+        searchTerm,
+        onSearch,
+        clearFilter,
         updateSearch,
         setPageSize: (size: number) => updateSearch({ pageSize: size, page: 1 }),
         setFilter: (val: string) => updateSearch({ filter: val, page: 1 }),

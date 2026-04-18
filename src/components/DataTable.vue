@@ -10,33 +10,74 @@ import {
  } from '@/components/ui/table';
 import Button from './ui/button/Button.vue';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from './ui/select/';
-import { ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-vue-next';
+import { ArrowUp, ArrowDown, ArrowUpDown, Search, X } from 'lucide-vue-next';
+import Label from './ui/label/Label.vue';
+import Input from './ui/input/Input.vue';
+import { computed } from 'vue';
 
 const props = defineProps<{
     table: TableInstance<TData>,
     isLoading?: boolean,
 }>();
 
+const searchModel = defineModel<string>('search');
+const emit = defineEmits(['search', 'clearFilter']);
+
+const activeFilter = computed(() => {
+    return props.table.getState().globalFilter as string | undefined;
+});
 </script>
 
 <template>
-    <div class="p-4">
-        <div class="flex gap-2 mb-4 justify-end">
-            <Select
-                :model-value="String(table.getState().pagination.pageSize)"
-                @update:model-value="(val) => table.setPageSize(Number(val))"
-            >
-                <SelectTrigger>
-                    <SelectValue :placeholder="String(table.getState().pagination.pageSize)"/>
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectGroup>
-                        <SelectItem value="20">20</SelectItem>
-                        <SelectItem value="50">50</SelectItem>
-                        <SelectItem value="100">100</SelectItem>
-                    </SelectGroup>
-                </SelectContent>
-            </Select>
+    <div class="p-4 flex flex-col">
+        <div class="flex flex-col gap-4 mb-4">
+            <div class="flex gap-4 justify-start items-center">
+                <div class="flex gap-2 justify-start items-center">
+                    <Label>Show:</Label>
+                    <Select
+                        :model-value="String(table.getState().pagination.pageSize)"
+                        @update:model-value="(val) => table.setPageSize(Number(val))"
+                    >
+                        <SelectTrigger>
+                            <SelectValue :placeholder="String(table.getState().pagination.pageSize)"/>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectGroup>
+                                <SelectItem value="20">20</SelectItem>
+                                <SelectItem value="50">50</SelectItem>
+                                <SelectItem value="100">100</SelectItem>
+                            </SelectGroup>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div class="flex gap-1">
+                    <div class="flex gap-2">
+                        <Input
+                            v-model="searchModel"
+                            type="text" 
+                            placeholder="Search"
+                            @keyup.enter="emit('search')"
+                        />
+                        <Button type="button" @click="emit('search')">
+                            <Search/>
+                        </Button>
+                    </div>
+                </div>
+            </div>
+            <div v-if="activeFilter" class="flex items-center gap-1.5 mt-1">
+                <span class="text-xs text-slate-500">Hasil pencarian:</span>
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-medium italic">
+                    "{{ activeFilter }}"
+                    <button
+                        type="button"
+                        class="hover:bg-blue-200 rounded-full p-0.5 transition-colors"
+                        @click="emit('clearFilter')"
+                        title="Hapus filter"
+                    >
+                        <X class="w-3 h-3" />
+                    </button>
+                </span>
+            </div>
         </div>
         <div class="border rounded-md bg-white">
             <Table>

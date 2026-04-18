@@ -15,6 +15,20 @@ export function createColumns<T>(
     )
 }
 
+/**
+ * Strip default/empty values from parsed table params so they don't appear in the URL.
+ * Only non-default values are kept in the search object.
+ */
+export function stripTableDefaults(parsed: Record<string, any>): Record<string, any> {
+    const cleaned: Record<string, any> = {};
+    if (parsed.page !== undefined && parsed.page !== 1) cleaned.page = parsed.page;
+    if (parsed.filter !== undefined && parsed.filter !== '') cleaned.filter = parsed.filter;
+    if (parsed.sortBy !== undefined) cleaned.sortBy = parsed.sortBy;
+    if (parsed.sortDesc === true) cleaned.sortDesc = parsed.sortDesc;
+    if (parsed.pageSize !== undefined && parsed.pageSize !== 20) cleaned.pageSize = parsed.pageSize;
+    return cleaned;
+}
+
 export function validateTableSearchRedirect(
     to: string,
     raw: Record<string, any>,
@@ -24,12 +38,12 @@ export function validateTableSearchRedirect(
         (key) => !tableParamKeys.includes(key as any)
     )
 
-    const hasChangedValues = 
-    String(raw.page ?? '') !== String(parsed.page ?? '') ||
-    (raw.filter ?? '') !== (parsed.filter ?? '') ||
-    (raw.sortBy !== undefined && raw.sortBy !== parsed.sortBy) ||
-    (raw.pageSize !== undefined && String(raw.pageSize) !== String(parsed.pageSize)) ||
-    (raw.sortDesc !== undefined && String(raw.sortDesc) !== String(parsed.sortDesc))
+    // Compare raw vs parsed (both may be sparse/stripped)
+    const rawKeys = Object.keys(raw);
+    const parsedKeys = Object.keys(parsed);
+    
+    const hasChangedValues = rawKeys.length !== parsedKeys.length ||
+        rawKeys.some(key => String(raw[key] ?? '') !== String(parsed[key] ?? ''))
 
     if (hasExtraKeys || hasChangedValues) {
         throw redirect({

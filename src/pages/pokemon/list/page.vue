@@ -16,10 +16,14 @@ const isLoading = ref(false);
 const fetchData = async () => {
     isLoading.value = true;
     try {
+        const page = search.value.page ?? 1;
+        const pageSize = search.value.pageSize ?? 20;
+        const filter = search.value.filter ?? '';
+
         const response = await getCoba({
-            limit: search.value.pageSize,
-            offset: (search.value.page - 1) * search.value.pageSize,
-            search: search.value.filter
+            limit: pageSize,
+            offset: (page - 1) * pageSize,
+            search: filter
         });
 
         data.value = response.results;
@@ -31,7 +35,7 @@ const fetchData = async () => {
     }
 }
 
-const { table } = useTable({
+const { table, searchTerm, onSearch, clearFilter } = useTable({
     data: data,
     rowCount: totalCount,
     columns: [
@@ -58,5 +62,8 @@ watch(() => search, () => {
     <DataTable
         :table="table"
         :is-loading="isLoading"
+        v-model:search="searchTerm"
+        @search="onSearch"
+        @clear-filter="clearFilter"
     />
 </template>
