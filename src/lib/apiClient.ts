@@ -2,7 +2,9 @@ import axios, { AxiosError } from "axios";
 
 export const apiClient = axios.create({
     // baseURL: 'https://pokeapi.co/api/v2',
-    baseURL: 'https://pokeapi.co/api/v2',
+    // baseURL: 'localhost:8080',
+    baseURL: 'https://jsonplaceholder.typicode.com/',    // json placeholder
+    // baseURL: 'https://rickandmortyapi.com/api/character',   // format meta
     timeout: 10000,
 });
 
