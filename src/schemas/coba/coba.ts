@@ -3,6 +3,9 @@
 //     url: string;
 // }
 
+export const AlbumKeys = ['albumId', 'id', 'title', 'url', 'thumbnailUrl'] as const;
+export type AlbumKey = (typeof AlbumKeys)[number];
+
 export interface CobaListItem {
     // POST
     // userId: number;

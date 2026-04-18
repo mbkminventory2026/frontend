@@ -1,3 +1,5 @@
+export const PokemonKeys = ['name', 'url'] as const;
+export type PokemonKey = (typeof PokemonKeys)[number];
 export interface PokemonListItem {
     name: string;
     url: string;
@@ -9,8 +11,6 @@ export interface PokemonListResponse {
     previous: string | null;
     results: PokemonListItem[];
 }
-
-export const PokemonKeys: (keyof PokemonListItem)[] = ['name', 'url'];
 
 export const PokemonLabels: Partial<Record<keyof PokemonListItem, string>> = {
     name: 'Nama Pokemon',

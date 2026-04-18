@@ -7,47 +7,57 @@ import {
     type PaginationState, 
     type SortingState
 } from "@tanstack/vue-table";
-import { type TableParams } from "@/schemas/table-params";
+import { createTableParamsSchema, type TableParams } from "@/schemas/table-params";
+import { type ZodSchema } from "zod";
 
-interface UseTableOptions<TData> {
+interface UseTableOptions<TData, TSchema extends ZodSchema> {
     data: MaybeRefOrGetter<TData[]>;
     columns: ColumnDef<TData, any>[];
     rowCount: MaybeRefOrGetter<number>;
-    search: TableParams;
+    search: any;
+    schema: TSchema;
 }
 
-export function useTable<TData>(
-    options: UseTableOptions<TData>
+export function useTable<TData, TSchema extends ZodSchema>(
+    options: UseTableOptions<TData, TSchema>
 ) {
     const navigate = useNavigate();
 
+    const safeSearch = computed(() => {
+        try {
+            return options.schema.parse(toValue(options.search));
+        } catch {
+            return options.schema.parse({})
+        }
+    })
+
     const pagination = computed<PaginationState>(() => {
-        const currentSearch = toValue(options.search);
+        const s = safeSearch.value;
         return {
-            pageIndex: (currentSearch.page || 1) - 1,
-            pageSize: currentSearch.pageSize || 20
+            pageIndex: (s.page || 1) - 1,
+            pageSize: s.pageSize || 20
         };
     });
 
     const sorting = computed<SortingState>(() => {
-        const currentSearch = toValue(options.search);
+        const s = safeSearch.value;
 
-        if (currentSearch.sortBy) {
+        if (s.sortBy) {
             return [{
-                id: currentSearch.sortBy,
-                desc: currentSearch.sortDesc ?? false
+                id: s.sortBy,
+                desc: s.sortDesc ?? false
             }]
         }
         return [];  // default
     })
 
-    const updateSearch = (newParams: Partial<TableParams>) => {
+    const updateSearch = (newParams: any) => {
         navigate({
             to: '.',
-            search: (prev: any) => ({
-                ...prev,
-                ...newParams,
-            }),
+            search: (prev) => {
+                const merged = { ...prev, ...newParams }
+                return options.schema.parse(merged)
+            },
         });
     };
 
@@ -103,6 +113,7 @@ export function useTable<TData>(
 
     return {
         table,
+        updateSearch,
         setPageSize,
         setFilter,
     }

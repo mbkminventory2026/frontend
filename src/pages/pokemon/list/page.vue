@@ -3,6 +3,7 @@ import { getCoba } from '@/api/coba/coba';
 import { getPokemons } from '@/api/pokemon/pokemon';
 import DataTable from '@/components/DataTable.vue';
 import { useTable } from '@/composables/useTable';
+import { albumSearchSchema } from '@/routes/pokemon';
 import { type CobaListItem } from '@/schemas/coba/coba';
 import type { PokemonListItem } from '@/schemas/pokemon/pokemon';
 import { useSearch } from '@tanstack/vue-router';
@@ -33,15 +34,7 @@ const fetchData = async () => {
     }
 }
 
-onMounted(() => {
-    fetchData();
-});
-
-watch(() => search, () => {
-    fetchData();
-}, { deep: true });
-
-const { table } = useTable({
+const { table, updateSearch } = useTable({
     data: data,
     rowCount: totalCount,
     columns: [
@@ -59,8 +52,21 @@ const { table } = useTable({
         { header: 'URL', accessorKey: 'url' },
         { header: 'Thumbanil URL', accessorKey: 'thumbnailUrl' },
     ],
-    search: search
+    search: search,
+    schema: albumSearchSchema,
 })
+
+onMounted(() => {
+    const parsed = albumSearchSchema.safeParse(search.value);
+    if (parsed.success && JSON.stringify(parsed.data) !== JSON.stringify(search.value)) {
+        updateSearch({});
+    }
+    fetchData();
+});
+
+watch(() => search, () => {
+    fetchData();
+}, { deep: true });
 
 </script>
 <template>
