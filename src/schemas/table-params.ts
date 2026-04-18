@@ -3,7 +3,9 @@ import z from "zod"
 export const tabelParamsSchema = z.object({
   page: z.number().catch(1),    // default 1
   filter: z.string().catch(''), // default ''
-  sort: z.enum(['alphabet', 'newest']).catch('newest'),   // default 'newest',
+  sortBy: z.string().optional(),
+  sortDesc: z.boolean().catch(false),
+  
   pageSize: z.union([
     z.literal(20),
     z.literal(50),

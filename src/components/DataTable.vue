@@ -10,6 +10,7 @@ import {
  } from '@/components/ui/table';
 import Button from './ui/button/Button.vue';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from './ui/select/';
+import { ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-vue-next';
 
 const props = defineProps<{
     table: TableInstance<TData>,
@@ -41,12 +42,23 @@ const props = defineProps<{
             <Table>
                 <TableHeader>
                     <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
-                        <TableHead v-for="header in headerGroup.headers" :key="header.id" class="font-bold">
-                            <FlexRender
-                            v-if="!header.isPlaceholder"
-                            :render="header.column.columnDef.header"
-                            :props="header.getContext()"
-                            />
+                        <TableHead v-for="header in headerGroup.headers" :key="header.id" class="font-bold" :class="{
+                            'cursor-pointer select-none hover:bg-slate-50 transition-colors': header.column.getCanSort()
+                        }"
+                        @click="header.column.getToggleSortingHandler()?.($event)"
+                        >
+                            <div class="flex items-center gap-2">
+                                <FlexRender
+                                    v-if="!header.isPlaceholder"
+                                    :render="header.column.columnDef.header"
+                                    :props="header.getContext()"
+                                />
+                                <template v-if="header.column.getCanSort() && !header.isPlaceholder">
+                                    <ArrowUp v-if="header.column.getIsSorted() === 'asc'" class="w-4 h-4"/>
+                                    <ArrowDown v-else-if="header.column.getIsSorted() === 'desc'" class="w-4 h-4"/>
+                                    <ArrowUpDown v-else class="w-4 h-4 opacity-30"/>
+                                </template>
+                            </div>
                         </TableHead>
                     </TableRow>
                 </TableHeader>
