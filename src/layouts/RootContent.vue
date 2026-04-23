@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Outlet } from '@tanstack/vue-router'
 // import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
-import AppSidebar from '@/components/AppSidebar.vue';
 
 // const { open, setOpen, isMobile, openMobile, setOpenMobile } = useSidebar();
 

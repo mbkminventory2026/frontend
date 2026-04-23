@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import TurnstileWidget from '@/components/TurnstileWidget.vue';
 
 import { useLoginForm } from '@/composables/auth/useLoginForm';
+import { Link } from '@tanstack/vue-router';
 
 const {
     isLoading,
@@ -30,7 +31,15 @@ const {
 
         <FormField v-slot="{ componentField }" name="password">
             <FormItem>
-                <FormLabel>Password</FormLabel>
+                <div class="flex items-center">
+                    <FormLabel>Password</FormLabel>
+                    <Link
+                        to="/"
+                        class="ml-auto text-sm underline-offset-4 hover:underline"
+                    >
+                        Lupa password?
+                    </Link>
+                </div>
                 <FormControl>
                     <Input type="password" placeholder="••••••••" v-bind="componentField"/>
                 </FormControl>
@@ -50,5 +59,11 @@ const {
             <span v-if="isLoading">Sedang memeriksa....</span>
             <span v-else>Masuk</span>
         </Button>
+        <div class="text-center">
+        Tidak punya akun?
+        <Link to="#" class="underline-offset-4 hover:underline">
+            Sign up
+        </Link>
+        </div>
     </form>
 </template>

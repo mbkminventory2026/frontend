@@ -1,5 +1,8 @@
 import { apiClient } from "@/lib/apiClient";
-import type { CobaListItem, CobaListResponse } from "@/schemas/coba/coba";
+import type { 
+    CobaListItem, 
+    // CobaListResponse 
+} from "@/schemas/coba/coba";
 
 export const getCoba = async(params: {
     limit: number,

@@ -15,10 +15,10 @@ import { Outlet } from "@tanstack/vue-router"
 import {
   BookOpen,
   Bot,
-  Frame,
+  // Frame,
   LifeBuoy,
-  Map,
-  PieChart,
+  // Map,
+  // PieChart,
   Send,
   Settings2,
   SquareTerminal,
@@ -164,7 +164,6 @@ const data = {
         <SidebarInset>
           <div class="flex flex-1 flex-col gap-4 p-4">
             <Outlet/>
-            <div class="bg-muted/50 min-h-[100vh] flex-1 rounded-xl md:min-h-min" />
           </div>
         </SidebarInset>
       </div>
