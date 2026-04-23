@@ -1,63 +1,172 @@
-<script setup lang="ts">
-import { Outlet } from '@tanstack/vue-router'
-import AppNavbar, { type NavItem } from '@/components/AppNavbar.vue'
-import { CircleCheckIcon, CircleHelpIcon, CircleIcon } from 'lucide-vue-next'
+<script lang="ts">
+export const iframeHeight = "800px"
+export const description = "A sidebar with a header and a search form."
+</script>
 
-const myNavigation: NavItem[] = [
-  // 1. Contoh Direct Link
-  {
-    title: 'Home',
-    href: '/'
+<script setup lang="ts">
+import AppSidebar from "@/components/layouts/AppSidebar.vue"
+import SiteHeader from "@/components/layouts/SiteHeader.vue"
+import {
+  SidebarInset,
+  SidebarProvider,
+} from "@/components/ui/sidebar"
+import { useBreadcrumbs } from "@/composables/useBreadcrumbs"
+import { Outlet } from "@tanstack/vue-router"
+import {
+  BookOpen,
+  Bot,
+  Frame,
+  LifeBuoy,
+  Map,
+  PieChart,
+  Send,
+  Settings2,
+  SquareTerminal,
+} from "lucide-vue-next"
+
+const { breadcrumbs } = useBreadcrumbs()
+
+const data = {
+  user: {
+    name: "shadcn",
+    email: "m@example.com",
+    avatar: "/avatars/shadcn.jpg",
   },
-  {
-    title: 'Docs',
-    href: '/docs'
-  },
-  // 2. Contoh Dropdown Grid + Deskripsi (seperti "Components" sebelumnya)
-  {
-    title: 'Components',
-    layout: 'grid',
-    children: [
-      { 
-        title: 'Accordion', 
-        href: '/docs/accordion', 
-        description: 'A vertically stacked set of interactive headings that each reveal a section of content.' 
-      },
-      { 
-        title: 'Alert', 
-        href: '/docs/alert', 
-        description: 'Displays a callout for user attention.' 
-      },
-    ]
-  },
-  // 3. Contoh Dropdown Simple (Tanpa deskripsi)
-  {
-    title: 'Simple',
-    layout: 'simple',
-    children: [
-      { title: 'Components', href: '#' },
-      { title: 'Documentation', href: '#' },
-      { title: 'Blocks', href: '#' },
-    ]
-  },
-  // 4. Contoh Dropdown dengan Icon
-  {
-    title: 'With Icon',
-    layout: 'simple',
-    children: [
-      { title: 'Backlog', href: '#', icon: CircleHelpIcon, description: '1234567890' },
-      { title: 'To Do', href: '#', icon: CircleIcon },
-      { title: 'Done', href: '#', icon: CircleCheckIcon },
-    ]
-  }
-]
+  navMain: [
+    {
+      title: "Playground",
+      url: "#",
+      icon: SquareTerminal,
+      isActive: true,
+      items: [
+        {
+          title: "History",
+          url: "#",
+        },
+        {
+          title: "Starred",
+          url: "#",
+        },
+        {
+          title: "Settings",
+          url: "#",
+        },
+      ],
+    },
+    {
+      title: "Models",
+      url: "#",
+      icon: Bot,
+      items: [
+        {
+          title: "Genesis",
+          url: "#",
+        },
+        {
+          title: "Explorer",
+          url: "#",
+        },
+        {
+          title: "Quantum",
+          url: "#",
+        },
+      ],
+    },
+    {
+      title: "Documentation",
+      url: "#",
+      icon: BookOpen,
+      items: [
+        {
+          title: "Introduction",
+          url: "#",
+        },
+        {
+          title: "Get Started",
+          url: "#",
+        },
+        {
+          title: "Tutorials",
+          url: "#",
+        },
+        {
+          title: "Changelog",
+          url: "#",
+        },
+      ],
+    },
+    {
+      title: "Settings",
+      url: "#",
+      icon: Settings2,
+      items: [
+        {
+          title: "General",
+          url: "#",
+        },
+        {
+          title: "Team",
+          url: "#",
+        },
+        {
+          title: "Billing",
+          url: "#",
+        },
+        {
+          title: "Limits",
+          url: "#",
+        },
+      ],
+    },
+  ],
+  navSecondary: [
+    {
+      title: "Support",
+      url: "#",
+      icon: LifeBuoy,
+    },
+    {
+      title: "Feedback",
+      url: "#",
+      icon: Send,
+    },
+  ],
+  projects: [
+    // {
+    //   name: "Design Engineering",
+    //   url: "#",
+    //   icon: Frame,
+    // },
+    // {
+    //   name: "Sales & Marketing",
+    //   url: "#",
+    //   icon: PieChart,
+    // },
+    // {
+    //   name: "Travel",
+    //   url: "#",
+    //   icon: Map,
+    // },
+  ],
+}
 </script>
 
 <template>
-  <header class="p-4 border-b">
-    <AppNavbar :items="myNavigation" />
-  </header>
-  <main>
-    <Outlet />
-  </main>
+    <SidebarProvider class="flex flex-col [--header-height:calc(--spacing(14))]">
+      <SiteHeader :breadcrumbs="breadcrumbs"/>
+      <div class="flex flex-1">
+        <AppSidebar 
+          :user="data.user"
+          :nav-main="data.navMain"
+          :nav-secondary="data.navSecondary"
+          :projects="data.projects"
+        />
+        <SidebarInset>
+          <div class="flex flex-1 flex-col gap-4 p-4">
+            <Outlet/>
+            <div class="bg-muted/50 min-h-[100vh] flex-1 rounded-xl md:min-h-min" />
+          </div>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
 </template>

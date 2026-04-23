@@ -66,11 +66,11 @@ const activeFilter = computed(() => {
             </div>
             <div v-if="activeFilter" class="flex items-center gap-1.5 mt-1">
                 <span class="text-xs text-slate-500">Hasil pencarian:</span>
-                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-medium italic">
+                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-300 text-xs font-medium italic">
                     "{{ activeFilter }}"
                     <button
                         type="button"
-                        class="hover:bg-blue-200 rounded-full p-0.5 transition-colors"
+                        class="hover:bg-gray-200 rounded-full p-0.5 transition-colors"
                         @click="emit('clearFilter')"
                         title="Hapus filter"
                     >

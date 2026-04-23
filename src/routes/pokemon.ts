@@ -23,4 +23,7 @@ export const Route = createFileRoute('/pokemon')({
   },
 
   component: PokemonPage,
+  staticData: {
+    breadcrumb: 'Pokemons'
+  }
 })

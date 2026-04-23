@@ -3,4 +3,7 @@ import LoginPage from '@/pages/login/page.vue'
 
 export const Route = createFileRoute('/login')({
   component: LoginPage,
+  staticData: {
+    breadcrumb: 'Login'
+  }
 })

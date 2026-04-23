@@ -7,7 +7,6 @@ import {
     type PaginationState, 
     type SortingState
 } from "@tanstack/vue-table";
-import { type TableParams } from "@/schemas/table-params";
 import { stripTableDefaults } from '@/lib/table-utils';
 import { type ZodSchema } from "zod";
 import { ref, watch } from 'vue';
