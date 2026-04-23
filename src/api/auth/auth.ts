@@ -1,17 +1,17 @@
 import { apiClient } from "@/lib/apiClient";
 import type { LoginPayload } from "@/schemas/auth/auth";
 
-export interface LoginResponse {
-    token: string;
-    user: {
-        id: number;
-        name: string;
-        email: string;
-        role: string;
+export interface LoginRequest {
+    status: string;
+    message: string;
+    data: {
+        access_token: string;
+        token_type: string;
+        expires_in: number;
     }
 }
 
-export const loginApi = async (data: LoginPayload & { cloudflareToken: string }): Promise<LoginResponse> => {
-    const response = await apiClient.post<LoginResponse>('auth/response', data)
+export const loginApi = async (data: LoginPayload & { turnstile_token: string }): Promise<LoginRequest> => {
+    const response = await apiClient.post<LoginRequest>('/auth/login', data)
     return response.data;
 }

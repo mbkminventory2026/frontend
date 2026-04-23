@@ -19,11 +19,11 @@ const {
 
 <template>
     <form @submit="onSubmit" class="space-y-6">
-        <FormField v-slot="{ componentField }" name="email">
+        <FormField v-slot="{ componentField }" name="username">
             <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>Username</FormLabel>
                 <FormControl>
-                    <Input type="email" placeholder="admin@perusahaan.com" v-bind="componentField"/>
+                    <Input type="text" placeholder="super-admin" v-bind="componentField"/>
                 </FormControl>
                 <FormMessage/>
             </FormItem>

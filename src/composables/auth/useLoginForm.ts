@@ -34,20 +34,20 @@ export function useLoginForm() {
         // logic
         try {
             const response = await loginApi({
-                email: values.email,
+                username: values.username,
                 password: values.password,
-                cloudflareToken: turnstileToken.value
+                turnstile_token: turnstileToken.value
             })
 
-            authStore.login(response.token, response.user);
+            authStore.login(response.data.access_token, { username: values.username });
 
             router.navigate({
                 to: '/dashboard' as any
             })
         } catch(error: any) {
             console.error('Login gagal: ', error);
-            const errorMsg = error.response?.data?.mesage || 'Gagal terhubung ke server';
-            alert(`Gagal masuk: ${errorMsg}`);
+            const errorMsg = error.response?.data?.message || 'Gagal masuk';
+            alert(errorMsg);
         } finally {
             isLoading.value = false;
         }
