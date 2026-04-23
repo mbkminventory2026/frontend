@@ -1,18 +1,18 @@
 import { computed } from "vue";
-import { useNavigate } from "@tanstack/vue-router";
+import { useRouter } from "@tanstack/vue-router";
 import { useAuthStore } from "@/store/authStore";
 
 export function useDashboard() {
     const authStore = useAuthStore();
-    const navigate = useNavigate();
+    const router = useRouter();
 
     // mengambil value dari reactive variable
-    const username = computed(() => authStore.user?.name);
-    const role = computed(() => authStore.user?.role)
+    const username = computed(() => authStore.user?.username ?? 'Guest');
+    const role = computed(() => authStore.user?.role ?? 'admin')
 
     const handleLogout = () => {
         authStore.logout();
-        navigate({ to: '/login' })
+        router.navigate({ to: '/login' })
     };
 
     return { username, role, handleLogout }

@@ -1,8 +1,7 @@
-import Dashboard from '@/components/dashboard/Dashboard.vue'
+import DashboardPage from '@/pages/dashboard/page.vue'
 import { createFileRoute } from '@tanstack/vue-router'
 
 export const Route = createFileRoute('/_authenticated/dashboard')({
-  component: Dashboard,
+  component: DashboardPage,
+  staticData: { breadcrumb: 'Dashboard' }
 })
-
-

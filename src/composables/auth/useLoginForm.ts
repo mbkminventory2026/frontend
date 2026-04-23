@@ -39,7 +39,7 @@ export function useLoginForm() {
                 turnstile_token: turnstileToken.value
             })
 
-            authStore.login(response.data.access_token, { username: values.username });
+            authStore.login(response.data.access_token, { username: values.username, role: 'admin' });
 
             router.navigate({
                 to: '/dashboard' as any
