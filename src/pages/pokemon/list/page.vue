@@ -2,12 +2,12 @@
 import { getCoba } from '@/api/coba/coba';
 import DataTable from '@/components/DataTable.vue';
 import { useTable } from '@/composables/useTable';
-import { pokemonSearchSchema } from '@/routes/pokemon';
+import { pokemonSearchSchema } from '@/routes/_authenticated/pokemon';
 import { type CobaListItem } from '@/schemas/coba/coba';
 import { useSearch } from '@tanstack/vue-router';
 import { ref, watch, onMounted } from 'vue';
 
-const search = useSearch({ from:'/pokemon' });
+const search = useSearch({ from:'/_authenticated/pokemon' });
 
 const data = ref<CobaListItem[]>([]);
 const totalCount = ref(0);

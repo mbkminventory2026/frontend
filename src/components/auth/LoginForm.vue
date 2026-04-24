@@ -49,7 +49,7 @@ const {
 
         <div class="flex justify-center my-4">
             <TurnstileWidget
-            site-key="1x00000000000000000000AA"
+            site-key="0x4AAAAAACm1QQwy4f0wxjXu"
             @verify="handleTurnstileSuccess"
             @error="handleTurnstileError"
             ></TurnstileWidget>

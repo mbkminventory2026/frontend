@@ -9,30 +9,35 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as PokemonRouteImport } from './routes/pokemon'
-import { Route as LoginRouteImport } from './routes/login'
+import { Route as PublicRouteImport } from './routes/_public'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as PublicIndexRouteImport } from './routes/_public/index'
+import { Route as PublicLoginRouteImport } from './routes/_public/login'
+import { Route as AuthenticatedPokemonRouteImport } from './routes/_authenticated/pokemon'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 
-const PokemonRoute = PokemonRouteImport.update({
-  id: '/pokemon',
-  path: '/pokemon',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const PublicRoute = PublicRouteImport.update({
+  id: '/_public',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
+const PublicIndexRoute = PublicIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => PublicRoute,
+} as any)
+const PublicLoginRoute = PublicLoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => PublicRoute,
+} as any)
+const AuthenticatedPokemonRoute = AuthenticatedPokemonRouteImport.update({
+  id: '/pokemon',
+  path: '/pokemon',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
@@ -41,60 +46,53 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/login': typeof LoginRoute
-  '/pokemon': typeof PokemonRoute
+  '/': typeof PublicIndexRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/pokemon': typeof AuthenticatedPokemonRoute
+  '/login': typeof PublicLoginRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/login': typeof LoginRoute
-  '/pokemon': typeof PokemonRoute
+  '/': typeof PublicIndexRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/pokemon': typeof AuthenticatedPokemonRoute
+  '/login': typeof PublicLoginRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
-  '/login': typeof LoginRoute
-  '/pokemon': typeof PokemonRoute
+  '/_public': typeof PublicRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/pokemon': typeof AuthenticatedPokemonRoute
+  '/_public/login': typeof PublicLoginRoute
+  '/_public/': typeof PublicIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/pokemon' | '/dashboard'
+  fullPaths: '/' | '/dashboard' | '/pokemon' | '/login'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/pokemon' | '/dashboard'
+  to: '/' | '/dashboard' | '/pokemon' | '/login'
   id:
     | '__root__'
-    | '/'
     | '/_authenticated'
-    | '/login'
-    | '/pokemon'
+    | '/_public'
     | '/_authenticated/dashboard'
+    | '/_authenticated/pokemon'
+    | '/_public/login'
+    | '/_public/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
-  LoginRoute: typeof LoginRoute
-  PokemonRoute: typeof PokemonRoute
+  PublicRoute: typeof PublicRouteWithChildren
 }
 
 declare module '@tanstack/vue-router' {
   interface FileRoutesByPath {
-    '/pokemon': {
-      id: '/pokemon'
-      path: '/pokemon'
-      fullPath: '/pokemon'
-      preLoaderRoute: typeof PokemonRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
+    '/_public': {
+      id: '/_public'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof PublicRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -104,12 +102,26 @@ declare module '@tanstack/vue-router' {
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
+    '/_public/': {
+      id: '/_public/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof PublicIndexRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_public/login': {
+      id: '/_public/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof PublicLoginRouteImport
+      parentRoute: typeof PublicRoute
+    }
+    '/_authenticated/pokemon': {
+      id: '/_authenticated/pokemon'
+      path: '/pokemon'
+      fullPath: '/pokemon'
+      preLoaderRoute: typeof AuthenticatedPokemonRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
@@ -123,21 +135,34 @@ declare module '@tanstack/vue-router' {
 
 interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedPokemonRoute: typeof AuthenticatedPokemonRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedPokemonRoute: AuthenticatedPokemonRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
   AuthenticatedRouteChildren,
 )
 
+interface PublicRouteChildren {
+  PublicLoginRoute: typeof PublicLoginRoute
+  PublicIndexRoute: typeof PublicIndexRoute
+}
+
+const PublicRouteChildren: PublicRouteChildren = {
+  PublicLoginRoute: PublicLoginRoute,
+  PublicIndexRoute: PublicIndexRoute,
+}
+
+const PublicRouteWithChildren =
+  PublicRoute._addFileChildren(PublicRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
-  LoginRoute: LoginRoute,
-  PokemonRoute: PokemonRoute,
+  PublicRoute: PublicRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

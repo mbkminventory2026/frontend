@@ -1,12 +1,19 @@
 import { createFileRoute, redirect } from '@tanstack/vue-router'
-import Auth from '@/layouts/Auth.vue'
+import AuthenticatedLayout from '@/layouts/Root.vue'
 
 export const Route = createFileRoute('/_authenticated')({
-  beforeLoad: () => {
+  beforeLoad: ({ location }) => {
     const token = localStorage.getItem('accessToken');
-    if (!token) throw redirect({ to: '/login' });
+    if (!token) {
+      throw redirect({
+        to: '/login',
+        search: {
+          redirect: location.href,
+        },
+      });
+    }
   },
-  component: Auth,
+  component: AuthenticatedLayout,
 })
 
 

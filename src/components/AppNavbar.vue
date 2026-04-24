@@ -30,7 +30,7 @@ defineProps<{
 </script>
 
 <template>
-  <NavigationMenu :viewport="false">
+  <NavigationMenu :viewport="false" class="p-4">
     <NavigationMenuList>
       <NavigationMenuItem v-for="item in items" :key="item.title">
         

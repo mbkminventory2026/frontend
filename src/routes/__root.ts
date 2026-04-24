@@ -1,8 +1,8 @@
 import { createRootRoute } from '@tanstack/vue-router'
-import Root from '../layouts/Root.vue'
+import RootContent from '../layouts/RootContent.vue'
 import NotFound from '@/pages/NotFound.vue'
 
 export const Route = createRootRoute({
-  component: Root,
+  component: RootContent,
   notFoundComponent: NotFound,
 })

@@ -6,7 +6,7 @@ import { validateTableSearchRedirect, stripTableDefaults } from '@/lib/table-uti
 export const pokemonColumns: [string, ...string[]] = ['albumId', 'id', 'title', 'url', 'thumbnailUrl'];
 export const pokemonSearchSchema = createTableParamsSchema(pokemonColumns)
 
-export const Route = createFileRoute('/pokemon')({
+export const Route = createFileRoute('/_authenticated/pokemon')({
   // validateSearch hanya untuk parsing — TIDAK boleh throw redirect di sini
   validateSearch: (search: Record<string, unknown>) => {
     const parsed = pokemonSearchSchema.parse(search)
@@ -16,7 +16,7 @@ export const Route = createFileRoute('/pokemon')({
   // Redirect logic ada di beforeLoad — di sini throw redirect() baru bekerja
   beforeLoad: ({ search, location }) => {
     validateTableSearchRedirect(
-      '/pokemon',
+      '/_authenticated/pokemon',
       location.search as Record<string, any>,
       search
     )

@@ -31,7 +31,6 @@ export function useLoginForm() {
 
         isLoading.value = true;
 
-        // logic
         try {
             const response = await loginApi({
                 username: values.username,
@@ -41,9 +40,15 @@ export function useLoginForm() {
 
             authStore.login(response.data.access_token, { username: values.username, role: 'admin' });
 
-            router.navigate({
-                to: '/dashboard' as any
-            })
+            const search = router.latestLocation.search as { redirect?: string };
+            
+            if (search.redirect) {
+                window.location.href = search.redirect;
+            } else {
+                router.navigate({
+                    to: '/dashboard' as any
+                })
+            }
         } catch(error: any) {
             console.error('Login gagal: ', error);
             const errorMsg = error.response?.data?.message || 'Gagal masuk';
