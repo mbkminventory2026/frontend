@@ -6,7 +6,7 @@ import { BotOff } from 'lucide-vue-next';
 </script>
 
 <template>
-  <Empty class="min-h-full">
+  <Empty class="min-h-screen flex flex-col">
     <EmptyHeader>
         <EmptyMedia variant="icon">
             <BotOff></BotOff>

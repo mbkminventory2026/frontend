@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from '@tanstack/vue-router'
-import AuthenticatedLayout from '@/layouts/Root.vue'
+import AuthenticatedLayout from '@/layouts/Authenticated.vue'
 
 export const Route = createFileRoute('/_authenticated')({
   beforeLoad: ({ location }) => {
