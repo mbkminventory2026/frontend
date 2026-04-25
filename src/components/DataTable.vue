@@ -63,6 +63,10 @@ const activeFilter = computed(() => {
                         </Button>
                     </div>
                 </div>
+
+                <div class="flex items-center gap-2">
+                    <slot name="actions" />
+                </div>
             </div>
             <div v-if="activeFilter" class="flex items-center gap-1.5 mt-1">
                 <span class="text-xs text-slate-500">Hasil pencarian:</span>
