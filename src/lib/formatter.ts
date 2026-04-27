@@ -12,12 +12,15 @@ export const formatRupiah = (value: number): string => {
 }
 
 export const formatDate = (dateString: string | Date) : string => {
-    if (!dateString) return 'T___T';
+    if (!dateString) return '-';
 
     const date = new Date(dateString);
-    return Intl.DateTimeFormat('id-ID', {
+    return Intl.DateTimeFormat('en-US', {
         day: 'numeric',
         month: 'long',
-        year: 'numeric'
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        // timeZone: 'short'
     }).format(date)
 }

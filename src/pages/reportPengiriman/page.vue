@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { h, ref, watch, onMounted } from 'vue';
 import { useSearch } from '@tanstack/vue-router';
-import { Plus, Pencil } from 'lucide-vue-next';
+import { Plus, Pencil, Trash2 } from 'lucide-vue-next';
 
-import { getReportPengiriman } from '@/api/reportPengiriman/reportPengiriman';
+import { deleteReportPengiriman, getReportPengiriman } from '@/api/reportPengiriman/reportPengiriman';
 import { type ReportPengirimanItem } from '@/schemas/reportPengiriman/reportPengiriman';
 import { reportPengirimanSchema } from '@/routes/_authenticated/report-pengiriman';
 
@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import { useTable } from '@/composables/useTable';
 import { useDialog } from '@/composables/useDialog';
 import { type DialogSchemaType } from '@/schemas/dialog/dialog';
+import { formatDate } from '@/lib/formatter';
+import DeleteButton from '@/components/DeleteButton.vue';
 
 const search = useSearch({ from: '/_authenticated/report-pengiriman' })
 
@@ -53,11 +55,25 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
     data: data,
     rowCount: totalCount,
     columns: [
-        { header: 'Created At', accessorKey: 'created_at' },
+        { header: 'Created At', accessorKey: 'created_at', cell: ({ row }) => formatDate(row.getValue('created_at')) },
         { header: 'Date', accessorKey: 'date' },
         { header: 'ID Report Pengiriman', accessorKey: 'id_report_pengiriman' },
         { header: 'ID WO Shell Size', accessorKey: 'id_wo_shell_size' },
         { header: 'Quantity', accessorKey: 'quantity' },
+        { header: 'Actions', id: 'actions', cell:({ row }) => {
+        const id = row.getValue('id_report_pengiriman') as number;
+        console.log("Data Row:", id);
+
+        return h('div', { class: 'flex gap-2 justify-center items-center' }, [
+            h(DeleteButton, {
+                onConfirm: async() => {
+                    await deleteReportPengiriman(id);
+                    await fetchData()
+                },
+                confirmMessage: 'Apakah Anda yakin ingin menghapus Report Pengiriman ini?'
+            })
+        ]) } 
+    }
     ],
     search: search,
     schema: reportPengirimanSchema,

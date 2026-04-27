@@ -21,3 +21,9 @@ export const getReportPengiriman = async(params: {
         count: Number(response.headers['x-total-count']) || response.data?.length || 0
     }
 }
+
+export const deleteReportPengiriman = async (id: string | number) => {
+    if (!id) throw new Error("ID is required for deletion");
+    
+    return await apiClient.delete(`/api/v1/report-pengiriman/${id}`);
+}

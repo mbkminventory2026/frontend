@@ -92,7 +92,7 @@ const activeFilter = computed(() => {
                         }"
                         @click="header.column.getToggleSortingHandler()?.($event)"
                         >
-                            <div class="flex items-center gap-2">
+                            <div class="flex items-center gap-2 justify-center">
                                 <FlexRender
                                     v-if="!header.isPlaceholder"
                                     :render="header.column.columnDef.header"
@@ -120,6 +120,7 @@ const activeFilter = computed(() => {
                         v-for="row in table.getRowModel().rows" 
                         :key="row.id"
                         :data-state="row.getIsSelected() && 'selected'"
+                        class="text-center"
                         >
                             <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id">
                                 <FlexRender 
