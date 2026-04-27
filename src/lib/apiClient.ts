@@ -2,7 +2,7 @@ import axios, { AxiosError } from "axios";
 
 export const apiClient = axios.create({
     // baseURL: 'https://pokeapi.co/api/v2',
-    baseURL: 'http://localhost:8080/api/v1',
+    baseURL: 'http://localhost:8080',
     // baseURL: 'https://jsonplaceholder.typicode.com/',    // json placeholder
     // baseURL: 'https://rickandmortyapi.com/api/character',   // format meta
     timeout: 10000,
@@ -28,6 +28,12 @@ apiClient.interceptors.request.use(
 // Response -> memeriksa bearer token pada header
 apiClient.interceptors.response.use(
     (response) => {
+        if (response.data && response.data.status === 'success') {
+            return {
+                ...response,
+                data: response.data.data
+            }
+        }
         return response;
     },
     (error: AxiosError) => {

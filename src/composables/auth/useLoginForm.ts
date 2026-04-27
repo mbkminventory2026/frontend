@@ -38,7 +38,7 @@ export function useLoginForm() {
                 turnstile_token: turnstileToken.value
             })
 
-            authStore.login(response.data.access_token, { username: values.username, role: 'admin' });
+            authStore.login(response.access_token, { username: values.username, role: 'admin' });
 
             const search = router.latestLocation.search as { redirect?: string };
             

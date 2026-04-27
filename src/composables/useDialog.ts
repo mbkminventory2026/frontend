@@ -1,6 +1,7 @@
 import { ref } from 'vue'
 import { toast } from 'vue-sonner'
-import axios from 'axios'
+import { apiClient } from '@/lib/apiClient'
+import { mapPayloadToSnakeCase } from '@/lib/utils'
 
 interface UseDialogOptions {
     endpoint: string
@@ -36,19 +37,20 @@ export function useDialog({
 
     const handleSubmit = async (values: any) => {
         isLoading.value = true
+        const snakeCaseValue = mapPayloadToSnakeCase(values)
 
-        const hasFile = Object.values(values).some(
+        const hasFile = Object.values(snakeCaseValue).some(
             (val) => val instanceof File || (Array.isArray(val) && val[0] instanceof File)
         )
 
-        let payload: any = values
+        let payload: any = snakeCaseValue
         if (hasFile) {
             const formData = new FormData() // agar bisa menerima file
-            Object.keys(values).forEach((key) => {
+            Object.keys(snakeCaseValue).forEach((key) => {
                 if (Array.isArray([key])) { // jika payload merupakan array
-                    values[key].forEach((item: any) => formData.append(`${key}[]`, item))
+                    snakeCaseValue[key].forEach((item: any) => formData.append(`${key}[]`, item))
                 } else {
-                    formData.append(key, values[key])
+                    formData.append(key, snakeCaseValue[key])
                 }
             })
             payload = formData
@@ -56,14 +58,14 @@ export function useDialog({
 
         try {
             const method = isEditMode.value ? 'patch' : 'post'
-            const url = isEditMode.value ? `${endpoint}/${values.id}` : endpoint
+            const url = isEditMode.value ? `${endpoint}/${snakeCaseValue.id}` : endpoint
             
-            await axios({
+            await apiClient({
                 method: method,
                 url: url,
                 data: payload,
                 headers: {
-                    'Content-Type': hasFile ? 'multipart/form-data' : 'application-json',
+                    'Content-Type': hasFile ? 'multipart/form-data' : 'application/json',
                 },
             })
 

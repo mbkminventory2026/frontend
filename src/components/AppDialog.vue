@@ -19,6 +19,9 @@ import {
   FieldLabel,
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Switch } from '@/components/ui/switch'
 import {
   Select,
   SelectContent,
@@ -27,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { type DialogSchemaType, type DialogField } from '@/schemas/dialog/dialog'
+import { type DialogSchemaType, type DialogField, type FieldType } from '@/schemas/dialog/dialog'
 
 interface Props {
   title: string
@@ -48,6 +51,12 @@ const emit = defineEmits(['submit', 'update:isOpen'])
 // Reactive form values tracker — keeps track of current form values for dependency evaluation
 const formValues = ref<Record<string, any>>({})
 
+// File preview URLs for image fields
+const filePreviews = ref<Record<string, string>>({})
+
+// Types that use a standard <Input> element
+const inputTypes: FieldType[] = ['text', 'number', 'password', 'email', 'date']
+
 // Initialize formValues when dialog opens or initialValues change
 watch(
   () => props.isOpen,
@@ -56,6 +65,9 @@ watch(
       formValues.value = { ...props.initialValues }
     } else {
       formValues.value = {}
+      // Revoke any object URLs to prevent memory leaks
+      Object.values(filePreviews.value).forEach((url) => URL.revokeObjectURL(url))
+      filePreviews.value = {}
     }
   },
   { immediate: true }
@@ -149,21 +161,75 @@ const visibleFields = computed(() => {
   return props.schema.filter((field) => isFieldVisible(field))
 })
 
+/**
+ * Build a Zod schema for a single field based on its type and rules.
+ */
+function buildFieldZodSchema(field: DialogField): z.ZodTypeAny {
+  const isRequired = typeof field.rules === 'string' && field.rules.includes('required')
+  const isEmail = typeof field.rules === 'string' && field.rules.includes('email')
+
+  switch (field.type) {
+    case 'number': {
+      let schema = z.coerce.number({ invalid_type_error: `${field.label} harus berupa angka` })
+      if (isRequired) {
+        schema = schema.min(0, `${field.label} wajib diisi`)
+      }
+      return isRequired ? schema : schema.optional()
+    }
+
+    case 'checkbox':
+    case 'switch': {
+      let schema: z.ZodTypeAny = z.boolean()
+      if (isRequired) {
+        // For required checkboxes, the value must be true (e.g., "agree to terms")
+        schema = z.literal(true, {
+          errorMap: () => ({ message: `${field.label} harus dicentang` }),
+        })
+      }
+      return schema
+    }
+
+    case 'file':
+    case 'image': {
+      // File inputs produce File objects; use z.any() with custom refinement
+      if (isRequired) {
+        return z.any().refine((val) => val != null, { message: `${field.label} wajib diisi` })
+      }
+      return z.any().optional()
+    }
+
+    case 'email': {
+      let schema = z.string().email('Format email salah')
+      if (isRequired) {
+        schema = z.string().min(1, `${field.label} wajib diisi`).email('Format email salah')
+      }
+      return isRequired ? schema : schema.optional()
+    }
+
+    case 'textarea':
+    case 'text':
+    case 'password':
+    case 'date':
+    case 'select':
+    default: {
+      let schema: z.ZodTypeAny = z.string()
+      if (isRequired) {
+        schema = z.string().min(1, `${field.label} wajib diisi`)
+      }
+      if (isEmail) {
+        schema = z.string().email('Format email salah')
+      }
+      return isRequired ? schema : (schema as z.ZodString).optional()
+    }
+  }
+}
+
 // Validation schema — only validate visible fields
 const validationSchema = computed(() => {
   const schemaObject: Record<string, any> = {}
 
   visibleFields.value.forEach((field) => {
-    let fieldSchema: z.ZodTypeAny = z.string()
-
-    if (typeof field.rules === 'string') {
-      if (field.rules.includes('required')) {
-        fieldSchema = z.string().min(1, `${field.label} wajib diisi`)
-      }
-      if (field.rules.includes('email')) {
-        fieldSchema = z.string().email('Format email salah')
-      }
-    }
+    let fieldSchema = buildFieldZodSchema(field)
 
     // If the field is disabled, make it optional
     if (isFieldDisabled(field)) {
@@ -199,20 +265,89 @@ function onFieldChange(key: string, value: any) {
   formValues.value[key] = value
 }
 
+/**
+ * Handle file input change — store file reference and generate preview.
+ */
+function onFileChange(key: string, event: Event, field: DialogField) {
+  const input = event.target as HTMLInputElement
+  const files = input.files
+
+  if (!files || files.length === 0) {
+    formValues.value[key] = null
+    // Clean up old preview
+    if (filePreviews.value[key]) {
+      URL.revokeObjectURL(filePreviews.value[key])
+      delete filePreviews.value[key]
+    }
+    return
+  }
+
+  const file = field.fileConfig?.multiple ? Array.from(files) : files[0]
+  formValues.value[key] = file
+
+  // Generate preview for image types
+  if (field.type === 'image' && field.fileConfig?.preview !== false && files[0]) {
+    if (filePreviews.value[key]) {
+      URL.revokeObjectURL(filePreviews.value[key])
+    }
+    filePreviews.value[key] = URL.createObjectURL(files[0])
+  }
+}
+
+function coerceValue(value: any, field: DialogField): any {
+  if (value == null || value === '') return value
+
+  switch (field.type) {
+    case 'number':
+      return Number(value)
+    case 'checkbox':
+    case 'switch':
+      return Boolean(value)
+    case 'select': {
+      // If all options are numeric, coerce to number
+      const allNumeric = field.options?.every((opt) => typeof opt.value === 'number')
+      return allNumeric ? Number(value) : value
+    }
+    default:
+      return value
+  }
+}
+
 function onHandleSubmit(values: any) {
-  // Only submit values for visible fields
-  const visibleKeys = new Set(visibleFields.value.map((f) => f.key))
+  // Build a lookup of field definitions by key for type coercion
+  const fieldMap = new Map(visibleFields.value.map((f) => [f.key, f]))
+  const visibleKeys = new Set(fieldMap.keys())
   const filteredValues: Record<string, any> = {}
+
   for (const key of Object.keys(values)) {
     if (visibleKeys.has(key)) {
-      filteredValues[key] = values[key]
+      const field = fieldMap.get(key)!
+      filteredValues[key] = coerceValue(values[key], field)
     }
   }
+
+  // Include file values from formValues (since vee-validate doesn't track native file inputs)
+  visibleFields.value.forEach((field) => {
+    if ((field.type === 'file' || field.type === 'image') && formValues.value[field.key]) {
+      filteredValues[field.key] = formValues.value[field.key]
+    }
+  })
+
   emit('submit', filteredValues)
 }
 
 function updateOpen(val: boolean) {
   emit('update:isOpen', val)
+}
+
+/**
+ * Get the file input accept attribute based on field config.
+ */
+function getFileAccept(field: DialogField): string | undefined {
+  if (field.type === 'image') {
+    return field.fileConfig?.accept ?? 'image/*'
+  }
+  return field.fileConfig?.accept
 }
 </script>
 
@@ -240,12 +375,13 @@ function updateOpen(val: boolean) {
                         <VeeField
                             v-for="item in fields.left"
                             :key="item.key"
-                            v-slot="{ componentField, errors }"
+                            v-slot="{ componentField, errors, handleChange, value }"
                             :name="item.key"
                         >
                             <Field :data-invalid="!!errors.length">
                                 <FieldLabel :for="item.key">{{ item.label }}</FieldLabel>
                                 
+                                <!-- Select -->
                                 <template v-if="item.type === 'select'">
                                     <Select
                                         v-bind="componentField"
@@ -275,6 +411,74 @@ function updateOpen(val: boolean) {
                                         </SelectContent>
                                     </Select>
                                 </template>
+
+                                <!-- Textarea -->
+                                <template v-else-if="item.type === 'textarea'">
+                                    <Textarea
+                                        :id="item.key"
+                                        :placeholder="item.placeholder"
+                                        :disabled="isFieldDisabled(item)"
+                                        v-bind="componentField"
+                                        @update:model-value="(val: any) => onFieldChange(item.key, val)"
+                                        @input="(e: Event) => onFieldChange(item.key, (e.target as HTMLTextAreaElement)?.value)"
+                                    />
+                                </template>
+
+                                <!-- Checkbox -->
+                                <template v-else-if="item.type === 'checkbox'">
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <Checkbox
+                                            :id="item.key"
+                                            :checked="!!value"
+                                            :disabled="isFieldDisabled(item)"
+                                            @update:checked="(val: boolean) => { handleChange(val); onFieldChange(item.key, val) }"
+                                        />
+                                        <label :for="item.key" class="text-sm text-muted-foreground cursor-pointer select-none">
+                                            {{ item.placeholder }}
+                                        </label>
+                                    </div>
+                                </template>
+
+                                <!-- Switch -->
+                                <template v-else-if="item.type === 'switch'">
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <Switch
+                                            :id="item.key"
+                                            :checked="!!value"
+                                            :disabled="isFieldDisabled(item)"
+                                            @update:checked="(val: boolean) => { handleChange(val); onFieldChange(item.key, val) }"
+                                        />
+                                        <label :for="item.key" class="text-sm text-muted-foreground cursor-pointer select-none">
+                                            {{ item.placeholder }}
+                                        </label>
+                                    </div>
+                                </template>
+
+                                <!-- File / Image -->
+                                <template v-else-if="item.type === 'file' || item.type === 'image'">
+                                    <Input
+                                        :id="item.key"
+                                        type="file"
+                                        :accept="getFileAccept(item)"
+                                        :multiple="item.fileConfig?.multiple ?? false"
+                                        :disabled="isFieldDisabled(item)"
+                                        class="cursor-pointer"
+                                        @change="(e: Event) => { onFileChange(item.key, e, item); handleChange(formValues[item.key]) }"
+                                    />
+                                    <!-- Image preview -->
+                                    <div v-if="item.type === 'image' && filePreviews[item.key]" class="mt-2">
+                                        <img
+                                            :src="filePreviews[item.key]"
+                                            :alt="`Preview ${item.label}`"
+                                            class="max-h-32 rounded-md border object-cover"
+                                        />
+                                    </div>
+                                    <p v-if="item.fileConfig?.maxSize" class="text-xs text-muted-foreground mt-1">
+                                        Maks. {{ item.fileConfig.maxSize }} MB
+                                    </p>
+                                </template>
+
+                                <!-- Standard Input (text, number, password, email, date) -->
                                 <template v-else>
                                     <Input
                                         :id="item.key"
@@ -297,12 +501,13 @@ function updateOpen(val: boolean) {
                         <VeeField
                             v-for="item in fields.right"
                             :key="item.key"
-                            v-slot="{ componentField, errors }"
+                            v-slot="{ componentField, errors, handleChange, value }"
                             :name="item.key"
                         >
                             <Field :data-invalid="!!errors.length">
                                 <FieldLabel :for="item.key">{{ item.label }}</FieldLabel>
                                 
+                                <!-- Select -->
                                 <template v-if="item.type === 'select'">
                                     <Select
                                         v-bind="componentField"
@@ -332,6 +537,73 @@ function updateOpen(val: boolean) {
                                         </SelectContent>
                                     </Select>
                                 </template>
+
+                                <!-- Textarea -->
+                                <template v-else-if="item.type === 'textarea'">
+                                    <Textarea
+                                        :id="item.key"
+                                        :placeholder="item.placeholder"
+                                        :disabled="isFieldDisabled(item)"
+                                        v-bind="componentField"
+                                        @update:model-value="(val: any) => onFieldChange(item.key, val)"
+                                        @input="(e: Event) => onFieldChange(item.key, (e.target as HTMLTextAreaElement)?.value)"
+                                    />
+                                </template>
+
+                                <!-- Checkbox -->
+                                <template v-else-if="item.type === 'checkbox'">
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <Checkbox
+                                            :id="item.key"
+                                            :checked="!!value"
+                                            :disabled="isFieldDisabled(item)"
+                                            @update:checked="(val: boolean) => { handleChange(val); onFieldChange(item.key, val) }"
+                                        />
+                                        <label :for="item.key" class="text-sm text-muted-foreground cursor-pointer select-none">
+                                            {{ item.placeholder }}
+                                        </label>
+                                    </div>
+                                </template>
+
+                                <!-- Switch -->
+                                <template v-else-if="item.type === 'switch'">
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <Switch
+                                            :id="item.key"
+                                            :checked="!!value"
+                                            :disabled="isFieldDisabled(item)"
+                                            @update:checked="(val: boolean) => { handleChange(val); onFieldChange(item.key, val) }"
+                                        />
+                                        <label :for="item.key" class="text-sm text-muted-foreground cursor-pointer select-none">
+                                            {{ item.placeholder }}
+                                        </label>
+                                    </div>
+                                </template>
+
+                                <!-- File / Image -->
+                                <template v-else-if="item.type === 'file' || item.type === 'image'">
+                                    <Input
+                                        :id="item.key"
+                                        type="file"
+                                        :accept="getFileAccept(item)"
+                                        :multiple="item.fileConfig?.multiple ?? false"
+                                        :disabled="isFieldDisabled(item)"
+                                        class="cursor-pointer"
+                                        @change="(e: Event) => { onFileChange(item.key, e, item); handleChange(formValues[item.key]) }"
+                                    />
+                                    <div v-if="item.type === 'image' && filePreviews[item.key]" class="mt-2">
+                                        <img
+                                            :src="filePreviews[item.key]"
+                                            :alt="`Preview ${item.label}`"
+                                            class="max-h-32 rounded-md border object-cover"
+                                        />
+                                    </div>
+                                    <p v-if="item.fileConfig?.maxSize" class="text-xs text-muted-foreground mt-1">
+                                        Maks. {{ item.fileConfig.maxSize }} MB
+                                    </p>
+                                </template>
+
+                                <!-- Standard Input (text, number, password, email, date) -->
                                 <template v-else>
                                     <Input
                                         :id="item.key"
@@ -354,12 +626,13 @@ function updateOpen(val: boolean) {
                         <VeeField
                             v-for="item in fields.full"
                             :key="item.key"
-                            v-slot="{ componentField, errors }"
+                            v-slot="{ componentField, errors, handleChange, value }"
                             :name="item.key"
                         >
                             <Field :data-invalid="!!errors.length">
                                 <FieldLabel :for="item.key">{{ item.label }}</FieldLabel>
                                 
+                                <!-- Select -->
                                 <template v-if="item.type === 'select'">
                                     <Select
                                         v-bind="componentField"
@@ -389,6 +662,73 @@ function updateOpen(val: boolean) {
                                         </SelectContent>
                                     </Select>
                                 </template>
+
+                                <!-- Textarea -->
+                                <template v-else-if="item.type === 'textarea'">
+                                    <Textarea
+                                        :id="item.key"
+                                        :placeholder="item.placeholder"
+                                        :disabled="isFieldDisabled(item)"
+                                        v-bind="componentField"
+                                        @update:model-value="(val: any) => onFieldChange(item.key, val)"
+                                        @input="(e: Event) => onFieldChange(item.key, (e.target as HTMLTextAreaElement)?.value)"
+                                    />
+                                </template>
+
+                                <!-- Checkbox -->
+                                <template v-else-if="item.type === 'checkbox'">
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <Checkbox
+                                            :id="item.key"
+                                            :checked="!!value"
+                                            :disabled="isFieldDisabled(item)"
+                                            @update:checked="(val: boolean) => { handleChange(val); onFieldChange(item.key, val) }"
+                                        />
+                                        <label :for="item.key" class="text-sm text-muted-foreground cursor-pointer select-none">
+                                            {{ item.placeholder }}
+                                        </label>
+                                    </div>
+                                </template>
+
+                                <!-- Switch -->
+                                <template v-else-if="item.type === 'switch'">
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <Switch
+                                            :id="item.key"
+                                            :checked="!!value"
+                                            :disabled="isFieldDisabled(item)"
+                                            @update:checked="(val: boolean) => { handleChange(val); onFieldChange(item.key, val) }"
+                                        />
+                                        <label :for="item.key" class="text-sm text-muted-foreground cursor-pointer select-none">
+                                            {{ item.placeholder }}
+                                        </label>
+                                    </div>
+                                </template>
+
+                                <!-- File / Image -->
+                                <template v-else-if="item.type === 'file' || item.type === 'image'">
+                                    <Input
+                                        :id="item.key"
+                                        type="file"
+                                        :accept="getFileAccept(item)"
+                                        :multiple="item.fileConfig?.multiple ?? false"
+                                        :disabled="isFieldDisabled(item)"
+                                        class="cursor-pointer"
+                                        @change="(e: Event) => { onFileChange(item.key, e, item); handleChange(formValues[item.key]) }"
+                                    />
+                                    <div v-if="item.type === 'image' && filePreviews[item.key]" class="mt-2">
+                                        <img
+                                            :src="filePreviews[item.key]"
+                                            :alt="`Preview ${item.label}`"
+                                            class="max-h-32 rounded-md border object-cover"
+                                        />
+                                    </div>
+                                    <p v-if="item.fileConfig?.maxSize" class="text-xs text-muted-foreground mt-1">
+                                        Maks. {{ item.fileConfig.maxSize }} MB
+                                    </p>
+                                </template>
+
+                                <!-- Standard Input (text, number, password, email, date) -->
                                 <template v-else>
                                     <Input
                                         :id="item.key"

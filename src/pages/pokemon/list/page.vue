@@ -70,6 +70,7 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
         { header: 'ID', accessorKey: 'id' },
         { header: 'Title', accessorKey: 'title' },
         { header: 'URL', accessorKey: 'url' },
+        { header: 'Thumbnail URL', accessorKey: 'thumbnailUrl' },
         { 
             header: 'Actions', 
             id: 'actions',
@@ -177,7 +178,7 @@ watch(() => search, () => {
         @clear-filter="clearFilter"
     >
         <template #actions>
-            <Button @click="createDialog.openDialog()">
+            <Button @click="createDialog.openDialog()" variant="outline">
                 <Plus class="w-4 h-4 mr-2" />
                 Tambah Data
             </Button>
