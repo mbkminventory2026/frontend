@@ -29,38 +29,40 @@ const activeFilter = computed(() => {
 </script>
 
 <template>
-    <div class="p-4 flex flex-col">
+    <div class="flex flex-col p-4">
         <div class="flex flex-col gap-4 mb-4">
-            <div class="flex gap-4 justify-start items-center">
-                <div class="flex gap-2 justify-start items-center">
-                    <Label>Show:</Label>
-                    <Select
-                        :model-value="String(table.getState().pagination.pageSize)"
-                        @update:model-value="(val) => table.setPageSize(Number(val))"
-                    >
-                        <SelectTrigger>
-                            <SelectValue :placeholder="String(table.getState().pagination.pageSize)"/>
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectGroup>
-                                <SelectItem value="20">20</SelectItem>
-                                <SelectItem value="50">50</SelectItem>
-                                <SelectItem value="100">100</SelectItem>
-                            </SelectGroup>
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div class="flex gap-1">
-                    <div class="flex gap-2">
-                        <Input
-                            v-model="searchModel"
-                            type="text" 
-                            placeholder="Search"
-                            @keyup.enter="emit('search')"
-                        />
-                        <Button type="button" @click="emit('search')">
-                            <Search/>
-                        </Button>
+            <div class="flex items-center justify-between gap-4">
+                <div class="flex gap-4">
+                    <div class="flex items-center justify-start gap-2">
+                        <Label>Show:</Label>
+                        <Select
+                            :model-value="String(table.getState().pagination.pageSize)"
+                            @update:model-value="(val) => table.setPageSize(Number(val))"
+                        >
+                            <SelectTrigger>
+                                <SelectValue :placeholder="String(table.getState().pagination.pageSize)"/>
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectGroup>
+                                    <SelectItem value="20">20</SelectItem>
+                                    <SelectItem value="50">50</SelectItem>
+                                    <SelectItem value="100">100</SelectItem>
+                                </SelectGroup>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div class="flex gap-1">
+                        <div class="flex gap-2">
+                            <Input
+                                v-model="searchModel"
+                                type="text" 
+                                placeholder="Search"
+                                @keyup.enter="emit('search')"
+                            />
+                            <Button type="button" @click="emit('search')">
+                                <Search/>
+                            </Button>
+                        </div>
                     </div>
                 </div>
 
@@ -70,7 +72,7 @@ const activeFilter = computed(() => {
             </div>
             <div v-if="activeFilter" class="flex items-center gap-1.5 mt-1">
                 <span class="text-xs text-slate-500">Hasil pencarian:</span>
-                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-gray-300 text-xs font-medium italic">
+                <span class="inline-flex items-center gap-1 px-2 py-1 text-xs italic font-medium bg-gray-300 rounded-full">
                     "{{ activeFilter }}"
                     <button
                         type="button"
@@ -83,16 +85,16 @@ const activeFilter = computed(() => {
                 </span>
             </div>
         </div>
-        <div class="border rounded-md bg-white">
+        <div class="bg-white border rounded-md">
             <Table>
-                <TableHeader>
+                <TableHeader class="sticky top-0 z-10 bg-muted">
                     <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
                         <TableHead v-for="header in headerGroup.headers" :key="header.id" class="font-bold" :class="{
-                            'cursor-pointer select-none hover:bg-slate-50 transition-colors': header.column.getCanSort()
+                            'cursor-pointer select-none transition-colors': header.column.getCanSort()
                         }"
                         @click="header.column.getToggleSortingHandler()?.($event)"
                         >
-                            <div class="flex items-center gap-2 justify-center">
+                            <div class="flex items-center justify-center gap-2">
                                 <FlexRender
                                     v-if="!header.isPlaceholder"
                                     :render="header.column.columnDef.header"
@@ -140,14 +142,14 @@ const activeFilter = computed(() => {
             </Table>
         </div>
         <div class="flex gap-2">
-            <div class="mt-4 flex gap-2">
+            <div class="flex gap-2 mt-4">
                 <Button 
                     :disabled="!table.getCanPreviousPage()"
                     @click="table.previousPage()"
                 >Back
                 </Button>
             </div>
-            <div class="mt-4 flex gap-2">
+            <div class="flex gap-2 mt-4">
                 <Button 
                     :disabled="!table.getCanNextPage()"
                     @click="table.nextPage()"

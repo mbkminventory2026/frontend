@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { h, ref, watch, onMounted } from 'vue';
 import { useSearch } from '@tanstack/vue-router';
-import { Plus, Pencil, Trash2 } from 'lucide-vue-next';
+import { PlusIcon, Pencil, Trash2 } from 'lucide-vue-next';
 
 import { deleteReportPengiriman, getReportPengiriman } from '@/api/reportPengiriman/reportPengiriman';
 import { type ReportPengirimanItem } from '@/schemas/reportPengiriman/reportPengiriman';
@@ -129,8 +129,8 @@ watch(() => search, () => {
     >
         <template #actions>
             <Button @click="createDialog.openDialog()" variant="outline">
-                <Plus class="w-4 h-4 mr-2" />
-                Tambah Data
+                <PlusIcon class="w-4 h-4" />
+                <span class="hidden lg:inline">Tambah Data</span>
             </Button>
         </template>
     </DataTable>
