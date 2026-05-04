@@ -30,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { type DialogSchemaType, type DialogField, type FieldType } from '@/schemas/dialog/dialog'
+import { type DialogSchemaType, type DialogField } from '@/schemas/dialog/dialog'
 
 interface Props {
   title: string
@@ -53,9 +53,6 @@ const formValues = ref<Record<string, any>>({})
 
 // File preview URLs for image fields
 const filePreviews = ref<Record<string, string>>({})
-
-// Types that use a standard <Input> element
-const inputTypes: FieldType[] = ['text', 'number', 'password', 'email', 'date']
 
 // Initialize formValues when dialog opens or initialValues change
 watch(

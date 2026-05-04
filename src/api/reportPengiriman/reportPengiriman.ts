@@ -3,7 +3,7 @@ import type {
     ReportPengirimanItem
 } from "@/schemas/reportPengiriman/reportPengiriman";
 
-export const getReportPengiriman = async(params: {
+export const getReportPengiriman = async (params: {
     limit: number,
     offset: number,
     search?: string
@@ -24,6 +24,13 @@ export const getReportPengiriman = async(params: {
 
 export const deleteReportPengiriman = async (id: string | number) => {
     if (!id) throw new Error("ID is required for deletion");
-    
+
     return await apiClient.delete(`/api/v1/report-pengiriman/${id}`);
+}
+
+export const getReportPengirimanById = async (id: string | number) => {
+    if (!id) throw new Error("ID is required");
+
+    const response = await apiClient.get<ReportPengirimanItem[]>(`/api/v1/report-pengiriman/${id}`);
+    return response.data;
 }

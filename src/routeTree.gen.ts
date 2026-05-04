@@ -16,6 +16,7 @@ import { Route as PublicIndexRouteImport } from './routes/_public/index'
 import { Route as AuthenticatedReportPengirimanRouteImport } from './routes/_authenticated/report-pengiriman'
 import { Route as AuthenticatedPokemonRouteImport } from './routes/_authenticated/pokemon'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedReportPengirimanIdRouteImport } from './routes/_authenticated/report-pengiriman.$id'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -51,20 +52,28 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedReportPengirimanIdRoute =
+  AuthenticatedReportPengirimanIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedReportPengirimanRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/pokemon': typeof AuthenticatedPokemonRoute
-  '/report-pengiriman': typeof AuthenticatedReportPengirimanRoute
+  '/report-pengiriman': typeof AuthenticatedReportPengirimanRouteWithChildren
+  '/report-pengiriman/$id': typeof AuthenticatedReportPengirimanIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof PublicIndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/pokemon': typeof AuthenticatedPokemonRoute
-  '/report-pengiriman': typeof AuthenticatedReportPengirimanRoute
+  '/report-pengiriman': typeof AuthenticatedReportPengirimanRouteWithChildren
+  '/report-pengiriman/$id': typeof AuthenticatedReportPengirimanIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -73,14 +82,27 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/pokemon': typeof AuthenticatedPokemonRoute
-  '/_authenticated/report-pengiriman': typeof AuthenticatedReportPengirimanRoute
+  '/_authenticated/report-pengiriman': typeof AuthenticatedReportPengirimanRouteWithChildren
   '/_public/': typeof PublicIndexRoute
+  '/_authenticated/report-pengiriman/$id': typeof AuthenticatedReportPengirimanIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/dashboard' | '/pokemon' | '/report-pengiriman'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/dashboard'
+    | '/pokemon'
+    | '/report-pengiriman'
+    | '/report-pengiriman/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/dashboard' | '/pokemon' | '/report-pengiriman'
+  to:
+    | '/'
+    | '/login'
+    | '/dashboard'
+    | '/pokemon'
+    | '/report-pengiriman'
+    | '/report-pengiriman/$id'
   id:
     | '__root__'
     | '/_authenticated'
@@ -90,6 +112,7 @@ export interface FileRouteTypes {
     | '/_authenticated/pokemon'
     | '/_authenticated/report-pengiriman'
     | '/_public/'
+    | '/_authenticated/report-pengiriman/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -149,19 +172,41 @@ declare module '@tanstack/vue-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/report-pengiriman/$id': {
+      id: '/_authenticated/report-pengiriman/$id'
+      path: '/$id'
+      fullPath: '/report-pengiriman/$id'
+      preLoaderRoute: typeof AuthenticatedReportPengirimanIdRouteImport
+      parentRoute: typeof AuthenticatedReportPengirimanRoute
+    }
   }
 }
+
+interface AuthenticatedReportPengirimanRouteChildren {
+  AuthenticatedReportPengirimanIdRoute: typeof AuthenticatedReportPengirimanIdRoute
+}
+
+const AuthenticatedReportPengirimanRouteChildren: AuthenticatedReportPengirimanRouteChildren =
+  {
+    AuthenticatedReportPengirimanIdRoute: AuthenticatedReportPengirimanIdRoute,
+  }
+
+const AuthenticatedReportPengirimanRouteWithChildren =
+  AuthenticatedReportPengirimanRoute._addFileChildren(
+    AuthenticatedReportPengirimanRouteChildren,
+  )
 
 interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedPokemonRoute: typeof AuthenticatedPokemonRoute
-  AuthenticatedReportPengirimanRoute: typeof AuthenticatedReportPengirimanRoute
+  AuthenticatedReportPengirimanRoute: typeof AuthenticatedReportPengirimanRouteWithChildren
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedPokemonRoute: AuthenticatedPokemonRoute,
-  AuthenticatedReportPengirimanRoute: AuthenticatedReportPengirimanRoute,
+  AuthenticatedReportPengirimanRoute:
+    AuthenticatedReportPengirimanRouteWithChildren,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(

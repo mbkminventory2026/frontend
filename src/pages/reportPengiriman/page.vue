@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { h, ref, watch, onMounted } from 'vue';
 import { useSearch } from '@tanstack/vue-router';
-import { PlusIcon, Pencil, Trash2 } from 'lucide-vue-next';
+import { PlusIcon } from 'lucide-vue-next';
 
 import { deleteReportPengiriman, getReportPengiriman } from '@/api/reportPengiriman/reportPengiriman';
 import { type ReportPengirimanItem } from '@/schemas/reportPengiriman/reportPengiriman';

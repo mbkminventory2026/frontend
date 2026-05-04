@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { useRoute, useRouter } from '@tanstack/vue-router';
+import { computed } from 'vue';
+import { useParams, useRouter } from '@tanstack/vue-router';
 import { getReportPengirimanById, deleteReportPengiriman } from '@/api/reportPengiriman/reportPengiriman';
 import { useDetail } from '@/composables/useDetail';
 import { useDelete } from '@/composables/useDelete';
@@ -8,16 +9,16 @@ import { Button } from '@/components/ui/button';
 import { type DetailSchema } from '@/schemas/detail/detail';
 import { Calendar, Package, Hash, Layers } from 'lucide-vue-next';
 
-const route = useRoute({ from: '/_authenticated/report-pengiriman/$id' });
 const router = useRouter();
-const id = route.params.id;
+const params = useParams({ from: '/_authenticated/report-pengiriman/$id' });
+const id = computed(() => params.value.id);
 
 const { data, isLoading } = useDetail(
   async (id) => {
     const res = await getReportPengirimanById(id);
     return Array.isArray(res) ? res[0] : res;
   },
-  id
+  id.value
 );
 
 const { deleteItem } = useDelete({
@@ -59,13 +60,13 @@ const schema: DetailSchema = [
 ];
 
 const handleEdit = () => {
-  console.log("Navigating to edit page for ID:", id);
-  // router.navigate({ to: `/report-pengiriman/${id}/edit` });
+  console.log("Navigating to edit page for ID:", id.value);
+  // router.navigate({ to: `/report-pengiriman/${id.value}/edit` });
 };
 
 const handleDelete = () => {
   deleteItem(async () => {
-    await deleteReportPengiriman(id);
+    await deleteReportPengiriman(id.value);
   }, "Apakah Anda yakin ingin menghapus laporan pengiriman ini?");
 };
 </script>
