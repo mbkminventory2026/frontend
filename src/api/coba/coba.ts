@@ -1,7 +1,7 @@
 import { apiClient } from "@/lib/apiClient";
+import { mapPayloadToSnakeCase, hasFile, prepareFormData } from "@/lib/utils";
 import type { 
     CobaListItem, 
-    // CobaListResponse 
 } from "@/schemas/coba/coba";
 
 export const getCoba = async(params: {
@@ -9,14 +9,6 @@ export const getCoba = async(params: {
     offset: number,
     search?: string
 }) => {
-    // const response = await apiClient.get<CobaListItem[]>('/posts', {
-    //     params: {
-    //         _limit: params.limit,
-    //         _start: params.offset,
-    //         q: params.search
-    //     }
-    // });
-
     const response = await apiClient.get<CobaListItem[]>('/photos', {
         params: {
             _limit: params.limit,
@@ -25,19 +17,28 @@ export const getCoba = async(params: {
         }
     });
 
-    // const response = await apiClient.get<CobaListResponse>('/character', {
-    //     params: {
-    //         limit: params.limit,
-    //         offset: params.offset,
-    //         search: params.search
-    //     }
-    // })
-
     return {
         results: response.data,
         count: Number(response.headers['x-total-count']) || 0
-
-        // yang akan dipakai sepertinya -> karena sudah berisi { metadata, results }
-        // results: response.data
     }
+}
+
+export const createCoba = async (data: any) => {
+    const snakeCaseValue = mapPayloadToSnakeCase(data)
+    const containsFile = hasFile(snakeCaseValue)
+    
+    const payload = containsFile ? prepareFormData(snakeCaseValue) : snakeCaseValue
+    const headers = containsFile ? { 'Content-Type': 'multipart/form-data' } : {}
+
+    return await apiClient.post('/api/coba', payload, { headers });
+}
+
+export const updateCoba = async (id: string | number, data: any) => {
+    const snakeCaseValue = mapPayloadToSnakeCase(data)
+    const containsFile = hasFile(snakeCaseValue)
+    
+    const payload = containsFile ? prepareFormData(snakeCaseValue) : snakeCaseValue
+    const headers = containsFile ? { 'Content-Type': 'multipart/form-data' } : {}
+
+    return await apiClient.patch(`/api/coba/${id}`, payload, { headers });
 }

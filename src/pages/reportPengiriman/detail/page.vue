@@ -29,7 +29,7 @@ const { deleteItem } = useDelete({
 
 const schema: DetailSchema = [
   { 
-    key: 'idReportPengiriman', 
+    key: 'id_report_pengiriman', 
     label: 'ID Report', 
     icon: Hash 
   },
@@ -40,7 +40,7 @@ const schema: DetailSchema = [
     icon: Calendar 
   },
   { 
-    key: 'idWoShellSize', 
+    key: 'id_wo_shell_size', 
     label: 'ID WO Shell Size', 
     icon: Layers 
   },
@@ -52,9 +52,10 @@ const schema: DetailSchema = [
     className: 'text-primary'
   },
   {
-    key: 'file_lampiran', // Contoh field file
-    label: 'Lampiran',
-    type: 'file',
+    key: 'created_at',
+    label: 'Dibuat Pada',
+    type: 'date',
+    icon: Calendar,
     span: 'full'
   }
 ];

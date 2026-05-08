@@ -4,7 +4,7 @@ import { useSearch } from '@tanstack/vue-router';
 import { Plus, Pencil } from 'lucide-vue-next';
 
 // API & Types
-import { getCoba } from '@/api/coba/coba';
+import { getCoba, createCoba, updateCoba } from '@/api/coba/coba';
 import { type CobaListItem } from '@/schemas/coba/coba';
 import { pokemonSearchSchema } from '@/routes/_authenticated/pokemon';
 
@@ -46,17 +46,15 @@ const fetchData = async () => {
     }
 }
 
-// --- LOGIC DIALOG ---
-
 // 1. Dialog untuk Tambah Data
 const createDialog = useDialog({
-    endpoint: '/api/coba',
+    onSubmit: async (values) => await createCoba(values),
     onSuccess: () => fetchData() // Refresh tabel setelah tambah
 });
 
 // 2. Dialog untuk Edit Data
 const updateDialog = useDialog({
-    endpoint: '/api/coba',
+    onSubmit: async (values) => await updateCoba(values.id, values),
     onSuccess: () => fetchData() // Refresh tabel setelah update
 });
 

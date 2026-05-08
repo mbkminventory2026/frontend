@@ -1,16 +1,14 @@
 import { ref } from 'vue'
 import { toast } from 'vue-sonner'
-import { apiClient } from '@/lib/apiClient'
-import { mapPayloadToSnakeCase } from '@/lib/utils'
 
 interface UseDialogOptions {
-    endpoint: string
+    onSubmit: (values: any, isEdit: boolean) => Promise<any>
     onSuccess?: () => void
     onError?: (error: any) => void
 }
 
 export function useDialog({
-    endpoint,
+    onSubmit,
     onSuccess,
     onError
 }: UseDialogOptions) {
@@ -37,38 +35,9 @@ export function useDialog({
 
     const handleSubmit = async (values: any) => {
         isLoading.value = true
-        const snakeCaseValue = mapPayloadToSnakeCase(values)
-
-        const hasFile = Object.values(snakeCaseValue).some(
-            (val) => val instanceof File || (Array.isArray(val) && val[0] instanceof File)
-        )
-
-        let payload: any = snakeCaseValue
-        if (hasFile) {
-            const formData = new FormData() // agar bisa menerima file
-            Object.keys(snakeCaseValue).forEach((key) => {
-                if (Array.isArray([key])) { // jika payload merupakan array
-                    snakeCaseValue[key].forEach((item: any) => formData.append(`${key}[]`, item))
-                } else {
-                    formData.append(key, snakeCaseValue[key])
-                }
-            })
-            payload = formData
-        }
-
         try {
-            const method = isEditMode.value ? 'patch' : 'post'
-            const url = isEditMode.value ? `${endpoint}/${snakeCaseValue.id}` : endpoint
+            await onSubmit(values, isEditMode.value)
             
-            await apiClient({
-                method: method,
-                url: url,
-                data: payload,
-                headers: {
-                    'Content-Type': hasFile ? 'multipart/form-data' : 'application/json',
-                },
-            })
-
             toast.success(isEditMode.value ? 'Data berhasil diperbarui' : 'Data berhasil ditambahkan')
 
             closeDialog()
@@ -80,6 +49,7 @@ export function useDialog({
             isLoading.value = false
         }
     } 
+
     return {
         isOpen,
         isLoading,

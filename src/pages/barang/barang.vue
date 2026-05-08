@@ -1,17 +1,13 @@
 <script setup lang="ts">
 import { h, ref, watch, onMounted } from 'vue';
 import { useSearch, useRouter } from '@tanstack/vue-router';
-import { PlusIcon, EyeIcon, PencilIcon } from 'lucide-vue-next';
+import { PlusIcon, EyeIcon, BuildingIcon, PencilIcon } from 'lucide-vue-next';
 
-import { 
-    deleteReportPengiriman, 
-    getReportPengiriman, 
-    getReportPengirimanById,
-    createReportPengiriman,
-    updateReportPengiriman 
-} from '@/api/reportPengiriman/reportPengiriman';
-import { type ReportPengirimanItem } from '@/schemas/reportPengiriman/reportPengiriman';
-import { reportPengirimanSchema } from '@/routes/_authenticated/report-pengiriman';
+import { deleteBarang, getBarang, getBarangById, createBarang, updateBarang } from '@/api/barang/barang';
+import { getJenisBarang } from '@/api/barang/jenisBarang';
+import { getMitra } from '@/api/mitra/mitra';
+import { type BarangResponseItem } from '@/schemas/barang/response';
+import { barangSchema } from '@/routes/_authenticated/barang';
 
 import DataTable from '@/components/DataTable.vue';
 import AppDialog from '@/components/AppDialog.vue';
@@ -29,50 +25,79 @@ import {
 } from '@/components/ui/dialog';
 import { Calendar, Package, Hash, Layers } from 'lucide-vue-next';
 import { type DetailSchema } from '@/schemas/detail/detail';
+import { computed } from 'vue';
 
-const search = useSearch({ from: '/_authenticated/report-pengiriman' })
+const search = useSearch({ from: '/_authenticated/barang' });
 const router = useRouter();
 
-const data = ref<ReportPengirimanItem[]>([]);
+const data = ref<BarangResponseItem[]>([]);
 const totalCount = ref(0);
 const isLoading = ref(false);
 
-// Detail Modal State
 const isDetailOpen = ref(false);
 const selectedDetailData = ref<any>(null);
 const isDetailLoading = ref(false);
 
+const jenisBarangOptions = ref<{ label: string, value: number }[]>([]);
+const mitraOptions = ref<{ label: string, value: number }[]>([]);
+
+const fetchJenisBarang = async () => {
+    try {
+        const res = await getJenisBarang();
+        jenisBarangOptions.value = res.map(item => ({
+            label: item.nama_jenis_barang,
+            value: item.id_jenis_barang
+        }));
+    } catch (error) {
+        console.error("Gagal fetch jenis barang:", error);
+    }
+}
+
+const fetchMitra = async () => {
+    try {
+        const res = await getMitra({ limit: 100, offset: 0 });
+        mitraOptions.value = res.results.map((item: any) => ({
+            label: item.nama_perusahaan,
+            value: item.id_mitra
+        }));
+    } catch (error) {
+        console.error("Gagal fetch mitra:", error);
+    }
+}
+
 const detailSchema: DetailSchema = [
   { 
-    key: 'id_report_pengiriman', 
-    label: 'ID Report', 
+    key: 'id_barang', 
+    label: 'ID Barang', 
     icon: Hash 
   },
   { 
-    key: 'date', 
-    label: 'Tanggal Pengiriman', 
-    type: 'date',
-    icon: Calendar 
+    key: 'kode', 
+    label: 'Kode',  
   },
   { 
-    key: 'id_wo_shell_size', 
-    label: 'ID WO Shell Size', 
-    icon: Layers 
+    key: 'nama_barang', 
+    label: 'Nama', 
+    icon: Package 
   },
   { 
-    key: 'quantity', 
-    label: 'Kuantitas', 
-    type: 'number',
-    icon: Package,
-    className: 'text-primary'
+    key: 'nama_jenis_barang', 
+    label: 'Jenis Barang', 
+    icon: Layers,
+  },
+  { 
+    key: 'nama_perusahaan', 
+    label: 'Perusahaan', 
+    icon: BuildingIcon,
   }
+
 ];
 
 const handleViewDetail = async (id: number) => {
     isDetailOpen.value = true;
     isDetailLoading.value = true;
     try {
-        const res = await getReportPengirimanById(id);
+        const res = await getBarangById(id);
         selectedDetailData.value = Array.isArray(res) ? res[0] : res;
     } catch (error) {
         console.error("Gagal fetch detail:", error);
@@ -88,7 +113,7 @@ const fetchData = async () => {
         const pageSize = search.value.pageSize ?? 20;
         const filter = search.value.filter ?? '';
 
-        const response = await getReportPengiriman({
+        const response = await getBarang({
             limit: pageSize,
             offset: (page - 1) * pageSize,
             search: filter
@@ -103,17 +128,15 @@ const fetchData = async () => {
     }
 }
 
-// Dialog
 const createDialog = useDialog({
     onSubmit: async (values, isEdit) => {
         if (isEdit) {
-            const id = values.id_report_pengiriman || values.idReportPengiriman;
-            return await updateReportPengiriman(id, values);
+            return await updateBarang(values.id_barang, values);
         } else {
-            return await createReportPengiriman(values);
+            return await createBarang(values);
         }
     },
-    onSuccess: () => fetchData() // Refresh tabel setelah tambah
+    onSuccess: () => fetchData() 
 });
 
 const { table, searchTerm, onSearch, clearFilter } = useTable({
@@ -121,13 +144,12 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
     rowCount: totalCount,
     columns: [
         { header: 'Created At', accessorKey: 'created_at', cell: ({ row }) => formatDate(row.getValue('created_at')) },
-        { header: 'Date', accessorKey: 'date' },
-        { header: 'ID Report Pengiriman', accessorKey: 'id_report_pengiriman' },
-        { header: 'ID WO Shell Size', accessorKey: 'id_wo_shell_size' },
-        { header: 'Quantity', accessorKey: 'quantity' },
+        { header: 'ID Barang', accessorKey: 'id_barang' },
+        { header: 'Nama', accessorKey: 'nama_barang' },
+        { header: 'Jenis', accessorKey: 'nama_jenis_barang' },
+        { header: 'Perusahaan', accessorKey: 'nama_perusahaan' },
         { header: 'Actions', id: 'actions', cell:({ row }) => {
-        const id = row.getValue('id_report_pengiriman') as number;
-        console.log("Data Row:", id);
+        const id = row.getValue('id_barang') as number;
 
         return h('div', { class: 'flex gap-2 justify-center items-center' }, [
             h(Button, { 
@@ -146,60 +168,61 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
                 h(PencilIcon, { class: 'w-4 h-4 mr-1' }),
                 'Edit'
             ]),
-            h(Button, { 
-                variant: 'ghost',
-                size: 'sm',
-                onClick: () => router.navigate({ to: `/report-pengiriman/${id}`, params: { id: String(id) } }) 
-            }, () => [
-                'Detail'
-            ]) ,
             h(DeleteButton, {
                 onConfirm: async() => {
-                    await deleteReportPengiriman(id);
+                    await deleteBarang(id);
                     await fetchData()
                 },
-                confirmMessage: 'Apakah Anda yakin ingin menghapus Report Pengiriman ini?'
+                confirmMessage: 'Apakah Anda yakin ingin menghapus Barang ini?'
             })
         ]) } 
     }
     ],
     search: search,
-    schema: reportPengirimanSchema,
+    schema: barangSchema,
 })
 
-const reportPengirimanDialogSchema: DialogSchemaType = [
+const BarangDialogSchema = computed<DialogSchemaType>(() => [
     {
-        key: "date",
-        label: "Date",
-        type: "date",
-        placeholder: "Pilih tanggal",
+        key: "kode",
+        label: "Kode Barang",
+        type: "text",
+        placeholder: "Contoh: BRG-001",
         rules: "required",
         position: "full"
     },
     {
-        key: "idWoShellSize",
-        label: "ID WO Shell Size",
+        key: "nama_barang",
+        label: "Nama Barang",
+        type: "text",
+        placeholder: "Masukkan nama barang",
+        rules: "required",
+        position: "full"
+    },
+    {
+        key: "id_jenis_barang",
+        label: "Jenis Barang",
         type: "select",
-        placeholder: "Pilih WO Shell Size",
+        placeholder: "Pilih jenis barang",
         rules: "required",
-        position: "full",
-        options: [
-            { label: "1", value: 1 },
-            { label: "2", value: 2 }
-        ]
+        position: "left",
+        options: jenisBarangOptions.value
     },
     {
-        key: "quantity",
-        label: "Quantity",
-        type: "number",
-        placeholder: "Masukkan quantity",
+        key: "id_mitra",
+        label: "Perusahaan (Mitra)",
+        type: "select",
+        placeholder: "Pilih mitra",
         rules: "required",
-        position: "full"
-    },
-];
+        position: "right",
+        options: mitraOptions.value
+    }
+])
 
 onMounted(() => {
     fetchData();
+    fetchJenisBarang();
+    fetchMitra();
 })
 
 watch(() => search, () => {
@@ -217,27 +240,28 @@ watch(() => search, () => {
     >
         <template #actions>
             <Button @click="createDialog.openDialog()" variant="outline">
-                <PlusIcon class="w-4 h-4" />
-                <span class="hidden lg:inline">Tambah Data</span>
+                <PlusIcon class="w-4 h-4 mr-2" />
+                Tambah Barang
             </Button>
         </template>
     </DataTable>
 
     <AppDialog
-        :title="createDialog.isEditMode.value ? 'Edit Report Pengiriman' : 'Tambah Report Pengiriman'"
-        :description="createDialog.isEditMode.value ? 'Perbarui informasi laporan pengiriman di bawah ini.' : 'Masukkan detail laporan pengiriman baru di sini.'"
-        :schema="reportPengirimanDialogSchema"
+        :title="createDialog.isEditMode.value ? 'Edit Barang' : 'Tambah Barang'"
+        :description="createDialog.isEditMode.value ? 'Perbarui informasi barang di bawah ini.' : 'Masukkan detail barang baru di sini.'"
+        :schema="BarangDialogSchema"
         :is-open="createDialog.isOpen.value"
         :initial-values="createDialog.initialValues.value"
         :submit-label="createDialog.isLoading.value ? 'Sending...' : (createDialog.isEditMode.value ? 'Update' : 'Create')"
         @update:is-open="createDialog.isOpen.value = $event"
         @submit="createDialog.handleSubmit"
     />
+
     <Dialog :open="isDetailOpen" @update:open="isDetailOpen = $event">
         <DialogContent class="sm:max-w-[600px] p-0 overflow-hidden border-none bg-transparent shadow-none">
             <AppDetailView
-                title="Quick View Report Pengiriman"
-                description="Detail ringkas laporan pengiriman barang."
+                title="Quick View Barang"
+                description="Detail informasi barang."
                 :data="selectedDetailData"
                 :schema="detailSchema"
                 :is-loading="isDetailLoading"

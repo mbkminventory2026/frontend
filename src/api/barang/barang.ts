@@ -1,21 +1,21 @@
 import { apiClient } from "@/lib/apiClient";
 import { mapPayloadToSnakeCase, hasFile, prepareFormData } from "@/lib/utils";
 import type {
-    ReportPengirimanItem
-} from "@/schemas/reportPengiriman/reportPengiriman";
+    BarangResponseItem
+} from '@/schemas/barang/response';
 
-export const getReportPengiriman = async (params: {
+export const getBarang = async (params: {
     limit: number,
     offset: number,
     search?: string
 }) => {
-    const response = await apiClient.get<ReportPengirimanItem[]>('/api/v1/report-pengiriman', {
+    const response = await apiClient.get<BarangResponseItem[]>('/api/v1/master/barang', {
         params: {
             limit: params.limit,
             offset: params.offset,
             q: params.search
         }
-    });
+    })
 
     return {
         results: response.data,
@@ -23,35 +23,35 @@ export const getReportPengiriman = async (params: {
     }
 }
 
-export const createReportPengiriman = async (data: any) => {
+export const createBarang = async (data: any) => {
     const snakeCaseValue = mapPayloadToSnakeCase(data)
     const containsFile = hasFile(snakeCaseValue)
     
     const payload = containsFile ? prepareFormData(snakeCaseValue) : snakeCaseValue
     const headers = containsFile ? { 'Content-Type': 'multipart/form-data' } : {}
 
-    return await apiClient.post('/api/v1/report-pengiriman', payload, { headers });
+    return await apiClient.post('/api/v1/master/barang', payload, { headers });
 }
 
-export const updateReportPengiriman = async (id: string | number, data: any) => {
+export const updateBarang = async (id: string | number, data: any) => {
     const snakeCaseValue = mapPayloadToSnakeCase(data)
     const containsFile = hasFile(snakeCaseValue)
     
     const payload = containsFile ? prepareFormData(snakeCaseValue) : snakeCaseValue
     const headers = containsFile ? { 'Content-Type': 'multipart/form-data' } : {}
 
-    return await apiClient.patch(`/api/v1/report-pengiriman/${id}`, payload, { headers });
+    return await apiClient.patch(`/api/v1/master/barang/${id}`, payload, { headers });
 }
 
-export const deleteReportPengiriman = async (id: string | number) => {
-    if (!id) throw new Error("ID is required for deletion");
+export const deleteBarang = async (id: string | number) => {
+    if(!id) throw new Error("ID is required for deletion");
 
-    return await apiClient.delete(`/api/v1/report-pengiriman/${id}`);
+    return await apiClient.delete(`/api/v1/master/barang/${id}`);
 }
 
-export const getReportPengirimanById = async (id: string | number) => {
+export const getBarangById = async (id: string | number) => {
     if (!id) throw new Error("ID is required");
 
-    const response = await apiClient.get<ReportPengirimanItem[]>(`/api/v1/report-pengiriman/${id}`);
+    const response = await apiClient.get<BarangResponseItem[]>(`/api/v1/barang/${id}`);
     return response.data;
 }

@@ -16,6 +16,7 @@ import { Route as PublicIndexRouteImport } from './routes/_public/index'
 import { Route as AuthenticatedReportPengirimanRouteImport } from './routes/_authenticated/report-pengiriman'
 import { Route as AuthenticatedPokemonRouteImport } from './routes/_authenticated/pokemon'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedBarangRouteImport } from './routes/_authenticated/barang'
 import { Route as AuthenticatedReportPengirimanIdRouteImport } from './routes/_authenticated/report-pengiriman.$id'
 
 const LoginRoute = LoginRouteImport.update({
@@ -52,6 +53,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedBarangRoute = AuthenticatedBarangRouteImport.update({
+  id: '/barang',
+  path: '/barang',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedReportPengirimanIdRoute =
   AuthenticatedReportPengirimanIdRouteImport.update({
     id: '/$id',
@@ -62,6 +68,7 @@ const AuthenticatedReportPengirimanIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
   '/login': typeof LoginRoute
+  '/barang': typeof AuthenticatedBarangRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/pokemon': typeof AuthenticatedPokemonRoute
   '/report-pengiriman': typeof AuthenticatedReportPengirimanRouteWithChildren
@@ -70,6 +77,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof PublicIndexRoute
   '/login': typeof LoginRoute
+  '/barang': typeof AuthenticatedBarangRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/pokemon': typeof AuthenticatedPokemonRoute
   '/report-pengiriman': typeof AuthenticatedReportPengirimanRouteWithChildren
@@ -80,6 +88,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/_public': typeof PublicRouteWithChildren
   '/login': typeof LoginRoute
+  '/_authenticated/barang': typeof AuthenticatedBarangRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/pokemon': typeof AuthenticatedPokemonRoute
   '/_authenticated/report-pengiriman': typeof AuthenticatedReportPengirimanRouteWithChildren
@@ -91,6 +100,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/login'
+    | '/barang'
     | '/dashboard'
     | '/pokemon'
     | '/report-pengiriman'
@@ -99,6 +109,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/login'
+    | '/barang'
     | '/dashboard'
     | '/pokemon'
     | '/report-pengiriman'
@@ -108,6 +119,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/_public'
     | '/login'
+    | '/_authenticated/barang'
     | '/_authenticated/dashboard'
     | '/_authenticated/pokemon'
     | '/_authenticated/report-pengiriman'
@@ -172,6 +184,13 @@ declare module '@tanstack/vue-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/barang': {
+      id: '/_authenticated/barang'
+      path: '/barang'
+      fullPath: '/barang'
+      preLoaderRoute: typeof AuthenticatedBarangRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/report-pengiriman/$id': {
       id: '/_authenticated/report-pengiriman/$id'
       path: '/$id'
@@ -197,12 +216,14 @@ const AuthenticatedReportPengirimanRouteWithChildren =
   )
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedBarangRoute: typeof AuthenticatedBarangRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedPokemonRoute: typeof AuthenticatedPokemonRoute
   AuthenticatedReportPengirimanRoute: typeof AuthenticatedReportPengirimanRouteWithChildren
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedBarangRoute: AuthenticatedBarangRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedPokemonRoute: AuthenticatedPokemonRoute,
   AuthenticatedReportPengirimanRoute:
