@@ -4,7 +4,10 @@ export const MitraResponseKeys = [
     'nama_perusahaan',
     'email',
     'no_telp',
-    'tipe_perusahaan'
+    'tipe_perusahaan',
+    'alamat',
+    'kota',
+    'kode_pos'
 ]
 
 export type MitraResponseKey = (typeof MitraResponseKeys)[number]
@@ -15,7 +18,10 @@ export interface MitraResponseItem {
     nama_perusahaan: string,
     email: string,
     no_telp: string,
-    tipe_perusahaan: string
+    tipe_perusahaan: string,
+    alamat: string,
+    kota: string,
+    kode_pos: string
 }
 
 export const MitraLabels: Partial<Record<keyof MitraResponseItem, string>> = {
@@ -24,5 +30,8 @@ export const MitraLabels: Partial<Record<keyof MitraResponseItem, string>> = {
     nama_perusahaan: 'Nama Perusahaan',
     email: 'Email',
     no_telp: 'No. Telp',
-    tipe_perusahaan: 'Tipe Perusahaan'
+    tipe_perusahaan: 'Tipe Perusahaan',
+    alamat: 'Alamat',
+    kota: 'Kota',
+    kode_pos: 'Kode Pos'
 }

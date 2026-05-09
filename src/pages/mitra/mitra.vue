@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { h, ref, watch, onMounted } from 'vue';
 import { useSearch } from '@tanstack/vue-router';
-import { PlusIcon, EyeIcon, PencilIcon, Hash, Building, Mail, Phone, MapPin, Globe, Calendar } from 'lucide-vue-next';
+import { PlusIcon, EyeIcon, PencilIcon, Hash, Building, Mail, Phone, Globe, Calendar } from 'lucide-vue-next';
 
 import { 
     deleteMitra, 
@@ -65,6 +65,22 @@ const detailSchema: DetailSchema = [
     key: 'no_telp', 
     label: 'No. Telp', 
     icon: Phone 
+  },
+  {
+    key: 'kota',
+    label: 'Kota',
+    icon: Globe
+  },
+  {
+    key: 'kode_pos',
+    label: 'Kode Pos',
+    icon: Hash
+  },
+  {
+    key: 'alamat',
+    label: 'Alamat',
+    icon: MapPin,
+    span: 'full'
   },
   {
     key: 'created_at',
