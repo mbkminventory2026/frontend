@@ -1,15 +1,13 @@
 import { apiClient } from "@/lib/apiClient";
 import { mapPayloadToSnakeCase, hasFile, prepareFormData } from "@/lib/utils";
-import type {
-    MitraItem
-} from '@/schemas/mitra/mitra';
+import type { MitraResponseItem } from '@/schemas/mitra/response';
 
 export const getMitra = async (params: {
     limit: number,
     offset: number,
     search?: string
 }) => {
-    const response = await apiClient.get<MitraItem[]>('/api/v1/master/mitra', {
+    const response = await apiClient.get<MitraResponseItem[]>('/api/v1/master/mitra', {
         params: {
             limit: params.limit,
             offset: params.offset,
@@ -52,6 +50,6 @@ export const deleteMitra = async (id: string | number) => {
 export const getMitraById = async (id: string | number) => {
     if (!id) throw new Error("ID is required");
 
-    const response = await apiClient.get<MitraItem[]>(`/api/v1/mitra/${id}`);
+    const response = await apiClient.get<MitraResponseItem>(`/api/v1/master/mitra/${id}`);
     return response.data;
 }
