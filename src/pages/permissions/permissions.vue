@@ -1,0 +1,209 @@
+<script setup lang="ts">
+import { h, ref, watch, onMounted } from 'vue';
+import { useSearch } from '@tanstack/vue-router';
+import { PlusIcon, EyeIcon, PencilIcon, Hash, Package, Calendar } from 'lucide-vue-next';
+
+import { 
+    deletePermissions, 
+    getPermissions, 
+    getPermissionsById, 
+    createPermissions, 
+    updatePermissions 
+} from '@/api/permissions/permissions';
+import { type PermissionsResponseItem } from '@/schemas/permissions/response';
+import { permissionsSchema } from '@/routes/_authenticated/permissions';
+
+import DataTable from '@/components/DataTable.vue';
+import AppDialog from '@/components/AppDialog.vue';
+import { Button } from '@/components/ui/button';
+
+import { useTable } from '@/composables/useTable';
+import { useDialog } from '@/composables/useDialog';
+import { type DialogSchemaType } from '@/schemas/dialog/dialog';
+import { formatDate } from '@/lib/formatter';
+import DeleteButton from '@/components/DeleteButton.vue';
+import AppDetailView from '@/components/AppDetailView.vue';
+import { 
+    Dialog, 
+    DialogContent, 
+} from '@/components/ui/dialog';
+import { type DetailSchema } from '@/schemas/detail/detail';
+import { computed } from 'vue';
+
+const search = useSearch({ from: '/_authenticated/permissions' });
+
+const data = ref<PermissionsResponseItem[]>([]);
+const totalCount = ref(0);
+const isLoading = ref(false);
+
+const isDetailOpen = ref(false);
+const selectedDetailData = ref<any>(null);
+const isDetailLoading = ref(false);
+
+const detailSchema: DetailSchema = [
+  { 
+    key: 'id_hak_akses', 
+    label: 'ID Hak Akses', 
+    icon: Hash 
+  },
+  { 
+    key: 'nama_halaman', 
+    label: 'Nama Halaman', 
+    icon: Package 
+  },
+  {
+    key: 'created_at',
+    label: 'Created At',
+    icon: Calendar,
+    formatter: (val: string) => formatDate(val)
+  }
+];
+
+const handleViewDetail = async (id: number) => {
+    isDetailOpen.value = true;
+    isDetailLoading.value = true;
+    try {
+        const res = await getPermissionsById(id);
+        selectedDetailData.value = Array.isArray(res) ? res[0] : res;
+    } catch (error) {
+        console.error("Gagal fetch detail:", error);
+    } finally {
+        isDetailLoading.value = false;
+    }
+}
+
+const fetchData = async () => {
+    isLoading.value = true;
+    try {
+        const page = search.value.page ?? 1;
+        const pageSize = search.value.pageSize ?? 20;
+        const filter = search.value.filter ?? '';
+
+        const response = await getPermissions({
+            limit: pageSize,
+            offset: (page - 1) * pageSize,
+            search: filter
+        });
+
+        data.value = response.results;
+        totalCount.value = response.count;
+    } catch (error) {
+        console.error("Gagal fetch data:", error);
+    } finally {
+        isLoading.value = false;
+    }
+}
+
+const createDialog = useDialog({
+    onSubmit: async (values, isEdit) => {
+        if (isEdit) {
+            return await updatePermissions(values.id_hak_akses, values);
+        } else {
+            return await createPermissions(values);
+        }
+    },
+    onSuccess: () => fetchData() 
+});
+
+const { table, searchTerm, onSearch, clearFilter } = useTable({
+    data: data,
+    rowCount: totalCount,
+    columns: [
+        { header: 'Created At', accessorKey: 'created_at', cell: ({ row }) => formatDate(row.getValue('created_at')) },
+        { header: 'ID Hak Akses', accessorKey: 'id_hak_akses' },
+        { header: 'Nama Halaman', accessorKey: 'nama_halaman' },
+        { header: 'Actions', id: 'actions', cell:({ row }) => {
+        const id = row.getValue('id_hak_akses') as number;
+
+        return h('div', { class: 'flex gap-2 justify-center items-center' }, [
+            h(Button, { 
+                variant: 'outline',
+                size: 'sm',
+                onClick: () => handleViewDetail(id) 
+            }, () => [
+                h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
+                'View'
+            ]),
+            h(Button, { 
+                variant: 'ghost',
+                size: 'sm',
+                onClick: () => createDialog.openDialog(row.original) 
+            }, () => [
+                h(PencilIcon, { class: 'w-4 h-4 mr-1' }),
+                'Edit'
+            ]),
+            h(DeleteButton, {
+                onConfirm: async() => {
+                    await deletePermissions(id);
+                    await fetchData()
+                },
+                confirmMessage: 'Apakah Anda yakin ingin menghapus Permissions ini?'
+            })
+        ]) } 
+    }
+    ],
+    search: search,
+    schema: permissionsSchema,
+})
+
+const PermissionsDialogSchema = computed<DialogSchemaType>(() => [
+    {
+        key: "nama_halaman",
+        label: "Nama Halaman",
+        type: "text",
+        placeholder: "Masukkan nama halaman",
+        rules: "required",
+        position: "full"
+    }
+])
+
+onMounted(() => {
+    fetchData();
+})
+
+watch(() => search, () => {
+    fetchData();
+}, { deep: true })
+</script>
+
+<template>
+    <DataTable
+        :table="table"
+        :is-loading="isLoading"
+        v-model:search="searchTerm"
+        @search="onSearch"
+        @clear-filter="clearFilter"
+    >
+        <template #actions>
+            <Button @click="createDialog.openDialog()" variant="outline">
+                <PlusIcon class="w-4 h-4 mr-2" />
+                Tambah Permissions
+            </Button>
+        </template>
+    </DataTable>
+
+    <AppDialog
+        :title="createDialog.isEditMode.value ? 'Edit Permissions' : 'Tambah Permissions'"
+        :description="createDialog.isEditMode.value ? 'Perbarui informasi permissions di bawah ini.' : 'Masukkan detail permissions baru di sini.'"
+        :schema="PermissionsDialogSchema"
+        :is-open="createDialog.isOpen.value"
+        :initial-values="createDialog.initialValues.value"
+        :submit-label="createDialog.isLoading.value ? 'Sending...' : (createDialog.isEditMode.value ? 'Update' : 'Create')"
+        @update:is-open="createDialog.isOpen.value = $event"
+        @submit="createDialog.handleSubmit"
+    />
+
+    <Dialog :open="isDetailOpen" @update:open="isDetailOpen = $event">
+        <DialogContent class="sm:max-w-[600px] p-0 overflow-hidden border-none bg-transparent shadow-none">
+            <AppDetailView
+                title="Quick View Permissions"
+                description="Detail informasi permissions."
+                :data="selectedDetailData"
+                :schema="detailSchema"
+                :is-loading="isDetailLoading"
+                :show-edit="false"
+                :show-delete="false"
+            />
+        </DialogContent>
+    </Dialog>
+</template>
