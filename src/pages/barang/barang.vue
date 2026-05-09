@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { h, ref, watch, onMounted } from 'vue';
-import { useSearch, useRouter } from '@tanstack/vue-router';
+import { useSearch } from '@tanstack/vue-router';
 import { PlusIcon, EyeIcon, BuildingIcon, PencilIcon } from 'lucide-vue-next';
 
 import { deleteBarang, getBarang, getBarangById, createBarang, updateBarang } from '@/api/barang/barang';
@@ -23,12 +23,11 @@ import {
     Dialog, 
     DialogContent, 
 } from '@/components/ui/dialog';
-import { Calendar, Package, Hash, Layers } from 'lucide-vue-next';
+import { Package, Hash, Layers } from 'lucide-vue-next';
 import { type DetailSchema } from '@/schemas/detail/detail';
 import { computed } from 'vue';
 
 const search = useSearch({ from: '/_authenticated/barang' });
-const router = useRouter();
 
 const data = ref<BarangResponseItem[]>([]);
 const totalCount = ref(0);
