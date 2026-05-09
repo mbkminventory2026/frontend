@@ -15,6 +15,8 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as PublicIndexRouteImport } from './routes/_public/index'
 import { Route as AuthenticatedReportPengirimanRouteImport } from './routes/_authenticated/report-pengiriman'
 import { Route as AuthenticatedPokemonRouteImport } from './routes/_authenticated/pokemon'
+import { Route as AuthenticatedPermissionsRouteImport } from './routes/_authenticated/permissions'
+import { Route as AuthenticatedMitraRouteImport } from './routes/_authenticated/mitra'
 import { Route as AuthenticatedJenisBarangRouteImport } from './routes/_authenticated/jenis-barang'
 import { Route as AuthenticatedDepartemenRouteImport } from './routes/_authenticated/departemen'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
@@ -48,6 +50,17 @@ const AuthenticatedReportPengirimanRoute =
 const AuthenticatedPokemonRoute = AuthenticatedPokemonRouteImport.update({
   id: '/pokemon',
   path: '/pokemon',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedPermissionsRoute =
+  AuthenticatedPermissionsRouteImport.update({
+    id: '/permissions',
+    path: '/permissions',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedMitraRoute = AuthenticatedMitraRouteImport.update({
+  id: '/mitra',
+  path: '/mitra',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedJenisBarangRoute =
@@ -85,6 +98,8 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/departemen': typeof AuthenticatedDepartemenRoute
   '/jenis-barang': typeof AuthenticatedJenisBarangRoute
+  '/mitra': typeof AuthenticatedMitraRoute
+  '/permissions': typeof AuthenticatedPermissionsRoute
   '/pokemon': typeof AuthenticatedPokemonRoute
   '/report-pengiriman': typeof AuthenticatedReportPengirimanRouteWithChildren
   '/report-pengiriman/$id': typeof AuthenticatedReportPengirimanIdRoute
@@ -96,6 +111,8 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/departemen': typeof AuthenticatedDepartemenRoute
   '/jenis-barang': typeof AuthenticatedJenisBarangRoute
+  '/mitra': typeof AuthenticatedMitraRoute
+  '/permissions': typeof AuthenticatedPermissionsRoute
   '/pokemon': typeof AuthenticatedPokemonRoute
   '/report-pengiriman': typeof AuthenticatedReportPengirimanRouteWithChildren
   '/report-pengiriman/$id': typeof AuthenticatedReportPengirimanIdRoute
@@ -109,6 +126,8 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/departemen': typeof AuthenticatedDepartemenRoute
   '/_authenticated/jenis-barang': typeof AuthenticatedJenisBarangRoute
+  '/_authenticated/mitra': typeof AuthenticatedMitraRoute
+  '/_authenticated/permissions': typeof AuthenticatedPermissionsRoute
   '/_authenticated/pokemon': typeof AuthenticatedPokemonRoute
   '/_authenticated/report-pengiriman': typeof AuthenticatedReportPengirimanRouteWithChildren
   '/_public/': typeof PublicIndexRoute
@@ -123,6 +142,8 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/departemen'
     | '/jenis-barang'
+    | '/mitra'
+    | '/permissions'
     | '/pokemon'
     | '/report-pengiriman'
     | '/report-pengiriman/$id'
@@ -134,6 +155,8 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/departemen'
     | '/jenis-barang'
+    | '/mitra'
+    | '/permissions'
     | '/pokemon'
     | '/report-pengiriman'
     | '/report-pengiriman/$id'
@@ -146,6 +169,8 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/departemen'
     | '/_authenticated/jenis-barang'
+    | '/_authenticated/mitra'
+    | '/_authenticated/permissions'
     | '/_authenticated/pokemon'
     | '/_authenticated/report-pengiriman'
     | '/_public/'
@@ -200,6 +225,20 @@ declare module '@tanstack/vue-router' {
       path: '/pokemon'
       fullPath: '/pokemon'
       preLoaderRoute: typeof AuthenticatedPokemonRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/permissions': {
+      id: '/_authenticated/permissions'
+      path: '/permissions'
+      fullPath: '/permissions'
+      preLoaderRoute: typeof AuthenticatedPermissionsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/mitra': {
+      id: '/_authenticated/mitra'
+      path: '/mitra'
+      fullPath: '/mitra'
+      preLoaderRoute: typeof AuthenticatedMitraRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/jenis-barang': {
@@ -259,6 +298,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDepartemenRoute: typeof AuthenticatedDepartemenRoute
   AuthenticatedJenisBarangRoute: typeof AuthenticatedJenisBarangRoute
+  AuthenticatedMitraRoute: typeof AuthenticatedMitraRoute
+  AuthenticatedPermissionsRoute: typeof AuthenticatedPermissionsRoute
   AuthenticatedPokemonRoute: typeof AuthenticatedPokemonRoute
   AuthenticatedReportPengirimanRoute: typeof AuthenticatedReportPengirimanRouteWithChildren
 }
@@ -268,6 +309,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDepartemenRoute: AuthenticatedDepartemenRoute,
   AuthenticatedJenisBarangRoute: AuthenticatedJenisBarangRoute,
+  AuthenticatedMitraRoute: AuthenticatedMitraRoute,
+  AuthenticatedPermissionsRoute: AuthenticatedPermissionsRoute,
   AuthenticatedPokemonRoute: AuthenticatedPokemonRoute,
   AuthenticatedReportPengirimanRoute:
     AuthenticatedReportPengirimanRouteWithChildren,
