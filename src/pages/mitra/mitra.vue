@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { h, ref, watch, onMounted } from 'vue';
 import { useSearch } from '@tanstack/vue-router';
-import { PlusIcon, EyeIcon, PencilIcon, Hash, Building, Mail, Phone, Globe, Calendar } from 'lucide-vue-next';
+import { PlusIcon, EyeIcon, PencilIcon, Hash, Building, Mail, Phone, MapPin, Globe, Calendar } from 'lucide-vue-next';
 
 import { 
     deleteMitra, 
