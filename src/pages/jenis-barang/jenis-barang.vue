@@ -59,7 +59,7 @@ const detailSchema: DetailSchema = [
     key: 'created_at',
     label: 'Created At',
     icon: Calendar,
-    format: (val) => formatDate(val)
+    formatter: (val: string) => formatDate(val)
   }
 ];
 

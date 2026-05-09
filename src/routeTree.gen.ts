@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as PublicIndexRouteImport } from './routes/_public/index'
 import { Route as AuthenticatedReportPengirimanRouteImport } from './routes/_authenticated/report-pengiriman'
 import { Route as AuthenticatedPokemonRouteImport } from './routes/_authenticated/pokemon'
+import { Route as AuthenticatedJenisBarangRouteImport } from './routes/_authenticated/jenis-barang'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedBarangRouteImport } from './routes/_authenticated/barang'
 import { Route as AuthenticatedReportPengirimanIdRouteImport } from './routes/_authenticated/report-pengiriman.$id'
@@ -48,6 +49,12 @@ const AuthenticatedPokemonRoute = AuthenticatedPokemonRouteImport.update({
   path: '/pokemon',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedJenisBarangRoute =
+  AuthenticatedJenisBarangRouteImport.update({
+    id: '/jenis-barang',
+    path: '/jenis-barang',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -70,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/barang': typeof AuthenticatedBarangRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/jenis-barang': typeof AuthenticatedJenisBarangRoute
   '/pokemon': typeof AuthenticatedPokemonRoute
   '/report-pengiriman': typeof AuthenticatedReportPengirimanRouteWithChildren
   '/report-pengiriman/$id': typeof AuthenticatedReportPengirimanIdRoute
@@ -79,6 +87,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/barang': typeof AuthenticatedBarangRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/jenis-barang': typeof AuthenticatedJenisBarangRoute
   '/pokemon': typeof AuthenticatedPokemonRoute
   '/report-pengiriman': typeof AuthenticatedReportPengirimanRouteWithChildren
   '/report-pengiriman/$id': typeof AuthenticatedReportPengirimanIdRoute
@@ -90,6 +99,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_authenticated/barang': typeof AuthenticatedBarangRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/jenis-barang': typeof AuthenticatedJenisBarangRoute
   '/_authenticated/pokemon': typeof AuthenticatedPokemonRoute
   '/_authenticated/report-pengiriman': typeof AuthenticatedReportPengirimanRouteWithChildren
   '/_public/': typeof PublicIndexRoute
@@ -102,6 +112,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/barang'
     | '/dashboard'
+    | '/jenis-barang'
     | '/pokemon'
     | '/report-pengiriman'
     | '/report-pengiriman/$id'
@@ -111,6 +122,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/barang'
     | '/dashboard'
+    | '/jenis-barang'
     | '/pokemon'
     | '/report-pengiriman'
     | '/report-pengiriman/$id'
@@ -121,6 +133,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_authenticated/barang'
     | '/_authenticated/dashboard'
+    | '/_authenticated/jenis-barang'
     | '/_authenticated/pokemon'
     | '/_authenticated/report-pengiriman'
     | '/_public/'
@@ -177,6 +190,13 @@ declare module '@tanstack/vue-router' {
       preLoaderRoute: typeof AuthenticatedPokemonRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/jenis-barang': {
+      id: '/_authenticated/jenis-barang'
+      path: '/jenis-barang'
+      fullPath: '/jenis-barang'
+      preLoaderRoute: typeof AuthenticatedJenisBarangRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -218,6 +238,7 @@ const AuthenticatedReportPengirimanRouteWithChildren =
 interface AuthenticatedRouteChildren {
   AuthenticatedBarangRoute: typeof AuthenticatedBarangRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedJenisBarangRoute: typeof AuthenticatedJenisBarangRoute
   AuthenticatedPokemonRoute: typeof AuthenticatedPokemonRoute
   AuthenticatedReportPengirimanRoute: typeof AuthenticatedReportPengirimanRouteWithChildren
 }
@@ -225,6 +246,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBarangRoute: AuthenticatedBarangRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedJenisBarangRoute: AuthenticatedJenisBarangRoute,
   AuthenticatedPokemonRoute: AuthenticatedPokemonRoute,
   AuthenticatedReportPengirimanRoute:
     AuthenticatedReportPengirimanRouteWithChildren,
