@@ -141,7 +141,15 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
             h(Button, { 
                 variant: 'ghost',
                 size: 'sm',
-                onClick: () => createDialog.openDialog(row.original) 
+                onClick: async () => {
+                    try {
+                        const res = await getReportPengirimanById(id);
+                        const detailData = Array.isArray(res) ? res[0] : res;
+                        createDialog.openDialog(detailData);
+                    } catch (error) {
+                        console.error("Gagal fetch detail untuk edit:", error);
+                    }
+                }
             }, () => [
                 h(PencilIcon, { class: 'w-4 h-4 mr-1' }),
                 'Edit'
@@ -177,7 +185,7 @@ const reportPengirimanDialogSchema: DialogSchemaType = [
         position: "full"
     },
     {
-        key: "idWoShellSize",
+        key: "id_wo_shell_size",
         label: "ID WO Shell Size",
         type: "select",
         placeholder: "Pilih WO Shell Size",

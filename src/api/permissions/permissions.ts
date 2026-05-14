@@ -24,7 +24,7 @@ export const getPermissions = async (params: {
 export const createPermissions = async (data: any) => {
     const snakeCaseValue = mapPayloadToSnakeCase(data)
     const containsFile = hasFile(snakeCaseValue)
-    
+
     const payload = containsFile ? prepareFormData(snakeCaseValue) : snakeCaseValue
     const headers = containsFile ? { 'Content-Type': 'multipart/form-data' } : {}
 
@@ -34,15 +34,15 @@ export const createPermissions = async (data: any) => {
 export const updatePermissions = async (id: string | number, data: any) => {
     const snakeCaseValue = mapPayloadToSnakeCase(data)
     const containsFile = hasFile(snakeCaseValue)
-    
+
     const payload = containsFile ? prepareFormData(snakeCaseValue) : snakeCaseValue
     const headers = containsFile ? { 'Content-Type': 'multipart/form-data' } : {}
 
-    return await apiClient.patch(`/api/v1/master/permissions/${id}`, payload, { headers });
+    return await apiClient.put(`/api/v1/master/permissions/${id}`, payload, { headers });
 }
 
 export const deletePermissions = async (id: string | number) => {
-    if(!id) throw new Error("ID is required for deletion");
+    if (!id) throw new Error("ID is required for deletion");
 
     return await apiClient.delete(`/api/v1/master/permissions/${id}`);
 }

@@ -1,14 +1,14 @@
 import { createFileRoute } from '@tanstack/vue-router'
-import BarangPage from '@/pages/barang/barang.vue'
+import BarangPage from '@/pages/barang/page.vue'
 import { createTableParamsSchema } from '@/schemas/table-params'
 import { validateTableSearchRedirect, stripTableDefaults } from '@/lib/table-utils'
 
 export const barangColumns: [string, ...string[]] = [
     'created_at',
     'id_barang',
-    'kode', 
-    'nama_barang', 
-    'nama_jenis_barang', 
+    'kode',
+    'nama_barang',
+    'nama_jenis_barang',
     'nama_perusahaan'
 ]
 

@@ -26,7 +26,7 @@ export const getReportPengiriman = async (params: {
 export const createReportPengiriman = async (data: any) => {
     const snakeCaseValue = mapPayloadToSnakeCase(data)
     const containsFile = hasFile(snakeCaseValue)
-    
+
     const payload = containsFile ? prepareFormData(snakeCaseValue) : snakeCaseValue
     const headers = containsFile ? { 'Content-Type': 'multipart/form-data' } : {}
 
@@ -36,11 +36,11 @@ export const createReportPengiriman = async (data: any) => {
 export const updateReportPengiriman = async (id: string | number, data: any) => {
     const snakeCaseValue = mapPayloadToSnakeCase(data)
     const containsFile = hasFile(snakeCaseValue)
-    
+
     const payload = containsFile ? prepareFormData(snakeCaseValue) : snakeCaseValue
     const headers = containsFile ? { 'Content-Type': 'multipart/form-data' } : {}
 
-    return await apiClient.patch(`/api/v1/report-pengiriman/${id}`, payload, { headers });
+    return await apiClient.put(`/api/v1/report-pengiriman/${id}`, payload, { headers });
 }
 
 export const deleteReportPengiriman = async (id: string | number) => {

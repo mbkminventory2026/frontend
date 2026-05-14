@@ -26,7 +26,7 @@ export const getBarang = async (params: {
 export const createBarang = async (data: any) => {
     const snakeCaseValue = mapPayloadToSnakeCase(data)
     const containsFile = hasFile(snakeCaseValue)
-    
+
     const payload = containsFile ? prepareFormData(snakeCaseValue) : snakeCaseValue
     const headers = containsFile ? { 'Content-Type': 'multipart/form-data' } : {}
 
@@ -36,15 +36,15 @@ export const createBarang = async (data: any) => {
 export const updateBarang = async (id: string | number, data: any) => {
     const snakeCaseValue = mapPayloadToSnakeCase(data)
     const containsFile = hasFile(snakeCaseValue)
-    
+
     const payload = containsFile ? prepareFormData(snakeCaseValue) : snakeCaseValue
     const headers = containsFile ? { 'Content-Type': 'multipart/form-data' } : {}
 
-    return await apiClient.patch(`/api/v1/master/barang/${id}`, payload, { headers });
+    return await apiClient.put(`/api/v1/master/barang/${id}`, payload, { headers });
 }
 
 export const deleteBarang = async (id: string | number) => {
-    if(!id) throw new Error("ID is required for deletion");
+    if (!id) throw new Error("ID is required for deletion");
 
     return await apiClient.delete(`/api/v1/master/barang/${id}`);
 }
@@ -52,6 +52,6 @@ export const deleteBarang = async (id: string | number) => {
 export const getBarangById = async (id: string | number) => {
     if (!id) throw new Error("ID is required");
 
-    const response = await apiClient.get<BarangResponseItem[]>(`/api/v1/barang/${id}`);
+    const response = await apiClient.get<BarangResponseItem[]>(`/api/v1/master/barang/${id}`);
     return response.data;
 }

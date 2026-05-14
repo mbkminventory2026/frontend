@@ -1,10 +1,10 @@
 import { apiClient } from "@/lib/apiClient";
 import { mapPayloadToSnakeCase, hasFile, prepareFormData } from "@/lib/utils";
-import type { 
-    CobaListItem, 
+import type {
+    CobaListItem,
 } from "@/schemas/coba/coba";
 
-export const getCoba = async(params: {
+export const getCoba = async (params: {
     limit: number,
     offset: number,
     search?: string
@@ -26,7 +26,7 @@ export const getCoba = async(params: {
 export const createCoba = async (data: any) => {
     const snakeCaseValue = mapPayloadToSnakeCase(data)
     const containsFile = hasFile(snakeCaseValue)
-    
+
     const payload = containsFile ? prepareFormData(snakeCaseValue) : snakeCaseValue
     const headers = containsFile ? { 'Content-Type': 'multipart/form-data' } : {}
 
@@ -36,9 +36,9 @@ export const createCoba = async (data: any) => {
 export const updateCoba = async (id: string | number, data: any) => {
     const snakeCaseValue = mapPayloadToSnakeCase(data)
     const containsFile = hasFile(snakeCaseValue)
-    
+
     const payload = containsFile ? prepareFormData(snakeCaseValue) : snakeCaseValue
     const headers = containsFile ? { 'Content-Type': 'multipart/form-data' } : {}
 
-    return await apiClient.patch(`/api/coba/${id}`, payload, { headers });
+    return await apiClient.put(`/api/coba/${id}`, payload, { headers });
 }

@@ -51,6 +51,19 @@ const emit = defineEmits(['submit', 'update:isOpen'])
 // Reactive form values tracker — keeps track of current form values for dependency evaluation
 const formValues = ref<Record<string, any>>({})
 
+// Normalized initial values — ensures select values are strings for Radix UI
+const normalizedInitialValues = computed(() => {
+  const vals = { ...props.initialValues }
+  if (props.schema && Array.isArray(props.schema)) {
+    props.schema.forEach((field) => {
+      if (field && field.type === 'select' && vals[field.key] !== undefined && vals[field.key] !== null) {
+        vals[field.key] = String(vals[field.key])
+      }
+    })
+  }
+  return vals
+})
+
 // File preview URLs for image fields
 const filePreviews = ref<Record<string, string>>({})
 
@@ -59,7 +72,7 @@ watch(
   () => props.isOpen,
   (open) => {
     if (open) {
-      formValues.value = { ...props.initialValues }
+      formValues.value = { ...normalizedInitialValues.value }
     } else {
       formValues.value = {}
       // Revoke any object URLs to prevent memory leaks
@@ -71,7 +84,7 @@ watch(
 )
 
 watch(
-  () => props.initialValues,
+  () => normalizedInitialValues.value,
   (newVals) => {
     if (props.isOpen) {
       formValues.value = { ...newVals }
@@ -91,16 +104,16 @@ function evaluateDependency(dep: DialogField['dependency']): boolean {
 
   switch (dep.condition) {
     case '===':
-      return parentValue === dep.value
+      return String(parentValue) === String(dep.value)
     case '!==':
-      return parentValue !== dep.value
+      return String(parentValue) !== String(dep.value)
     case '>':
       return Number(parentValue) > Number(dep.value)
     case '<':
       return Number(parentValue) < Number(dep.value)
     case 'includes':
       if (Array.isArray(parentValue)) {
-        return parentValue.includes(dep.value)
+        return parentValue.map(String).includes(String(dep.value))
       }
       return String(parentValue ?? '').includes(String(dep.value))
     default:
@@ -155,7 +168,7 @@ function isFieldDisabled(field: DialogField): boolean {
 
 // Computed list of currently visible fields
 const visibleFields = computed(() => {
-  return props.schema.filter((field) => isFieldVisible(field))
+  return (props.schema || []).filter((field) => isFieldVisible(field))
 })
 
 /**
@@ -313,24 +326,25 @@ function coerceValue(value: any, field: DialogField): any {
 function onHandleSubmit(values: any) {
   // Build a lookup of field definitions by key for type coercion
   const fieldMap = new Map(visibleFields.value.map((f) => [f.key, f]))
-  const visibleKeys = new Set(fieldMap.keys())
-  const filteredValues: Record<string, any> = {}
+  
+  // result starts with all initial values to preserve IDs and other metadata
+  const result = { ...props.initialValues }
 
-  for (const key of Object.keys(values)) {
-    if (visibleKeys.has(key)) {
-      const field = fieldMap.get(key)!
-      filteredValues[key] = coerceValue(values[key], field)
+  for (const [key, value] of Object.entries(values)) {
+    const field = fieldMap.get(key)
+    if (field) {
+      result[key] = coerceValue(value, field)
     }
   }
 
   // Include file values from formValues (since vee-validate doesn't track native file inputs)
   visibleFields.value.forEach((field) => {
     if ((field.type === 'file' || field.type === 'image') && formValues.value[field.key]) {
-      filteredValues[field.key] = formValues.value[field.key]
+      result[field.key] = formValues.value[field.key]
     }
   })
 
-  emit('submit', filteredValues)
+  emit('submit', result)
 }
 
 function updateOpen(val: boolean) {
@@ -359,13 +373,13 @@ function getFileAccept(field: DialogField): string | undefined {
         </DialogHeader>
 
         <Form
+            v-if="props.isOpen"
             v-slot="{ handleSubmit }"
             as=""
-            keep-values
             :validation-schema="validationSchema"
-            :initial-values="props.initialValues"
+            :initial-values="normalizedInitialValues"
         >
-            <form id="dialogForm" @submit="handleSubmit($event, onHandleSubmit)">
+            <form id="dialogForm" @submit.prevent="handleSubmit(onHandleSubmit)">
                 <div :class="['grid gap-4', fields.hasTwoColumns ? 'grid-cols-2' : 'grid-cols-1']">
                     <!-- left -->
                     <div class="flex flex-col gap-4">
@@ -381,9 +395,9 @@ function getFileAccept(field: DialogField): string | undefined {
                                 <!-- Select -->
                                 <template v-if="item.type === 'select'">
                                     <Select
-                                        v-bind="componentField"
+                                        :model-value="value !== undefined && value !== null ? String(value) : undefined"
                                         :disabled="isFieldDisabled(item)"
-                                        @update:model-value="(val: any) => onFieldChange(item.key, val)"
+                                        @update:model-value="(val: any) => { handleChange(val); onFieldChange(item.key, val) }"
                                     >
                                         <SelectTrigger :id="item.key">
                                             <SelectValue :placeholder="item.placeholder" />
@@ -507,9 +521,9 @@ function getFileAccept(field: DialogField): string | undefined {
                                 <!-- Select -->
                                 <template v-if="item.type === 'select'">
                                     <Select
-                                        v-bind="componentField"
+                                        :model-value="value !== undefined && value !== null ? String(value) : undefined"
                                         :disabled="isFieldDisabled(item)"
-                                        @update:model-value="(val: any) => onFieldChange(item.key, val)"
+                                        @update:model-value="(val: any) => { handleChange(val); onFieldChange(item.key, val) }"
                                     >
                                         <SelectTrigger :id="item.key">
                                             <SelectValue :placeholder="item.placeholder" />
@@ -632,9 +646,9 @@ function getFileAccept(field: DialogField): string | undefined {
                                 <!-- Select -->
                                 <template v-if="item.type === 'select'">
                                     <Select
-                                        v-bind="componentField"
+                                        :model-value="value !== undefined && value !== null ? String(value) : undefined"
                                         :disabled="isFieldDisabled(item)"
-                                        @update:model-value="(val: any) => onFieldChange(item.key, val)"
+                                        @update:model-value="(val: any) => { handleChange(val); onFieldChange(item.key, val) }"
                                     >
                                         <SelectTrigger :id="item.key">
                                             <SelectValue :placeholder="item.placeholder" />

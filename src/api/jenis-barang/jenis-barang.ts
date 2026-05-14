@@ -24,7 +24,7 @@ export const getJenisBarang = async (params: {
 export const createJenisBarang = async (data: any) => {
     const snakeCaseValue = mapPayloadToSnakeCase(data)
     const containsFile = hasFile(snakeCaseValue)
-    
+
     const payload = containsFile ? prepareFormData(snakeCaseValue) : snakeCaseValue
     const headers = containsFile ? { 'Content-Type': 'multipart/form-data' } : {}
 
@@ -34,15 +34,15 @@ export const createJenisBarang = async (data: any) => {
 export const updateJenisBarang = async (id: string | number, data: any) => {
     const snakeCaseValue = mapPayloadToSnakeCase(data)
     const containsFile = hasFile(snakeCaseValue)
-    
+
     const payload = containsFile ? prepareFormData(snakeCaseValue) : snakeCaseValue
     const headers = containsFile ? { 'Content-Type': 'multipart/form-data' } : {}
 
-    return await apiClient.patch(`/api/v1/master/jenis-barang/${id}`, payload, { headers });
+    return await apiClient.put(`/api/v1/master/jenis-barang/${id}`, payload, { headers });
 }
 
 export const deleteJenisBarang = async (id: string | number) => {
-    if(!id) throw new Error("ID is required for deletion");
+    if (!id) throw new Error("ID is required for deletion");
 
     return await apiClient.delete(`/api/v1/master/jenis-barang/${id}`);
 }

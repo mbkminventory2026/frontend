@@ -130,7 +130,15 @@ const fetchData = async () => {
 const createDialog = useDialog({
     onSubmit: async (values, isEdit) => {
         if (isEdit) {
-            return await updateBarang(values.id_barang, values);
+            const { 
+                created_at, 
+                nama_jenis_barang, 
+                nama_perusahaan, 
+                id_barang,
+                ...payload 
+            } = values;
+            
+            return await updateBarang(id_barang, payload);
         } else {
             return await createBarang(values);
         }
@@ -162,7 +170,30 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
             h(Button, { 
                 variant: 'ghost',
                 size: 'sm',
-                onClick: () => createDialog.openDialog(row.original) 
+                onClick: async () => {
+                    try {
+                        const res = await getBarangById(id);
+                        const detailData = Array.isArray(res) ? { ...res[0] } : { ...res };
+                        
+                        // Fallback mapping if IDs are missing but names are present
+                        if ((detailData.id_jenis_barang === undefined || detailData.id_jenis_barang === null) && detailData.nama_jenis_barang) {
+                            const option = jenisBarangOptions.value.find(opt => 
+                                opt.label.trim().toLowerCase() === detailData.nama_jenis_barang.trim().toLowerCase()
+                            );
+                            if (option) detailData.id_jenis_barang = option.value;
+                        }
+                        if ((detailData.id_mitra === undefined || detailData.id_mitra === null) && detailData.nama_perusahaan) {
+                            const option = mitraOptions.value.find(opt => 
+                                opt.label.trim().toLowerCase() === detailData.nama_perusahaan.trim().toLowerCase()
+                            );
+                            if (option) detailData.id_mitra = option.value;
+                        }
+
+                        createDialog.openDialog(detailData);
+                    } catch (error) {
+                        console.error("Gagal fetch detail untuk edit:", error);
+                    }
+                }
             }, () => [
                 h(PencilIcon, { class: 'w-4 h-4 mr-1' }),
                 'Edit'
