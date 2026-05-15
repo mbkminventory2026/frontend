@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { RouterProvider } from '@tanstack/vue-router'
 import { router } from './router'
-import { toast } from 'vue-sonner'
+import { Toaster } from '@/components/ui/sonner'
 import AppConfirmDialog from '@/components/AppConfirmDialog.vue'
 import { useConfirmDialog } from '@/composables/useConfirmDialog'
 
@@ -10,7 +10,7 @@ const { state, handleConfirm, handleCancel } = useConfirmDialog()
 
 <template>
   <RouterProvider :router="router" />
-  <toast />
+  <Toaster />
 
   <!-- Global confirmation dialog — dikontrol via useConfirmDialog() composable -->
   <AppConfirmDialog

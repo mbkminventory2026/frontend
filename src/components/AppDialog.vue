@@ -30,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import AppFilePicker from '@/components/AppFilePicker.vue'
 import { type DialogSchemaType, type DialogField } from '@/schemas/dialog/dialog'
 
 interface Props {
@@ -64,8 +65,7 @@ const normalizedInitialValues = computed(() => {
   return vals
 })
 
-// File preview URLs for image fields
-const filePreviews = ref<Record<string, string>>({})
+
 
 // Initialize formValues when dialog opens or initialValues change
 watch(
@@ -75,9 +75,6 @@ watch(
       formValues.value = { ...normalizedInitialValues.value }
     } else {
       formValues.value = {}
-      // Revoke any object URLs to prevent memory leaks
-      Object.values(filePreviews.value).forEach((url) => URL.revokeObjectURL(url))
-      filePreviews.value = {}
     }
   },
   { immediate: true }
@@ -275,34 +272,7 @@ function onFieldChange(key: string, value: any) {
   formValues.value[key] = value
 }
 
-/**
- * Handle file input change — store file reference and generate preview.
- */
-function onFileChange(key: string, event: Event, field: DialogField) {
-  const input = event.target as HTMLInputElement
-  const files = input.files
 
-  if (!files || files.length === 0) {
-    formValues.value[key] = null
-    // Clean up old preview
-    if (filePreviews.value[key]) {
-      URL.revokeObjectURL(filePreviews.value[key])
-      delete filePreviews.value[key]
-    }
-    return
-  }
-
-  const file = field.fileConfig?.multiple ? Array.from(files) : files[0]
-  formValues.value[key] = file
-
-  // Generate preview for image types
-  if (field.type === 'image' && field.fileConfig?.preview !== false && files[0]) {
-    if (filePreviews.value[key]) {
-      URL.revokeObjectURL(filePreviews.value[key])
-    }
-    filePreviews.value[key] = URL.createObjectURL(files[0])
-  }
-}
 
 function coerceValue(value: any, field: DialogField): any {
   if (value == null || value === '') return value
@@ -467,23 +437,13 @@ function getFileAccept(field: DialogField): string | undefined {
 
                                 <!-- File / Image -->
                                 <template v-else-if="item.type === 'file' || item.type === 'image'">
-                                    <Input
-                                        :id="item.key"
-                                        type="file"
+                                    <AppFilePicker
+                                        :model-value="value"
                                         :accept="getFileAccept(item)"
-                                        :multiple="item.fileConfig?.multiple ?? false"
+                                        :preview="item.type === 'image'"
                                         :disabled="isFieldDisabled(item)"
-                                        class="cursor-pointer"
-                                        @change="(e: Event) => { onFileChange(item.key, e, item); handleChange(formValues[item.key]) }"
+                                        @update:model-value="(file: any) => { handleChange(file); onFieldChange(item.key, file) }"
                                     />
-                                    <!-- Image preview -->
-                                    <div v-if="item.type === 'image' && filePreviews[item.key]" class="mt-2">
-                                        <img
-                                            :src="filePreviews[item.key]"
-                                            :alt="`Preview ${item.label}`"
-                                            class="max-h-32 rounded-md border object-cover"
-                                        />
-                                    </div>
                                     <p v-if="item.fileConfig?.maxSize" class="text-xs text-muted-foreground mt-1">
                                         Maks. {{ item.fileConfig.maxSize }} MB
                                     </p>
@@ -593,22 +553,13 @@ function getFileAccept(field: DialogField): string | undefined {
 
                                 <!-- File / Image -->
                                 <template v-else-if="item.type === 'file' || item.type === 'image'">
-                                    <Input
-                                        :id="item.key"
-                                        type="file"
+                                    <AppFilePicker
+                                        :model-value="value"
                                         :accept="getFileAccept(item)"
-                                        :multiple="item.fileConfig?.multiple ?? false"
+                                        :preview="item.type === 'image'"
                                         :disabled="isFieldDisabled(item)"
-                                        class="cursor-pointer"
-                                        @change="(e: Event) => { onFileChange(item.key, e, item); handleChange(formValues[item.key]) }"
+                                        @update:model-value="(file: any) => { handleChange(file); onFieldChange(item.key, file) }"
                                     />
-                                    <div v-if="item.type === 'image' && filePreviews[item.key]" class="mt-2">
-                                        <img
-                                            :src="filePreviews[item.key]"
-                                            :alt="`Preview ${item.label}`"
-                                            class="max-h-32 rounded-md border object-cover"
-                                        />
-                                    </div>
                                     <p v-if="item.fileConfig?.maxSize" class="text-xs text-muted-foreground mt-1">
                                         Maks. {{ item.fileConfig.maxSize }} MB
                                     </p>
@@ -718,22 +669,13 @@ function getFileAccept(field: DialogField): string | undefined {
 
                                 <!-- File / Image -->
                                 <template v-else-if="item.type === 'file' || item.type === 'image'">
-                                    <Input
-                                        :id="item.key"
-                                        type="file"
+                                    <AppFilePicker
+                                        :model-value="value"
                                         :accept="getFileAccept(item)"
-                                        :multiple="item.fileConfig?.multiple ?? false"
+                                        :preview="item.type === 'image'"
                                         :disabled="isFieldDisabled(item)"
-                                        class="cursor-pointer"
-                                        @change="(e: Event) => { onFileChange(item.key, e, item); handleChange(formValues[item.key]) }"
+                                        @update:model-value="(file: any) => { handleChange(file); onFieldChange(item.key, file) }"
                                     />
-                                    <div v-if="item.type === 'image' && filePreviews[item.key]" class="mt-2">
-                                        <img
-                                            :src="filePreviews[item.key]"
-                                            :alt="`Preview ${item.label}`"
-                                            class="max-h-32 rounded-md border object-cover"
-                                        />
-                                    </div>
                                     <p v-if="item.fileConfig?.maxSize" class="text-xs text-muted-foreground mt-1">
                                         Maks. {{ item.fileConfig.maxSize }} MB
                                     </p>

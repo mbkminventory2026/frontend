@@ -173,7 +173,7 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
                 onClick: async () => {
                     try {
                         const res = await getBarangById(id);
-                        const detailData = Array.isArray(res) ? { ...res[0] } : { ...res };
+                        const detailData = Array.isArray(res) ? { ...(res[0] as any) } : { ...(res as any) };
                         
                         // Fallback mapping if IDs are missing but names are present
                         if ((detailData.id_jenis_barang === undefined || detailData.id_jenis_barang === null) && detailData.nama_jenis_barang) {

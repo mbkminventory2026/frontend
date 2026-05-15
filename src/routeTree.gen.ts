@@ -20,6 +20,7 @@ import { Route as AuthenticatedMitraRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedJenisBarangRouteImport } from './routes/_authenticated/jenis-barang'
 import { Route as AuthenticatedDepartemenRouteImport } from './routes/_authenticated/departemen'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedCompanyRouteImport } from './routes/_authenticated/company'
 import { Route as AuthenticatedBarangRouteImport } from './routes/_authenticated/barang'
 import { Route as AuthenticatedReportPengirimanIdRouteImport } from './routes/_authenticated/report-pengiriman.$id'
 
@@ -79,6 +80,11 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedCompanyRoute = AuthenticatedCompanyRouteImport.update({
+  id: '/company',
+  path: '/company',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedBarangRoute = AuthenticatedBarangRouteImport.update({
   id: '/barang',
   path: '/barang',
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
   '/login': typeof LoginRoute
   '/barang': typeof AuthenticatedBarangRoute
+  '/company': typeof AuthenticatedCompanyRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/departemen': typeof AuthenticatedDepartemenRoute
   '/jenis-barang': typeof AuthenticatedJenisBarangRoute
@@ -108,6 +115,7 @@ export interface FileRoutesByTo {
   '/': typeof PublicIndexRoute
   '/login': typeof LoginRoute
   '/barang': typeof AuthenticatedBarangRoute
+  '/company': typeof AuthenticatedCompanyRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/departemen': typeof AuthenticatedDepartemenRoute
   '/jenis-barang': typeof AuthenticatedJenisBarangRoute
@@ -123,6 +131,7 @@ export interface FileRoutesById {
   '/_public': typeof PublicRouteWithChildren
   '/login': typeof LoginRoute
   '/_authenticated/barang': typeof AuthenticatedBarangRoute
+  '/_authenticated/company': typeof AuthenticatedCompanyRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/departemen': typeof AuthenticatedDepartemenRoute
   '/_authenticated/jenis-barang': typeof AuthenticatedJenisBarangRoute
@@ -139,6 +148,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/barang'
+    | '/company'
     | '/dashboard'
     | '/departemen'
     | '/jenis-barang'
@@ -152,6 +162,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/barang'
+    | '/company'
     | '/dashboard'
     | '/departemen'
     | '/jenis-barang'
@@ -166,6 +177,7 @@ export interface FileRouteTypes {
     | '/_public'
     | '/login'
     | '/_authenticated/barang'
+    | '/_authenticated/company'
     | '/_authenticated/dashboard'
     | '/_authenticated/departemen'
     | '/_authenticated/jenis-barang'
@@ -262,6 +274,13 @@ declare module '@tanstack/vue-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/company': {
+      id: '/_authenticated/company'
+      path: '/company'
+      fullPath: '/company'
+      preLoaderRoute: typeof AuthenticatedCompanyRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/barang': {
       id: '/_authenticated/barang'
       path: '/barang'
@@ -295,6 +314,7 @@ const AuthenticatedReportPengirimanRouteWithChildren =
 
 interface AuthenticatedRouteChildren {
   AuthenticatedBarangRoute: typeof AuthenticatedBarangRoute
+  AuthenticatedCompanyRoute: typeof AuthenticatedCompanyRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDepartemenRoute: typeof AuthenticatedDepartemenRoute
   AuthenticatedJenisBarangRoute: typeof AuthenticatedJenisBarangRoute
@@ -306,6 +326,7 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBarangRoute: AuthenticatedBarangRoute,
+  AuthenticatedCompanyRoute: AuthenticatedCompanyRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDepartemenRoute: AuthenticatedDepartemenRoute,
   AuthenticatedJenisBarangRoute: AuthenticatedJenisBarangRoute,

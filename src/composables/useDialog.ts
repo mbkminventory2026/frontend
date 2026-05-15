@@ -43,6 +43,7 @@ export function useDialog({
             closeDialog()
             if (onSuccess) onSuccess()
         } catch (error: any) {
+            console.error('API Error:', error.response?.data)
             toast.error(error.response?.data?.message || 'Terjadi kesalahan sistem')
             if (onError) onError(error)
         } finally {

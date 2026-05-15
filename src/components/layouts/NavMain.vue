@@ -38,7 +38,7 @@ defineProps<{
   <SidebarGroup>
     <SidebarGroupLabel>Platform</SidebarGroupLabel>
     <SidebarMenu>
-      <Collapsible v-for="item in items" :key="item.title" as-child ">
+      <Collapsible v-for="item in items" :key="item.title" as-child>
         <SidebarMenuItem>
           <SidebarMenuButton as-child :tooltip="item.title">
             <a :href="item.url">
