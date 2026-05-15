@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue';
 import { 
     BuildingIcon, 
     Mail, 
@@ -8,13 +7,12 @@ import {
     Info, 
     PencilIcon, 
     SaveIcon, 
-    XIcon, 
     User,
 } from 'lucide-vue-next';
-import { toast } from 'vue-sonner';
 
 import { getCompany, updateCompany } from '@/api/company/company';
-import type { CompanyResponseItem } from '@/schemas/company/response';
+import { useForm } from '@/composables/useForm';
+import { useAddressField } from '@/composables/form/useAddressField';
 
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -23,84 +21,35 @@ import {
   AvatarFallback,
   AvatarImage,
 } from '@/components/ui/avatar'
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { 
     Card, 
     CardContent, 
     CardDescription, 
     CardHeader, 
     CardTitle,
-    CardFooter
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import AppFilePicker from '@/components/AppFilePicker.vue';
-import AppAddressPicker from '@/components/AppAddressPicker.vue';
+import AppForm from '@/components/form/AppForm.vue';
+import AppFormField from '@/components/form/AppFormField.vue';
 
-const companyData = ref<CompanyResponseItem | null>(null);
-const isLoading = ref(true);
-const isEditing = ref(false);
-const isSaving = ref(false);
-
-// Form state
-const formValues = ref<any>({});
-
-const fetchData = async () => {
-    isLoading.value = true;
-    try {
-        const response = await getCompany({ limit: 1, offset: 0 });
-        const data = Array.isArray(response.results) ? response.results[0] : response.results;
-        
-        if (data) {
-            companyData.value = data;
-            resetForm();
+const form = useForm({
+    api: {
+        get: () => getCompany({ limit: 1, offset: 0 }),
+        update: (_id, payload) => {
+            // Remove read-only fields
+            const { id_company, created_at, ...data } = payload;
+            return updateCompany(id_company, data);
         }
-    } catch (error) {
-        console.error("Gagal fetch data company:", error);
-        toast.error("Gagal mengambil data perusahaan");
-    } finally {
-        isLoading.value = false;
-    }
-}
-
-const resetForm = () => {
-    if (companyData.value) {
-        formValues.value = { ...companyData.value };
-    }
-}
-
-const toggleEdit = () => {
-    if (isEditing.value) {
-        resetForm();
-    }
-    isEditing.value = !isEditing.value;
-}
-
-const handleSave = async () => {
-    if (!companyData.value?.id_company) return;
-    
-    isSaving.value = true;
-    try {
-        // Remove read-only fields
-        const { id_company, created_at, ...payload } = formValues.value;
-        
-        await updateCompany(id_company, payload);
-        
-        toast.success("Data perusahaan berhasil diperbarui");
-        isEditing.value = false;
-        await fetchData();
-    } catch (error: any) {
-        console.error("Gagal update company:", error);
-        toast.error(error.response?.data?.message || "Gagal memperbarui data");
-    } finally {
-        isSaving.value = false;
-    }
-}
-
-onMounted(() => {
-    fetchData();
+    },
+    id: 'id_company', // Just a placeholder to trigger update mode, logic handled in update function
+    immediate: true
 });
+
+const { values, isLoading, isSaving, isEditing } = form;
+
+// Using the modular logic for address display
+const { parsedAddress } = useAddressField(() => values.value?.alamat);
+
 </script>
 
 <template>
@@ -110,14 +59,14 @@ onMounted(() => {
             <p class="text-muted-foreground animate-pulse">Memuat profil perusahaan...</p>
         </div>
 
-        <div v-else-if="companyData">
+        <div v-else-if="values && values.id_company">
             <!-- VIEW MODE -->
             <div v-if="!isEditing" class="space-y-6 animate-in fade-in duration-500">
                 <!-- Header Section -->
                 <div class="flex flex-col md:flex-row gap-6 items-center">
                     <div class="relative">
                         <Avatar class="min-w-32 min-h-32 shadow-md">
-                            <AvatarImage v-if="companyData.logo" :src="companyData.logo" alt="Logo" class="object-cover" />
+                            <AvatarImage v-if="values.logo" :src="values.logo" alt="Logo" class="object-cover" />
                             <AvatarFallback>
                                 <User class="w-1/2 h-1/2 text-primary" />
                             </AvatarFallback>
@@ -125,19 +74,19 @@ onMounted(() => {
                     </div>
                     
                     <div class="flex-1 space-y-1 text-center md:text-left">
-                        <h1 class="text-3xl font-bold tracking-tight">{{ companyData.nama }}</h1>
+                        <h1 class="text-3xl font-bold tracking-tight">{{ values.nama }}</h1>
                         <div class="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-muted-foreground">
                             <span class="flex items-center gap-1.5">
-                                <Mail class="w-4 h-4" /> {{ companyData.email }}
+                                <Mail class="w-4 h-4" /> {{ values.email }}
                             </span>
                             <span class="flex items-center gap-1.5">
-                                <Phone class="w-4 h-4" /> {{ companyData.no_telp }}
+                                <Phone class="w-4 h-4" /> {{ values.no_telp }}
                             </span>
                         </div>
                     </div>
 
                     <div class="flex gap-2 w-full md:w-auto">
-                        <Button @click="toggleEdit" variant="outline" class="flex-1 md:flex-none">
+                        <Button @click="form.toggleEdit" variant="outline" class="flex-1 md:flex-none">
                             <PencilIcon class="w-4 h-4 mr-2" /> Edit Profil
                         </Button>
                     </div>
@@ -159,11 +108,11 @@ onMounted(() => {
                                         <div class="space-y-1">
                                             <p class="text-sm font-medium leading-none">Alamat</p>
                                             <div class="text-sm text-muted-foreground leading-relaxed">
-                                                <template v-if="companyData.alamat.includes(' | ')">
-                                                    <p class="font-medium text-foreground">{{ companyData.alamat.split(' | ')[0] }}</p>
-                                                    <p>{{ companyData.alamat.split(' | ').slice(1).join(', ') }}</p>
+                                                <template v-if="parsedAddress.details">
+                                                    <p class="font-medium text-foreground">{{ parsedAddress.main }}</p>
+                                                    <p>{{ parsedAddress.details }}</p>
                                                 </template>
-                                                <p v-else>{{ companyData.alamat }}</p>
+                                                <p v-else>{{ parsedAddress.main }}</p>
                                             </div>
                                         </div>
                                     </div>
@@ -175,7 +124,7 @@ onMounted(() => {
                                         <div class="space-y-1">
                                             <p class="text-sm font-medium leading-none">Email</p>
                                             <p class="text-sm text-muted-foreground">
-                                                {{ companyData.email }}
+                                                {{ values.email }}
                                             </p>
                                         </div>
                                     </div>
@@ -187,7 +136,7 @@ onMounted(() => {
                                         <div class="space-y-1">
                                             <p class="text-sm font-medium leading-none">Nomor Telepon</p>
                                             <p class="text-sm text-muted-foreground">
-                                                {{ companyData.no_telp }}
+                                                {{ values.no_telp }}
                                             </p>
                                         </div>
                                     </div>
@@ -212,7 +161,7 @@ onMounted(() => {
                                 <div class="space-y-4">
                                     <div class="space-y-2">
                                         <div class="prose prose-sm max-w-none text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                                            {{ companyData.about || 'Belum ada informasi deskripsi perusahaan.' }}
+                                            {{ values.about || 'Belum ada informasi deskripsi perusahaan.' }}
                                         </div>
                                     </div>
                                 </div>
@@ -231,76 +180,61 @@ onMounted(() => {
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 h-fit">
-                    <!-- Left Column: Logo & Contact -->
-                    <!-- Right Column: Main Info -->
-                    <div class="md:col-span-2 space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle class="text-lg">Logo Perusahaan</CardTitle>
-                                <CardDescription>Unggah logo resmi perusahaan.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <AppFilePicker 
-                                    v-model="formValues.logo"
-                                    accept="image/*"
-                                    :preview="true"
-                                />
-                            </CardContent>
-                        </Card>
-                        <Card>
-                            <CardHeader>
-                                <CardTitle class="text-lg">Informasi Umum</CardTitle>
-                                <CardDescription>Detail nama dan deskripsi perusahaan.</CardDescription>
-                            </CardHeader>
-                            <CardContent class="space-y-4">
-                                <div class="space-y-2">
-                                    <Label>Nama Perusahaan</Label>
-                                    <Input v-model="formValues.nama" placeholder="Masukkan nama resmi perusahaan" />
-                                </div>
-                                <div class="space-y-2">
-                                    <Label>Tentang Perusahaan</Label>
-                                    <Textarea 
-                                        v-model="formValues.about" 
+                <AppForm :form="form">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 h-fit">
+                        <!-- Left Column: Logo & General Info -->
+                        <div class="md:col-span-2 space-y-6">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle class="text-lg">Logo Perusahaan</CardTitle>
+                                    <CardDescription>Unggah logo resmi perusahaan.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <AppFormField name="logo" type="file" />
+                                </CardContent>
+                            </Card>
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle class="text-lg">Informasi Umum</CardTitle>
+                                    <CardDescription>Detail nama dan deskripsi perusahaan.</CardDescription>
+                                </CardHeader>
+                                <CardContent class="space-y-4">
+                                    <AppFormField name="nama" label="Nama Perusahaan" placeholder="Masukkan nama resmi perusahaan" />
+                                    <AppFormField 
+                                        name="about" 
+                                        type="textarea" 
+                                        label="Tentang Perusahaan" 
                                         placeholder="Tuliskan profil singkat, visi, dan misi perusahaan..." 
-                                        class="min-h-[350px] leading-relaxed" 
                                     />
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
 
-                    <div class="space-y-6">
-                        <Card class="h-full">
-                            <CardHeader>
-                                <CardTitle class="text-lg">Kontak & Alamat</CardTitle>
-                            </CardHeader>
-                            <CardContent class="space-y-6">
-                                <div class="space-y-2">
-                                    <Label>Email Perusahaan</Label>
-                                    <Input v-model="formValues.email" type="email" placeholder="email@perusahaan.com" />
-                                </div>
-                                <div class="space-y-2">
-                                    <Label>Nomor Telepon</Label>
-                                    <Input v-model="formValues.no_telp" placeholder="Contoh: 021-xxxxxxx" />
-                                </div>
-                                <div class="space-y-1 w-full">
-                                    <p class="text-sm font-medium leading-none mb-2">Alamat Lengkap</p>
-                                    <AppAddressPicker v-model="formValues.alamat" />
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <!-- Right Column: Contact & Address -->
+                        <div class="space-y-6">
+                            <Card class="h-full">
+                                <CardHeader>
+                                    <CardTitle class="text-lg">Kontak & Alamat</CardTitle>
+                                </CardHeader>
+                                <CardContent class="space-y-6">
+                                    <AppFormField name="email" type="email" label="Email Perusahaan" placeholder="email@perusahaan.com" />
+                                    <AppFormField name="no_telp" label="Nomor Telepon" placeholder="Contoh: 021-xxxxxxx" />
+                                    <AppFormField name="alamat" type="address" label="Alamat Lengkap" />
+                                </CardContent>
+                            </Card>
+                        </div>
                     </div>
-                </div>
-                <div class="flex justify-end gap-3 py-4">
-                    <Button @click="toggleEdit" variant="outline" class="cursor-pointer">
-                        Batal
-                    </Button>
-                    <Button @click="handleSave" :disabled="isSaving" class="cursor-pointer">
-                        <SaveIcon class="w-4 h-4 mr-2" /> 
-                        {{ isSaving ? 'Menyimpan...' : 'Simpan Perubahan' }}
-                    </Button>
-                </div>
+                    
+                    <div class="flex justify-end gap-3 py-4">
+                        <Button @click="form.toggleEdit" variant="outline" type="button" class="cursor-pointer">
+                            Batal
+                        </Button>
+                        <Button :disabled="isSaving" type="submit" class="cursor-pointer">
+                            <SaveIcon class="w-4 h-4 mr-2" /> 
+                            {{ isSaving ? 'Menyimpan...' : 'Simpan Perubahan' }}
+                        </Button>
+                    </div>
+                </AppForm>
             </div>
         </div>
 
@@ -313,9 +247,9 @@ onMounted(() => {
                 Data profil perusahaan belum ditemukan di sistem. Silakan hubungi administrator.
             </p>
         </Card>
-
     </div>
 </template>
+
 
 <style scoped>
 .prose {
