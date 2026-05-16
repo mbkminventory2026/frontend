@@ -11,7 +11,7 @@ import {
     updateReportPengiriman 
 } from '@/api/reportPengiriman/reportPengiriman';
 import { type ReportPengirimanItem } from '@/schemas/reportPengiriman/reportPengiriman';
-import { reportPengirimanSchema } from '@/routes/_authenticated/report-pengiriman';
+import { reportPengirimanSchema } from '@/routes/_authenticated/report-pengiriman.index';
 
 import DataTable from '@/components/DataTable.vue';
 import AppDialog from '@/components/AppDialog.vue';
@@ -22,71 +22,20 @@ import { useDialog } from '@/composables/useDialog';
 import { type DialogSchemaType } from '@/schemas/dialog/dialog';
 import { formatDate } from '@/lib/formatter';
 import DeleteButton from '@/components/DeleteButton.vue';
-import AppDetailView from '@/components/AppDetailView.vue';
-import { 
-    Dialog, 
-    DialogContent, 
-} from '@/components/ui/dialog';
-import { Calendar, Package, Hash, Layers } from 'lucide-vue-next';
-import { type DetailSchema } from '@/schemas/detail/detail';
 
-const search = useSearch({ from: '/_authenticated/report-pengiriman' })
+const search = useSearch({ strict: false }) as any
 const router = useRouter();
 
 const data = ref<ReportPengirimanItem[]>([]);
 const totalCount = ref(0);
 const isLoading = ref(false);
 
-// Detail Modal State
-const isDetailOpen = ref(false);
-const selectedDetailData = ref<any>(null);
-const isDetailLoading = ref(false);
-
-const detailSchema: DetailSchema = [
-  { 
-    key: 'id_report_pengiriman', 
-    label: 'ID Report', 
-    icon: Hash 
-  },
-  { 
-    key: 'date', 
-    label: 'Tanggal Pengiriman', 
-    type: 'date',
-    icon: Calendar 
-  },
-  { 
-    key: 'id_wo_shell_size', 
-    label: 'ID WO Shell Size', 
-    icon: Layers 
-  },
-  { 
-    key: 'quantity', 
-    label: 'Kuantitas', 
-    type: 'number',
-    icon: Package,
-    className: 'text-primary'
-  }
-];
-
-const handleViewDetail = async (id: number) => {
-    isDetailOpen.value = true;
-    isDetailLoading.value = true;
-    try {
-        const res = await getReportPengirimanById(id);
-        selectedDetailData.value = Array.isArray(res) ? res[0] : res;
-    } catch (error) {
-        console.error("Gagal fetch detail:", error);
-    } finally {
-        isDetailLoading.value = false;
-    }
-}
-
 const fetchData = async () => {
     isLoading.value = true;
     try {
-        const page = search.value.page ?? 1;
-        const pageSize = search.value.pageSize ?? 20;
-        const filter = search.value.filter ?? '';
+        const page = search.value?.page ?? 1;
+        const pageSize = search.value?.pageSize ?? 20;
+        const filter = search.value?.filter ?? '';
 
         const response = await getReportPengiriman({
             limit: pageSize,
@@ -133,7 +82,7 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
             h(Button, { 
                 variant: 'outline',
                 size: 'sm',
-                onClick: () => handleViewDetail(id) 
+                onClick: () => router.navigate({ to: '/report-pengiriman/$id', params: { id: String(id) } }) 
             }, () => [
                 h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
                 'View'
@@ -154,13 +103,6 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
                 h(PencilIcon, { class: 'w-4 h-4 mr-1' }),
                 'Edit'
             ]),
-            h(Button, { 
-                variant: 'ghost',
-                size: 'sm',
-                onClick: () => router.navigate({ to: `/report-pengiriman/${id}`, params: { id: String(id) } }) 
-            }, () => [
-                'Detail'
-            ]) ,
             h(DeleteButton, {
                 onConfirm: async() => {
                     await deleteReportPengiriman(id);
@@ -241,17 +183,4 @@ watch(() => search, () => {
         @update:is-open="createDialog.isOpen.value = $event"
         @submit="createDialog.handleSubmit"
     />
-    <Dialog :open="isDetailOpen" @update:open="isDetailOpen = $event">
-        <DialogContent class="sm:max-w-[600px] p-0 overflow-hidden border-none bg-transparent shadow-none">
-            <AppDetailView
-                title="Quick View Report Pengiriman"
-                description="Detail ringkas laporan pengiriman barang."
-                :data="selectedDetailData"
-                :schema="detailSchema"
-                :is-loading="isDetailLoading"
-                :show-edit="false"
-                :show-delete="false"
-            />
-        </DialogContent>
-    </Dialog>
 </template>

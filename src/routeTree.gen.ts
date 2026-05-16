@@ -22,7 +22,18 @@ import { Route as AuthenticatedDepartemenRouteImport } from './routes/_authentic
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCompanyRouteImport } from './routes/_authenticated/company'
 import { Route as AuthenticatedBarangRouteImport } from './routes/_authenticated/barang'
+import { Route as AuthenticatedReportPengirimanIndexRouteImport } from './routes/_authenticated/report-pengiriman.index'
+import { Route as AuthenticatedPermissionsIndexRouteImport } from './routes/_authenticated/permissions.index'
+import { Route as AuthenticatedMitraIndexRouteImport } from './routes/_authenticated/mitra.index'
+import { Route as AuthenticatedJenisBarangIndexRouteImport } from './routes/_authenticated/jenis-barang.index'
+import { Route as AuthenticatedDepartemenIndexRouteImport } from './routes/_authenticated/departemen.index'
+import { Route as AuthenticatedBarangIndexRouteImport } from './routes/_authenticated/barang.index'
 import { Route as AuthenticatedReportPengirimanIdRouteImport } from './routes/_authenticated/report-pengiriman.$id'
+import { Route as AuthenticatedPermissionsIdRouteImport } from './routes/_authenticated/permissions.$id'
+import { Route as AuthenticatedMitraIdRouteImport } from './routes/_authenticated/mitra.$id'
+import { Route as AuthenticatedJenisBarangIdRouteImport } from './routes/_authenticated/jenis-barang.$id'
+import { Route as AuthenticatedDepartemenIdRouteImport } from './routes/_authenticated/departemen.$id'
+import { Route as AuthenticatedBarangIdRouteImport } from './routes/_authenticated/barang.$id'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -90,57 +101,147 @@ const AuthenticatedBarangRoute = AuthenticatedBarangRouteImport.update({
   path: '/barang',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedReportPengirimanIndexRoute =
+  AuthenticatedReportPengirimanIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedReportPengirimanRoute,
+  } as any)
+const AuthenticatedPermissionsIndexRoute =
+  AuthenticatedPermissionsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedPermissionsRoute,
+  } as any)
+const AuthenticatedMitraIndexRoute = AuthenticatedMitraIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedMitraRoute,
+} as any)
+const AuthenticatedJenisBarangIndexRoute =
+  AuthenticatedJenisBarangIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedJenisBarangRoute,
+  } as any)
+const AuthenticatedDepartemenIndexRoute =
+  AuthenticatedDepartemenIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedDepartemenRoute,
+  } as any)
+const AuthenticatedBarangIndexRoute =
+  AuthenticatedBarangIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedBarangRoute,
+  } as any)
 const AuthenticatedReportPengirimanIdRoute =
   AuthenticatedReportPengirimanIdRouteImport.update({
     id: '/$id',
     path: '/$id',
     getParentRoute: () => AuthenticatedReportPengirimanRoute,
   } as any)
+const AuthenticatedPermissionsIdRoute =
+  AuthenticatedPermissionsIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedPermissionsRoute,
+  } as any)
+const AuthenticatedMitraIdRoute = AuthenticatedMitraIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthenticatedMitraRoute,
+} as any)
+const AuthenticatedJenisBarangIdRoute =
+  AuthenticatedJenisBarangIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedJenisBarangRoute,
+  } as any)
+const AuthenticatedDepartemenIdRoute =
+  AuthenticatedDepartemenIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedDepartemenRoute,
+  } as any)
+const AuthenticatedBarangIdRoute = AuthenticatedBarangIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthenticatedBarangRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
   '/login': typeof LoginRoute
-  '/barang': typeof AuthenticatedBarangRoute
+  '/barang': typeof AuthenticatedBarangRouteWithChildren
   '/company': typeof AuthenticatedCompanyRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/departemen': typeof AuthenticatedDepartemenRoute
-  '/jenis-barang': typeof AuthenticatedJenisBarangRoute
-  '/mitra': typeof AuthenticatedMitraRoute
-  '/permissions': typeof AuthenticatedPermissionsRoute
+  '/departemen': typeof AuthenticatedDepartemenRouteWithChildren
+  '/jenis-barang': typeof AuthenticatedJenisBarangRouteWithChildren
+  '/mitra': typeof AuthenticatedMitraRouteWithChildren
+  '/permissions': typeof AuthenticatedPermissionsRouteWithChildren
   '/pokemon': typeof AuthenticatedPokemonRoute
   '/report-pengiriman': typeof AuthenticatedReportPengirimanRouteWithChildren
+  '/barang/$id': typeof AuthenticatedBarangIdRoute
+  '/departemen/$id': typeof AuthenticatedDepartemenIdRoute
+  '/jenis-barang/$id': typeof AuthenticatedJenisBarangIdRoute
+  '/mitra/$id': typeof AuthenticatedMitraIdRoute
+  '/permissions/$id': typeof AuthenticatedPermissionsIdRoute
   '/report-pengiriman/$id': typeof AuthenticatedReportPengirimanIdRoute
+  '/barang/': typeof AuthenticatedBarangIndexRoute
+  '/departemen/': typeof AuthenticatedDepartemenIndexRoute
+  '/jenis-barang/': typeof AuthenticatedJenisBarangIndexRoute
+  '/mitra/': typeof AuthenticatedMitraIndexRoute
+  '/permissions/': typeof AuthenticatedPermissionsIndexRoute
+  '/report-pengiriman/': typeof AuthenticatedReportPengirimanIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof PublicIndexRoute
   '/login': typeof LoginRoute
-  '/barang': typeof AuthenticatedBarangRoute
   '/company': typeof AuthenticatedCompanyRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
-  '/departemen': typeof AuthenticatedDepartemenRoute
-  '/jenis-barang': typeof AuthenticatedJenisBarangRoute
-  '/mitra': typeof AuthenticatedMitraRoute
-  '/permissions': typeof AuthenticatedPermissionsRoute
   '/pokemon': typeof AuthenticatedPokemonRoute
-  '/report-pengiriman': typeof AuthenticatedReportPengirimanRouteWithChildren
+  '/barang/$id': typeof AuthenticatedBarangIdRoute
+  '/departemen/$id': typeof AuthenticatedDepartemenIdRoute
+  '/jenis-barang/$id': typeof AuthenticatedJenisBarangIdRoute
+  '/mitra/$id': typeof AuthenticatedMitraIdRoute
+  '/permissions/$id': typeof AuthenticatedPermissionsIdRoute
   '/report-pengiriman/$id': typeof AuthenticatedReportPengirimanIdRoute
+  '/barang': typeof AuthenticatedBarangIndexRoute
+  '/departemen': typeof AuthenticatedDepartemenIndexRoute
+  '/jenis-barang': typeof AuthenticatedJenisBarangIndexRoute
+  '/mitra': typeof AuthenticatedMitraIndexRoute
+  '/permissions': typeof AuthenticatedPermissionsIndexRoute
+  '/report-pengiriman': typeof AuthenticatedReportPengirimanIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/_public': typeof PublicRouteWithChildren
   '/login': typeof LoginRoute
-  '/_authenticated/barang': typeof AuthenticatedBarangRoute
+  '/_authenticated/barang': typeof AuthenticatedBarangRouteWithChildren
   '/_authenticated/company': typeof AuthenticatedCompanyRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/departemen': typeof AuthenticatedDepartemenRoute
-  '/_authenticated/jenis-barang': typeof AuthenticatedJenisBarangRoute
-  '/_authenticated/mitra': typeof AuthenticatedMitraRoute
-  '/_authenticated/permissions': typeof AuthenticatedPermissionsRoute
+  '/_authenticated/departemen': typeof AuthenticatedDepartemenRouteWithChildren
+  '/_authenticated/jenis-barang': typeof AuthenticatedJenisBarangRouteWithChildren
+  '/_authenticated/mitra': typeof AuthenticatedMitraRouteWithChildren
+  '/_authenticated/permissions': typeof AuthenticatedPermissionsRouteWithChildren
   '/_authenticated/pokemon': typeof AuthenticatedPokemonRoute
   '/_authenticated/report-pengiriman': typeof AuthenticatedReportPengirimanRouteWithChildren
   '/_public/': typeof PublicIndexRoute
+  '/_authenticated/barang/$id': typeof AuthenticatedBarangIdRoute
+  '/_authenticated/departemen/$id': typeof AuthenticatedDepartemenIdRoute
+  '/_authenticated/jenis-barang/$id': typeof AuthenticatedJenisBarangIdRoute
+  '/_authenticated/mitra/$id': typeof AuthenticatedMitraIdRoute
+  '/_authenticated/permissions/$id': typeof AuthenticatedPermissionsIdRoute
   '/_authenticated/report-pengiriman/$id': typeof AuthenticatedReportPengirimanIdRoute
+  '/_authenticated/barang/': typeof AuthenticatedBarangIndexRoute
+  '/_authenticated/departemen/': typeof AuthenticatedDepartemenIndexRoute
+  '/_authenticated/jenis-barang/': typeof AuthenticatedJenisBarangIndexRoute
+  '/_authenticated/mitra/': typeof AuthenticatedMitraIndexRoute
+  '/_authenticated/permissions/': typeof AuthenticatedPermissionsIndexRoute
+  '/_authenticated/report-pengiriman/': typeof AuthenticatedReportPengirimanIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -156,21 +257,37 @@ export interface FileRouteTypes {
     | '/permissions'
     | '/pokemon'
     | '/report-pengiriman'
+    | '/barang/$id'
+    | '/departemen/$id'
+    | '/jenis-barang/$id'
+    | '/mitra/$id'
+    | '/permissions/$id'
     | '/report-pengiriman/$id'
+    | '/barang/'
+    | '/departemen/'
+    | '/jenis-barang/'
+    | '/mitra/'
+    | '/permissions/'
+    | '/report-pengiriman/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
-    | '/barang'
     | '/company'
     | '/dashboard'
+    | '/pokemon'
+    | '/barang/$id'
+    | '/departemen/$id'
+    | '/jenis-barang/$id'
+    | '/mitra/$id'
+    | '/permissions/$id'
+    | '/report-pengiriman/$id'
+    | '/barang'
     | '/departemen'
     | '/jenis-barang'
     | '/mitra'
     | '/permissions'
-    | '/pokemon'
     | '/report-pengiriman'
-    | '/report-pengiriman/$id'
   id:
     | '__root__'
     | '/_authenticated'
@@ -186,7 +303,18 @@ export interface FileRouteTypes {
     | '/_authenticated/pokemon'
     | '/_authenticated/report-pengiriman'
     | '/_public/'
+    | '/_authenticated/barang/$id'
+    | '/_authenticated/departemen/$id'
+    | '/_authenticated/jenis-barang/$id'
+    | '/_authenticated/mitra/$id'
+    | '/_authenticated/permissions/$id'
     | '/_authenticated/report-pengiriman/$id'
+    | '/_authenticated/barang/'
+    | '/_authenticated/departemen/'
+    | '/_authenticated/jenis-barang/'
+    | '/_authenticated/mitra/'
+    | '/_authenticated/permissions/'
+    | '/_authenticated/report-pengiriman/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -288,6 +416,48 @@ declare module '@tanstack/vue-router' {
       preLoaderRoute: typeof AuthenticatedBarangRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/report-pengiriman/': {
+      id: '/_authenticated/report-pengiriman/'
+      path: '/'
+      fullPath: '/report-pengiriman/'
+      preLoaderRoute: typeof AuthenticatedReportPengirimanIndexRouteImport
+      parentRoute: typeof AuthenticatedReportPengirimanRoute
+    }
+    '/_authenticated/permissions/': {
+      id: '/_authenticated/permissions/'
+      path: '/'
+      fullPath: '/permissions/'
+      preLoaderRoute: typeof AuthenticatedPermissionsIndexRouteImport
+      parentRoute: typeof AuthenticatedPermissionsRoute
+    }
+    '/_authenticated/mitra/': {
+      id: '/_authenticated/mitra/'
+      path: '/'
+      fullPath: '/mitra/'
+      preLoaderRoute: typeof AuthenticatedMitraIndexRouteImport
+      parentRoute: typeof AuthenticatedMitraRoute
+    }
+    '/_authenticated/jenis-barang/': {
+      id: '/_authenticated/jenis-barang/'
+      path: '/'
+      fullPath: '/jenis-barang/'
+      preLoaderRoute: typeof AuthenticatedJenisBarangIndexRouteImport
+      parentRoute: typeof AuthenticatedJenisBarangRoute
+    }
+    '/_authenticated/departemen/': {
+      id: '/_authenticated/departemen/'
+      path: '/'
+      fullPath: '/departemen/'
+      preLoaderRoute: typeof AuthenticatedDepartemenIndexRouteImport
+      parentRoute: typeof AuthenticatedDepartemenRoute
+    }
+    '/_authenticated/barang/': {
+      id: '/_authenticated/barang/'
+      path: '/'
+      fullPath: '/barang/'
+      preLoaderRoute: typeof AuthenticatedBarangIndexRouteImport
+      parentRoute: typeof AuthenticatedBarangRoute
+    }
     '/_authenticated/report-pengiriman/$id': {
       id: '/_authenticated/report-pengiriman/$id'
       path: '/$id'
@@ -295,16 +465,128 @@ declare module '@tanstack/vue-router' {
       preLoaderRoute: typeof AuthenticatedReportPengirimanIdRouteImport
       parentRoute: typeof AuthenticatedReportPengirimanRoute
     }
+    '/_authenticated/permissions/$id': {
+      id: '/_authenticated/permissions/$id'
+      path: '/$id'
+      fullPath: '/permissions/$id'
+      preLoaderRoute: typeof AuthenticatedPermissionsIdRouteImport
+      parentRoute: typeof AuthenticatedPermissionsRoute
+    }
+    '/_authenticated/mitra/$id': {
+      id: '/_authenticated/mitra/$id'
+      path: '/$id'
+      fullPath: '/mitra/$id'
+      preLoaderRoute: typeof AuthenticatedMitraIdRouteImport
+      parentRoute: typeof AuthenticatedMitraRoute
+    }
+    '/_authenticated/jenis-barang/$id': {
+      id: '/_authenticated/jenis-barang/$id'
+      path: '/$id'
+      fullPath: '/jenis-barang/$id'
+      preLoaderRoute: typeof AuthenticatedJenisBarangIdRouteImport
+      parentRoute: typeof AuthenticatedJenisBarangRoute
+    }
+    '/_authenticated/departemen/$id': {
+      id: '/_authenticated/departemen/$id'
+      path: '/$id'
+      fullPath: '/departemen/$id'
+      preLoaderRoute: typeof AuthenticatedDepartemenIdRouteImport
+      parentRoute: typeof AuthenticatedDepartemenRoute
+    }
+    '/_authenticated/barang/$id': {
+      id: '/_authenticated/barang/$id'
+      path: '/$id'
+      fullPath: '/barang/$id'
+      preLoaderRoute: typeof AuthenticatedBarangIdRouteImport
+      parentRoute: typeof AuthenticatedBarangRoute
+    }
   }
 }
 
+interface AuthenticatedBarangRouteChildren {
+  AuthenticatedBarangIdRoute: typeof AuthenticatedBarangIdRoute
+  AuthenticatedBarangIndexRoute: typeof AuthenticatedBarangIndexRoute
+}
+
+const AuthenticatedBarangRouteChildren: AuthenticatedBarangRouteChildren = {
+  AuthenticatedBarangIdRoute: AuthenticatedBarangIdRoute,
+  AuthenticatedBarangIndexRoute: AuthenticatedBarangIndexRoute,
+}
+
+const AuthenticatedBarangRouteWithChildren =
+  AuthenticatedBarangRoute._addFileChildren(AuthenticatedBarangRouteChildren)
+
+interface AuthenticatedDepartemenRouteChildren {
+  AuthenticatedDepartemenIdRoute: typeof AuthenticatedDepartemenIdRoute
+  AuthenticatedDepartemenIndexRoute: typeof AuthenticatedDepartemenIndexRoute
+}
+
+const AuthenticatedDepartemenRouteChildren: AuthenticatedDepartemenRouteChildren =
+  {
+    AuthenticatedDepartemenIdRoute: AuthenticatedDepartemenIdRoute,
+    AuthenticatedDepartemenIndexRoute: AuthenticatedDepartemenIndexRoute,
+  }
+
+const AuthenticatedDepartemenRouteWithChildren =
+  AuthenticatedDepartemenRoute._addFileChildren(
+    AuthenticatedDepartemenRouteChildren,
+  )
+
+interface AuthenticatedJenisBarangRouteChildren {
+  AuthenticatedJenisBarangIdRoute: typeof AuthenticatedJenisBarangIdRoute
+  AuthenticatedJenisBarangIndexRoute: typeof AuthenticatedJenisBarangIndexRoute
+}
+
+const AuthenticatedJenisBarangRouteChildren: AuthenticatedJenisBarangRouteChildren =
+  {
+    AuthenticatedJenisBarangIdRoute: AuthenticatedJenisBarangIdRoute,
+    AuthenticatedJenisBarangIndexRoute: AuthenticatedJenisBarangIndexRoute,
+  }
+
+const AuthenticatedJenisBarangRouteWithChildren =
+  AuthenticatedJenisBarangRoute._addFileChildren(
+    AuthenticatedJenisBarangRouteChildren,
+  )
+
+interface AuthenticatedMitraRouteChildren {
+  AuthenticatedMitraIdRoute: typeof AuthenticatedMitraIdRoute
+  AuthenticatedMitraIndexRoute: typeof AuthenticatedMitraIndexRoute
+}
+
+const AuthenticatedMitraRouteChildren: AuthenticatedMitraRouteChildren = {
+  AuthenticatedMitraIdRoute: AuthenticatedMitraIdRoute,
+  AuthenticatedMitraIndexRoute: AuthenticatedMitraIndexRoute,
+}
+
+const AuthenticatedMitraRouteWithChildren =
+  AuthenticatedMitraRoute._addFileChildren(AuthenticatedMitraRouteChildren)
+
+interface AuthenticatedPermissionsRouteChildren {
+  AuthenticatedPermissionsIdRoute: typeof AuthenticatedPermissionsIdRoute
+  AuthenticatedPermissionsIndexRoute: typeof AuthenticatedPermissionsIndexRoute
+}
+
+const AuthenticatedPermissionsRouteChildren: AuthenticatedPermissionsRouteChildren =
+  {
+    AuthenticatedPermissionsIdRoute: AuthenticatedPermissionsIdRoute,
+    AuthenticatedPermissionsIndexRoute: AuthenticatedPermissionsIndexRoute,
+  }
+
+const AuthenticatedPermissionsRouteWithChildren =
+  AuthenticatedPermissionsRoute._addFileChildren(
+    AuthenticatedPermissionsRouteChildren,
+  )
+
 interface AuthenticatedReportPengirimanRouteChildren {
   AuthenticatedReportPengirimanIdRoute: typeof AuthenticatedReportPengirimanIdRoute
+  AuthenticatedReportPengirimanIndexRoute: typeof AuthenticatedReportPengirimanIndexRoute
 }
 
 const AuthenticatedReportPengirimanRouteChildren: AuthenticatedReportPengirimanRouteChildren =
   {
     AuthenticatedReportPengirimanIdRoute: AuthenticatedReportPengirimanIdRoute,
+    AuthenticatedReportPengirimanIndexRoute:
+      AuthenticatedReportPengirimanIndexRoute,
   }
 
 const AuthenticatedReportPengirimanRouteWithChildren =
@@ -313,25 +595,25 @@ const AuthenticatedReportPengirimanRouteWithChildren =
   )
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedBarangRoute: typeof AuthenticatedBarangRoute
+  AuthenticatedBarangRoute: typeof AuthenticatedBarangRouteWithChildren
   AuthenticatedCompanyRoute: typeof AuthenticatedCompanyRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedDepartemenRoute: typeof AuthenticatedDepartemenRoute
-  AuthenticatedJenisBarangRoute: typeof AuthenticatedJenisBarangRoute
-  AuthenticatedMitraRoute: typeof AuthenticatedMitraRoute
-  AuthenticatedPermissionsRoute: typeof AuthenticatedPermissionsRoute
+  AuthenticatedDepartemenRoute: typeof AuthenticatedDepartemenRouteWithChildren
+  AuthenticatedJenisBarangRoute: typeof AuthenticatedJenisBarangRouteWithChildren
+  AuthenticatedMitraRoute: typeof AuthenticatedMitraRouteWithChildren
+  AuthenticatedPermissionsRoute: typeof AuthenticatedPermissionsRouteWithChildren
   AuthenticatedPokemonRoute: typeof AuthenticatedPokemonRoute
   AuthenticatedReportPengirimanRoute: typeof AuthenticatedReportPengirimanRouteWithChildren
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedBarangRoute: AuthenticatedBarangRoute,
+  AuthenticatedBarangRoute: AuthenticatedBarangRouteWithChildren,
   AuthenticatedCompanyRoute: AuthenticatedCompanyRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
-  AuthenticatedDepartemenRoute: AuthenticatedDepartemenRoute,
-  AuthenticatedJenisBarangRoute: AuthenticatedJenisBarangRoute,
-  AuthenticatedMitraRoute: AuthenticatedMitraRoute,
-  AuthenticatedPermissionsRoute: AuthenticatedPermissionsRoute,
+  AuthenticatedDepartemenRoute: AuthenticatedDepartemenRouteWithChildren,
+  AuthenticatedJenisBarangRoute: AuthenticatedJenisBarangRouteWithChildren,
+  AuthenticatedMitraRoute: AuthenticatedMitraRouteWithChildren,
+  AuthenticatedPermissionsRoute: AuthenticatedPermissionsRouteWithChildren,
   AuthenticatedPokemonRoute: AuthenticatedPokemonRoute,
   AuthenticatedReportPengirimanRoute:
     AuthenticatedReportPengirimanRouteWithChildren,

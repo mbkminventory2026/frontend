@@ -1,31 +1,5 @@
-import { createFileRoute } from '@tanstack/vue-router'
-import DepartemenPage from '@/pages/departemen/departemen.vue'
-import { createTableParamsSchema } from '@/schemas/table-params'
-import { validateTableSearchRedirect, stripTableDefaults } from '@/lib/table-utils'
-
-export const departemenColumns: [string, ...string[]] = [
-    'created_at',
-    'id_departemen',
-    'nama_departemen'
-]
-
-export const departemenSchema = createTableParamsSchema(departemenColumns)
+import { createFileRoute, Outlet } from '@tanstack/vue-router'
 
 export const Route = createFileRoute('/_authenticated/departemen')({
-    validateSearch: (search: Record<string, unknown>) => {
-        const parsed = departemenSchema.parse(search)
-        return stripTableDefaults(parsed)
-    },
-
-    beforeLoad: ({ search, location }) => {
-        validateTableSearchRedirect(
-            '/_authenticated/departemen',
-            location.search as Record<string, any>,
-            search
-        )
-    },
-    component: DepartemenPage,
-    staticData: {
-        breadcrumb: 'Departemen'
-    }
+  component: Outlet,
 })

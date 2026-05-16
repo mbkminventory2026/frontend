@@ -160,8 +160,8 @@ onMounted(async () => {
     }
 });
 
-const onProvinceChange = async (value: string) => {
-    selectedProvince.value = value;
+const onProvinceChange = async (value: any) => {
+    selectedProvince.value = value as string;
     const prov = provinces.value.find(p => p.name === value);
     selectedRegency.value = '';
     selectedDistrict.value = '';
@@ -170,16 +170,16 @@ const onProvinceChange = async (value: string) => {
     if (prov) await fetchRegencies(prov.id);
 }
 
-const onRegencyChange = async (value: string) => {
-    selectedRegency.value = value;
+const onRegencyChange = async (value: any) => {
+    selectedRegency.value = value as string;
     const reg = regencies.value.find(r => r.name === value);
     selectedDistrict.value = '';
     districts.value = [];
     if (reg) await fetchDistricts(reg.id);
 }
 
-const onDistrictChange = (value: string) => {
-    selectedDistrict.value = value;
+const onDistrictChange = (value: any) => {
+    selectedDistrict.value = value as string;
 }
 
 </script>

@@ -26,8 +26,18 @@ export function useForm<T = any>(options: UseFormOptions) {
     isLoading.value = true
     try {
       const response = await options.api.get(...args)
-      // Standardize response: handle array vs object
-      const data = Array.isArray(response.results) ? response.results[0] : response.results
+      // Standardize response: handle both { results: [...] } and direct data formats
+      let data: any
+      if (response?.results !== undefined) {
+        // Wrapped format from list endpoints: { results: [...], count: N }
+        data = Array.isArray(response.results) ? response.results[0] : response.results
+      } else if (Array.isArray(response)) {
+        // Direct array response from getById endpoints
+        data = response[0]
+      } else {
+        // Direct object response
+        data = response
+      }
       
       if (data) {
         values.value = { ...data }

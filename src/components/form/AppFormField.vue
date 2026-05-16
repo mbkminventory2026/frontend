@@ -5,13 +5,21 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import AppFilePicker from '@/components/AppFilePicker.vue'
 import AppAddressPicker from '@/components/AppAddressPicker.vue'
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select'
 
 interface Props {
   name: string
   label?: string
-  type?: 'text' | 'textarea' | 'email' | 'tel' | 'file' | 'address'
+  type?: 'text' | 'textarea' | 'email' | 'tel' | 'file' | 'address' | 'select' | 'number' | 'date'
   placeholder?: string
   className?: string
+  options?: { label: string, value: string | number }[]
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -43,6 +51,20 @@ const { values } = form
     <!-- Address Picker -->
     <template v-else-if="props.type === 'address'">
       <AppAddressPicker v-model="values[props.name]" />
+    </template>
+
+    <!-- Select -->
+    <template v-else-if="props.type === 'select'">
+      <Select v-model="values[props.name]">
+        <SelectTrigger>
+          <SelectValue :placeholder="props.placeholder" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem v-for="opt in props.options" :key="opt.value" :value="String(opt.value)">
+            {{ opt.label }}
+          </SelectItem>
+        </SelectContent>
+      </Select>
     </template>
 
     <!-- Textarea -->

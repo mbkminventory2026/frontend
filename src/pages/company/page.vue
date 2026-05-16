@@ -11,7 +11,7 @@ import {
 } from 'lucide-vue-next';
 
 import { getCompany, updateCompany } from '@/api/company/company';
-import { useForm } from '@/composables/useForm';
+import { useForm } from '@/composables/form/useForm';
 import { useAddressField } from '@/composables/form/useAddressField';
 
 import { Button } from '@/components/ui/button';

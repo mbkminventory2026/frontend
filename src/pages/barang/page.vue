@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { h, ref, watch, onMounted } from 'vue';
-import { useSearch } from '@tanstack/vue-router';
-import { PlusIcon, EyeIcon, BuildingIcon, PencilIcon } from 'lucide-vue-next';
+import { useSearch, useRouter } from '@tanstack/vue-router';
+import { PlusIcon, EyeIcon, PencilIcon } from 'lucide-vue-next';
 
 import { deleteBarang, getBarang, getBarangById, createBarang, updateBarang } from '@/api/barang/barang';
 import { getJenisBarang } from '@/api/barang/jenisBarang';
 import { getMitra } from '@/api/mitra/mitra';
 import { type BarangResponseItem } from '@/schemas/barang/response';
-import { barangSchema } from '@/routes/_authenticated/barang';
+import { barangSchema } from '@/routes/_authenticated/barang.index';
 
 import DataTable from '@/components/DataTable.vue';
 import AppDialog from '@/components/AppDialog.vue';
@@ -18,24 +18,14 @@ import { useDialog } from '@/composables/useDialog';
 import { type DialogSchemaType } from '@/schemas/dialog/dialog';
 import { formatDate } from '@/lib/formatter';
 import DeleteButton from '@/components/DeleteButton.vue';
-import AppDetailView from '@/components/AppDetailView.vue';
-import { 
-    Dialog, 
-    DialogContent, 
-} from '@/components/ui/dialog';
-import { Package, Hash, Layers } from 'lucide-vue-next';
-import { type DetailSchema } from '@/schemas/detail/detail';
 import { computed } from 'vue';
 
-const search = useSearch({ from: '/_authenticated/barang' });
+const search = useSearch({ strict: false }) as any;
+const router = useRouter();
 
 const data = ref<BarangResponseItem[]>([]);
 const totalCount = ref(0);
 const isLoading = ref(false);
-
-const isDetailOpen = ref(false);
-const selectedDetailData = ref<any>(null);
-const isDetailLoading = ref(false);
 
 const jenisBarangOptions = ref<{ label: string, value: number }[]>([]);
 const mitraOptions = ref<{ label: string, value: number }[]>([]);
@@ -64,53 +54,13 @@ const fetchMitra = async () => {
     }
 }
 
-const detailSchema: DetailSchema = [
-  { 
-    key: 'id_barang', 
-    label: 'ID Barang', 
-    icon: Hash 
-  },
-  { 
-    key: 'kode', 
-    label: 'Kode',  
-  },
-  { 
-    key: 'nama_barang', 
-    label: 'Nama', 
-    icon: Package 
-  },
-  { 
-    key: 'nama_jenis_barang', 
-    label: 'Jenis Barang', 
-    icon: Layers,
-  },
-  { 
-    key: 'nama_perusahaan', 
-    label: 'Perusahaan', 
-    icon: BuildingIcon,
-  }
-
-];
-
-const handleViewDetail = async (id: number) => {
-    isDetailOpen.value = true;
-    isDetailLoading.value = true;
-    try {
-        const res = await getBarangById(id);
-        selectedDetailData.value = Array.isArray(res) ? res[0] : res;
-    } catch (error) {
-        console.error("Gagal fetch detail:", error);
-    } finally {
-        isDetailLoading.value = false;
-    }
-}
 
 const fetchData = async () => {
     isLoading.value = true;
     try {
-        const page = search.value.page ?? 1;
-        const pageSize = search.value.pageSize ?? 20;
-        const filter = search.value.filter ?? '';
+        const page = search.value?.page ?? 1;
+        const pageSize = search.value?.pageSize ?? 20;
+        const filter = search.value?.filter ?? '';
 
         const response = await getBarang({
             limit: pageSize,
@@ -162,7 +112,7 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
             h(Button, { 
                 variant: 'outline',
                 size: 'sm',
-                onClick: () => handleViewDetail(id) 
+                onClick: () => router.navigate({ to: '/barang/$id', params: { id: String(id) } }) 
             }, () => [
                 h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
                 'View'
@@ -286,18 +236,4 @@ watch(() => search, () => {
         @update:is-open="createDialog.isOpen.value = $event"
         @submit="createDialog.handleSubmit"
     />
-
-    <Dialog :open="isDetailOpen" @update:open="isDetailOpen = $event">
-        <DialogContent class="sm:max-w-[600px] p-0 overflow-hidden border-none bg-transparent shadow-none">
-            <AppDetailView
-                title="Quick View Barang"
-                description="Detail informasi barang."
-                :data="selectedDetailData"
-                :schema="detailSchema"
-                :is-loading="isDetailLoading"
-                :show-edit="false"
-                :show-delete="false"
-            />
-        </DialogContent>
-    </Dialog>
 </template>

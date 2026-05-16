@@ -1,17 +1,16 @@
 <script setup lang="ts">
 import { h, ref, watch, onMounted } from 'vue';
-import { useSearch } from '@tanstack/vue-router';
-import { PlusIcon, EyeIcon, PencilIcon, Hash, Building, Mail, Phone, Globe, Calendar } from 'lucide-vue-next';
+import { useSearch, useRouter } from '@tanstack/vue-router';
+import { PlusIcon, EyeIcon, PencilIcon } from 'lucide-vue-next';
 
 import { 
     deleteMitra, 
     getMitra, 
-    getMitraById, 
     createMitra, 
     updateMitra 
 } from '@/api/mitra/mitra';
 import { type MitraResponseItem } from '@/schemas/mitra/response';
-import { mitraSchema } from '@/routes/_authenticated/mitra';
+import { mitraSchema } from '@/routes/_authenticated/mitra.index';
 
 import DataTable from '@/components/DataTable.vue';
 import AppDialog from '@/components/AppDialog.vue';
@@ -22,77 +21,21 @@ import { useDialog } from '@/composables/useDialog';
 import { type DialogSchemaType } from '@/schemas/dialog/dialog';
 import { formatDate } from '@/lib/formatter';
 import DeleteButton from '@/components/DeleteButton.vue';
-import AppDetailView from '@/components/AppDetailView.vue';
-import { 
-    Dialog, 
-    DialogContent, 
-} from '@/components/ui/dialog';
-import { type DetailSchema } from '@/schemas/detail/detail';
 import { computed } from 'vue';
 
-const search = useSearch({ from: '/_authenticated/mitra' });
+const search = useSearch({ strict: false }) as any;
+const router = useRouter();
 
 const data = ref<MitraResponseItem[]>([]);
 const totalCount = ref(0);
 const isLoading = ref(false);
 
-const isDetailOpen = ref(false);
-const selectedDetailData = ref<any>(null);
-const isDetailLoading = ref(false);
-
-const detailSchema: DetailSchema = [
-  { 
-    key: 'id_mitra', 
-    label: 'ID Mitra', 
-    icon: Hash 
-  },
-  { 
-    key: 'nama_perusahaan', 
-    label: 'Nama Perusahaan', 
-    icon: Building 
-  },
-  { 
-    key: 'tipe_perusahaan', 
-    label: 'Tipe', 
-    icon: Globe 
-  },
-  { 
-    key: 'email', 
-    label: 'Email', 
-    icon: Mail 
-  },
-  { 
-    key: 'no_telp', 
-    label: 'No. Telp', 
-    icon: Phone 
-  },
-  {
-    key: 'created_at',
-    label: 'Created At',
-    icon: Calendar,
-    formatter: (val: string) => formatDate(val)
-  }
-];
-
-const handleViewDetail = async (id: number) => {
-    isDetailOpen.value = true;
-    isDetailLoading.value = true;
-    try {
-        const res = await getMitraById(id);
-        selectedDetailData.value = Array.isArray(res) ? res[0] : res;
-    } catch (error) {
-        console.error("Gagal fetch detail:", error);
-    } finally {
-        isDetailLoading.value = false;
-    }
-}
-
 const fetchData = async () => {
     isLoading.value = true;
     try {
-        const page = search.value.page ?? 1;
-        const pageSize = search.value.pageSize ?? 20;
-        const filter = search.value.filter ?? '';
+        const page = search.value?.page ?? 1;
+        const pageSize = search.value?.pageSize ?? 20;
+        const filter = search.value?.filter ?? '';
 
         const response = await getMitra({
             limit: pageSize,
@@ -137,7 +80,7 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
             h(Button, { 
                 variant: 'outline',
                 size: 'sm',
-                onClick: () => handleViewDetail(id) 
+                onClick: () => router.navigate({ to: '/mitra/$id', params: { id: String(id) } }) 
             }, () => [
                 h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
                 'View'
@@ -258,18 +201,4 @@ watch(() => search, () => {
         @update:is-open="createDialog.isOpen.value = $event"
         @submit="createDialog.handleSubmit"
     />
-
-    <Dialog :open="isDetailOpen" @update:open="isDetailOpen = $event">
-        <DialogContent class="sm:max-w-[600px] p-0 overflow-hidden border-none bg-transparent shadow-none">
-            <AppDetailView
-                title="Quick View Mitra"
-                description="Detail informasi mitra."
-                :data="selectedDetailData"
-                :schema="detailSchema"
-                :is-loading="isDetailLoading"
-                :show-edit="false"
-                :show-delete="false"
-            />
-        </DialogContent>
-    </Dialog>
 </template>
