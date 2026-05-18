@@ -64,6 +64,15 @@ export const getPOClients = async (params: {
     };
 };
 
+const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = error => reject(error);
+    });
+}
+
 export const createPOClient = async (data: any) => {
     if (data.tanggal && data.tanggal.includes('T')) {
         data.tanggal = data.tanggal.split('T')[0];
@@ -71,6 +80,12 @@ export const createPOClient = async (data: any) => {
     if (data.delivery && data.delivery.includes('T')) {
         data.delivery = data.delivery.split('T')[0];
     }
+    
+    // Check if file is a File object and convert to base64
+    if (data.file instanceof File) {
+        data.file = await fileToBase64(data.file);
+    }
+    
     const snakeCaseValue = mapPayloadToSnakeCase(data);
     return await apiClient.post('/api/v1/po-clients', snakeCaseValue);
 };
@@ -82,6 +97,12 @@ export const updatePOClient = async (id: string | number, data: any) => {
     if (data.delivery && data.delivery.includes('T')) {
         data.delivery = data.delivery.split('T')[0];
     }
+    
+    // Check if file is a File object and convert to base64
+    if (data.file instanceof File) {
+        data.file = await fileToBase64(data.file);
+    }
+    
     const snakeCaseValue = mapPayloadToSnakeCase(data);
     return await apiClient.put(`/api/v1/po-clients/${id}`, snakeCaseValue);
 };

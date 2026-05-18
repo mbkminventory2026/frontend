@@ -34,12 +34,14 @@ import { Route as AuthenticatedJenisBarangIndexRouteImport } from './routes/_aut
 import { Route as AuthenticatedDepartemenIndexRouteImport } from './routes/_authenticated/departemen.index'
 import { Route as AuthenticatedBarangIndexRouteImport } from './routes/_authenticated/barang.index'
 import { Route as AuthenticatedReportPengirimanIdRouteImport } from './routes/_authenticated/report-pengiriman.$id'
+import { Route as AuthenticatedPoClientCreateRouteImport } from './routes/_authenticated/po-client.create'
 import { Route as AuthenticatedPoClientIdRouteImport } from './routes/_authenticated/po-client.$id'
 import { Route as AuthenticatedPermissionsIdRouteImport } from './routes/_authenticated/permissions.$id'
 import { Route as AuthenticatedMitraIdRouteImport } from './routes/_authenticated/mitra.$id'
 import { Route as AuthenticatedJenisBarangIdRouteImport } from './routes/_authenticated/jenis-barang.$id'
 import { Route as AuthenticatedDepartemenIdRouteImport } from './routes/_authenticated/departemen.$id'
 import { Route as AuthenticatedBarangIdRouteImport } from './routes/_authenticated/barang.$id'
+import { Route as AuthenticatedPoClientEditIdRouteImport } from './routes/_authenticated/po-client.edit.$id'
 
 const RegisterMitraRoute = RegisterMitraRouteImport.update({
   id: '/register-mitra',
@@ -174,6 +176,12 @@ const AuthenticatedReportPengirimanIdRoute =
     path: '/$id',
     getParentRoute: () => AuthenticatedReportPengirimanRoute,
   } as any)
+const AuthenticatedPoClientCreateRoute =
+  AuthenticatedPoClientCreateRouteImport.update({
+    id: '/create',
+    path: '/create',
+    getParentRoute: () => AuthenticatedPoClientRoute,
+  } as any)
 const AuthenticatedPoClientIdRoute = AuthenticatedPoClientIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -207,6 +215,12 @@ const AuthenticatedBarangIdRoute = AuthenticatedBarangIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => AuthenticatedBarangRoute,
 } as any)
+const AuthenticatedPoClientEditIdRoute =
+  AuthenticatedPoClientEditIdRouteImport.update({
+    id: '/edit/$id',
+    path: '/edit/$id',
+    getParentRoute: () => AuthenticatedPoClientRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
@@ -229,6 +243,7 @@ export interface FileRoutesByFullPath {
   '/mitra/$id': typeof AuthenticatedMitraIdRoute
   '/permissions/$id': typeof AuthenticatedPermissionsIdRoute
   '/po-client/$id': typeof AuthenticatedPoClientIdRoute
+  '/po-client/create': typeof AuthenticatedPoClientCreateRoute
   '/report-pengiriman/$id': typeof AuthenticatedReportPengirimanIdRoute
   '/barang/': typeof AuthenticatedBarangIndexRoute
   '/departemen/': typeof AuthenticatedDepartemenIndexRoute
@@ -238,6 +253,7 @@ export interface FileRoutesByFullPath {
   '/po-client/': typeof AuthenticatedPoClientIndexRoute
   '/report-pengiriman/': typeof AuthenticatedReportPengirimanIndexRoute
   '/users/': typeof AuthenticatedUsersIndexRoute
+  '/po-client/edit/$id': typeof AuthenticatedPoClientEditIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof PublicIndexRoute
@@ -252,6 +268,7 @@ export interface FileRoutesByTo {
   '/mitra/$id': typeof AuthenticatedMitraIdRoute
   '/permissions/$id': typeof AuthenticatedPermissionsIdRoute
   '/po-client/$id': typeof AuthenticatedPoClientIdRoute
+  '/po-client/create': typeof AuthenticatedPoClientCreateRoute
   '/report-pengiriman/$id': typeof AuthenticatedReportPengirimanIdRoute
   '/barang': typeof AuthenticatedBarangIndexRoute
   '/departemen': typeof AuthenticatedDepartemenIndexRoute
@@ -261,6 +278,7 @@ export interface FileRoutesByTo {
   '/po-client': typeof AuthenticatedPoClientIndexRoute
   '/report-pengiriman': typeof AuthenticatedReportPengirimanIndexRoute
   '/users': typeof AuthenticatedUsersIndexRoute
+  '/po-client/edit/$id': typeof AuthenticatedPoClientEditIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -286,6 +304,7 @@ export interface FileRoutesById {
   '/_authenticated/mitra/$id': typeof AuthenticatedMitraIdRoute
   '/_authenticated/permissions/$id': typeof AuthenticatedPermissionsIdRoute
   '/_authenticated/po-client/$id': typeof AuthenticatedPoClientIdRoute
+  '/_authenticated/po-client/create': typeof AuthenticatedPoClientCreateRoute
   '/_authenticated/report-pengiriman/$id': typeof AuthenticatedReportPengirimanIdRoute
   '/_authenticated/barang/': typeof AuthenticatedBarangIndexRoute
   '/_authenticated/departemen/': typeof AuthenticatedDepartemenIndexRoute
@@ -295,6 +314,7 @@ export interface FileRoutesById {
   '/_authenticated/po-client/': typeof AuthenticatedPoClientIndexRoute
   '/_authenticated/report-pengiriman/': typeof AuthenticatedReportPengirimanIndexRoute
   '/_authenticated/users/': typeof AuthenticatedUsersIndexRoute
+  '/_authenticated/po-client/edit/$id': typeof AuthenticatedPoClientEditIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -319,6 +339,7 @@ export interface FileRouteTypes {
     | '/mitra/$id'
     | '/permissions/$id'
     | '/po-client/$id'
+    | '/po-client/create'
     | '/report-pengiriman/$id'
     | '/barang/'
     | '/departemen/'
@@ -328,6 +349,7 @@ export interface FileRouteTypes {
     | '/po-client/'
     | '/report-pengiriman/'
     | '/users/'
+    | '/po-client/edit/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -342,6 +364,7 @@ export interface FileRouteTypes {
     | '/mitra/$id'
     | '/permissions/$id'
     | '/po-client/$id'
+    | '/po-client/create'
     | '/report-pengiriman/$id'
     | '/barang'
     | '/departemen'
@@ -351,6 +374,7 @@ export interface FileRouteTypes {
     | '/po-client'
     | '/report-pengiriman'
     | '/users'
+    | '/po-client/edit/$id'
   id:
     | '__root__'
     | '/_authenticated'
@@ -375,6 +399,7 @@ export interface FileRouteTypes {
     | '/_authenticated/mitra/$id'
     | '/_authenticated/permissions/$id'
     | '/_authenticated/po-client/$id'
+    | '/_authenticated/po-client/create'
     | '/_authenticated/report-pengiriman/$id'
     | '/_authenticated/barang/'
     | '/_authenticated/departemen/'
@@ -384,6 +409,7 @@ export interface FileRouteTypes {
     | '/_authenticated/po-client/'
     | '/_authenticated/report-pengiriman/'
     | '/_authenticated/users/'
+    | '/_authenticated/po-client/edit/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -570,6 +596,13 @@ declare module '@tanstack/vue-router' {
       preLoaderRoute: typeof AuthenticatedReportPengirimanIdRouteImport
       parentRoute: typeof AuthenticatedReportPengirimanRoute
     }
+    '/_authenticated/po-client/create': {
+      id: '/_authenticated/po-client/create'
+      path: '/create'
+      fullPath: '/po-client/create'
+      preLoaderRoute: typeof AuthenticatedPoClientCreateRouteImport
+      parentRoute: typeof AuthenticatedPoClientRoute
+    }
     '/_authenticated/po-client/$id': {
       id: '/_authenticated/po-client/$id'
       path: '/$id'
@@ -611,6 +644,13 @@ declare module '@tanstack/vue-router' {
       fullPath: '/barang/$id'
       preLoaderRoute: typeof AuthenticatedBarangIdRouteImport
       parentRoute: typeof AuthenticatedBarangRoute
+    }
+    '/_authenticated/po-client/edit/$id': {
+      id: '/_authenticated/po-client/edit/$id'
+      path: '/edit/$id'
+      fullPath: '/po-client/edit/$id'
+      preLoaderRoute: typeof AuthenticatedPoClientEditIdRouteImport
+      parentRoute: typeof AuthenticatedPoClientRoute
     }
   }
 }
@@ -691,12 +731,16 @@ const AuthenticatedPermissionsRouteWithChildren =
 
 interface AuthenticatedPoClientRouteChildren {
   AuthenticatedPoClientIdRoute: typeof AuthenticatedPoClientIdRoute
+  AuthenticatedPoClientCreateRoute: typeof AuthenticatedPoClientCreateRoute
   AuthenticatedPoClientIndexRoute: typeof AuthenticatedPoClientIndexRoute
+  AuthenticatedPoClientEditIdRoute: typeof AuthenticatedPoClientEditIdRoute
 }
 
 const AuthenticatedPoClientRouteChildren: AuthenticatedPoClientRouteChildren = {
   AuthenticatedPoClientIdRoute: AuthenticatedPoClientIdRoute,
+  AuthenticatedPoClientCreateRoute: AuthenticatedPoClientCreateRoute,
   AuthenticatedPoClientIndexRoute: AuthenticatedPoClientIndexRoute,
+  AuthenticatedPoClientEditIdRoute: AuthenticatedPoClientEditIdRoute,
 }
 
 const AuthenticatedPoClientRouteWithChildren =

@@ -15,12 +15,24 @@ export const formatDate = (dateString: string | Date) : string => {
     if (!dateString) return '-';
 
     const date = new Date(dateString);
-    return Intl.DateTimeFormat('en-US', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        // timeZone: 'short'
-    }).format(date)
+    if (isNaN(date.getTime())) return '-';
+
+    const hasTime = typeof dateString === 'string' && (dateString.includes('T') || dateString.includes(':') || dateString.includes(' '));
+
+    const datePart = Intl.DateTimeFormat('en-US', {
+        month: '2-digit',
+        day: '2-digit',
+        year: 'numeric'
+    }).format(date);
+
+    if (hasTime || typeof dateString !== 'string') {
+        const timePart = Intl.DateTimeFormat('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        }).format(date);
+        return `${datePart} ${timePart}`;
+    }
+
+    return datePart;
 }

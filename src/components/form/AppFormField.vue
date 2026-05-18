@@ -43,7 +43,7 @@ const { values } = form
     <template v-if="props.type === 'file'">
       <AppFilePicker 
         v-model="values[props.name]"
-        accept="image/*"
+        accept="image/*,application/pdf"
         :preview="true"
       />
     </template>
