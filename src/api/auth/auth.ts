@@ -13,3 +13,8 @@ export const loginApi = async (data: LoginPayload & { turnstile_token: string })
     const response = await apiClient.post<LoginResponse>('/api/v1/auth/login', data)
     return response.data;
 }
+
+export const registerMitraApi = async (data: any): Promise<any> => {
+    const response = await apiClient.post('/api/v1/auth/register-mitra', data)
+    return response.data;
+}

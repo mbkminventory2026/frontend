@@ -1,0 +1,67 @@
+import { apiClient } from "@/lib/apiClient";
+import { mapPayloadToSnakeCase } from "@/lib/utils";
+
+export interface UserResponseItem {
+    id_user: number;
+    username: string;
+    is_manager: boolean;
+    status: string;
+    id_departemen?: number;
+    id_mitra?: number;
+    nama_departemen?: string;
+    nama_perusahaan?: string;
+    created_at: string;
+    hak_akses_ids?: number[];
+}
+
+export const getUsers = async (params: {
+    limit: number,
+    offset: number,
+    search?: string
+}) => {
+    const response = await apiClient.get<UserResponseItem[]>('/api/v1/users', {
+        params: {
+            limit: params.limit,
+            offset: params.offset,
+            q: params.search
+        }
+    })
+
+    return {
+        results: response.data,
+        count: Number(response.headers['x-total-count']) || response.data?.length || 0
+    }
+}
+
+export const createUser = async (data: any) => {
+    const snakeCaseValue = mapPayloadToSnakeCase(data)
+    return await apiClient.post('/api/v1/users', snakeCaseValue);
+}
+
+export const updateUser = async (id: string | number, data: any) => {
+    const snakeCaseValue = mapPayloadToSnakeCase(data)
+    return await apiClient.put(`/api/v1/users/${id}`, snakeCaseValue);
+}
+
+export const deleteUser = async (id: string | number) => {
+    if (!id) throw new Error("ID is required for deletion");
+    return await apiClient.delete(`/api/v1/users/${id}`);
+}
+
+export const getUserById = async (id: string | number) => {
+    if (!id) throw new Error("ID is required");
+    const response = await apiClient.get<UserResponseItem>(`/api/v1/users/${id}`);
+    return response.data;
+}
+
+export const approveUser = async (id: string | number) => {
+    if (!id) throw new Error("ID is required for approval");
+    const response = await apiClient.put(`/api/v1/users/${id}/approve`);
+    return response.data;
+}
+
+export const rejectUser = async (id: string | number) => {
+    if (!id) throw new Error("ID is required for rejection");
+    const response = await apiClient.put(`/api/v1/users/${id}/reject`);
+    return response.data;
+}

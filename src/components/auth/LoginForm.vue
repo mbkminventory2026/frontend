@@ -61,7 +61,7 @@ const {
         </Button>
         <div class="text-center">
         Tidak punya akun?
-        <Link to="#" class="underline-offset-4 hover:underline">
+        <Link to="/register-mitra" class="underline-offset-4 hover:underline">
             Sign up
         </Link>
         </div>

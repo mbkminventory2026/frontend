@@ -12,6 +12,7 @@ export const FieldTypeEnum = z.enum([
     "switch",
     "file",
     "image",
+    "multi-checkbox",
 ]);
 
 export const FieldPositionEnum = z.enum([

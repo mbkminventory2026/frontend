@@ -196,6 +196,14 @@ function buildFieldZodSchema(field: DialogField): z.ZodTypeAny {
       return schema
     }
 
+    case 'multi-checkbox': {
+      let schema = z.array(z.union([z.string(), z.number()]))
+      if (isRequired) {
+        return schema.min(1, `${field.label} wajib diisi`)
+      }
+      return schema.optional()
+    }
+
     case 'file':
     case 'image': {
       // File inputs produce File objects; use z.any() with custom refinement
@@ -287,6 +295,13 @@ function coerceValue(value: any, field: DialogField): any {
       // If all options are numeric, coerce to number
       const allNumeric = field.options?.every((opt) => typeof opt.value === 'number')
       return allNumeric ? Number(value) : value
+    }
+    case 'multi-checkbox': {
+      if (Array.isArray(value)) {
+        const allNumeric = field.options?.every((opt) => typeof opt.value === 'number')
+        return allNumeric ? value.map(Number) : value
+      }
+      return value
     }
     default:
       return value
@@ -420,6 +435,37 @@ function getFileAccept(field: DialogField): string | undefined {
                                     </div>
                                 </template>
 
+                                <!-- Multi Checkbox -->
+                                <template v-else-if="item.type === 'multi-checkbox'">
+                                    <div class="grid grid-cols-2 gap-2 mt-1 border rounded-lg p-3 bg-slate-50/50">
+                                        <div 
+                                            v-for="opt in item.options" 
+                                            :key="String(opt.value)"
+                                            class="flex items-center gap-2"
+                                        >
+                                            <Checkbox
+                                                :id="`${item.key}-${opt.value}`"
+                                                :checked="Array.isArray(value) && value.includes(opt.value)"
+                                                :disabled="isFieldDisabled(item)"
+                                                @update:checked="(checked: boolean) => {
+                                                    const currentVals = Array.isArray(value) ? [...value] : [];
+                                                    if (checked) {
+                                                        currentVals.push(opt.value);
+                                                    } else {
+                                                        const idx = currentVals.indexOf(opt.value);
+                                                        if (idx > -1) currentVals.splice(idx, 1);
+                                                    }
+                                                    handleChange(currentVals);
+                                                    onFieldChange(item.key, currentVals);
+                                                }"
+                                            />
+                                            <label :for="`${item.key}-${opt.value}`" class="text-xs text-slate-700 cursor-pointer select-none font-medium">
+                                                {{ opt.label }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                </template>
+
                                 <!-- Switch -->
                                 <template v-else-if="item.type === 'switch'">
                                     <div class="flex items-center gap-2 mt-1">
@@ -536,6 +582,37 @@ function getFileAccept(field: DialogField): string | undefined {
                                     </div>
                                 </template>
 
+                                <!-- Multi Checkbox -->
+                                <template v-else-if="item.type === 'multi-checkbox'">
+                                    <div class="grid grid-cols-2 gap-2 mt-1 border rounded-lg p-3 bg-slate-50/50">
+                                        <div 
+                                            v-for="opt in item.options" 
+                                            :key="String(opt.value)"
+                                            class="flex items-center gap-2"
+                                        >
+                                            <Checkbox
+                                                :id="`${item.key}-${opt.value}`"
+                                                :checked="Array.isArray(value) && value.includes(opt.value)"
+                                                :disabled="isFieldDisabled(item)"
+                                                @update:checked="(checked: boolean) => {
+                                                    const currentVals = Array.isArray(value) ? [...value] : [];
+                                                    if (checked) {
+                                                        currentVals.push(opt.value);
+                                                    } else {
+                                                        const idx = currentVals.indexOf(opt.value);
+                                                        if (idx > -1) currentVals.splice(idx, 1);
+                                                    }
+                                                    handleChange(currentVals);
+                                                    onFieldChange(item.key, currentVals);
+                                                }"
+                                            />
+                                            <label :for="`${item.key}-${opt.value}`" class="text-xs text-slate-700 cursor-pointer select-none font-medium">
+                                                {{ opt.label }}
+                                            </label>
+                                        </div>
+                                    </div>
+                                </template>
+
                                 <!-- Switch -->
                                 <template v-else-if="item.type === 'switch'">
                                     <div class="flex items-center gap-2 mt-1">
@@ -649,6 +726,37 @@ function getFileAccept(field: DialogField): string | undefined {
                                         <label :for="item.key" class="text-sm text-muted-foreground cursor-pointer select-none">
                                             {{ item.placeholder }}
                                         </label>
+                                    </div>
+                                </template>
+
+                                <!-- Multi Checkbox -->
+                                <template v-else-if="item.type === 'multi-checkbox'">
+                                    <div class="grid grid-cols-2 gap-2 mt-1 border rounded-lg p-3 bg-slate-50/50">
+                                        <div 
+                                            v-for="opt in item.options" 
+                                            :key="String(opt.value)"
+                                            class="flex items-center gap-2"
+                                        >
+                                            <Checkbox
+                                                :id="`${item.key}-${opt.value}`"
+                                                :checked="Array.isArray(value) && value.includes(opt.value)"
+                                                :disabled="isFieldDisabled(item)"
+                                                @update:checked="(checked: boolean) => {
+                                                    const currentVals = Array.isArray(value) ? [...value] : [];
+                                                    if (checked) {
+                                                        currentVals.push(opt.value);
+                                                    } else {
+                                                        const idx = currentVals.indexOf(opt.value);
+                                                        if (idx > -1) currentVals.splice(idx, 1);
+                                                    }
+                                                    handleChange(currentVals);
+                                                    onFieldChange(item.key, currentVals);
+                                                }"
+                                            />
+                                            <label :for="`${item.key}-${opt.value}`" class="text-xs text-slate-700 cursor-pointer select-none font-medium">
+                                                {{ opt.label }}
+                                            </label>
+                                        </div>
                                     </div>
                                 </template>
 
