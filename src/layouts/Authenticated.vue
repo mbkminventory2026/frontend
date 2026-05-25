@@ -18,7 +18,8 @@ import {
   Users,
   Truck,
   LifeBuoy,
-  Send
+  Send,
+  Sparkles
 } from "lucide-vue-next"
 import { useAuthStore } from "@/store/authStore"
 import { computed } from "vue"
@@ -52,6 +53,11 @@ const navMainItems = computed(() => {
       url: "/dashboard",
       icon: LayoutDashboard,
       isActive: true,
+    },
+    {
+      title: "Estimasi AI (AI)",
+      url: "/ai-estimation",
+      icon: Sparkles,
     },
     {
       title: "Master Data",

@@ -25,6 +25,7 @@ import { Route as AuthenticatedDepartemenRouteImport } from './routes/_authentic
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedCompanyRouteImport } from './routes/_authenticated/company'
 import { Route as AuthenticatedBarangRouteImport } from './routes/_authenticated/barang'
+import { Route as AuthenticatedAiEstimationRouteImport } from './routes/_authenticated/ai-estimation'
 import { Route as AuthenticatedUsersIndexRouteImport } from './routes/_authenticated/users.index'
 import { Route as AuthenticatedReportPengirimanIndexRouteImport } from './routes/_authenticated/report-pengiriman.index'
 import { Route as AuthenticatedPoClientIndexRouteImport } from './routes/_authenticated/po-client.index'
@@ -124,6 +125,12 @@ const AuthenticatedBarangRoute = AuthenticatedBarangRouteImport.update({
   path: '/barang',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAiEstimationRoute =
+  AuthenticatedAiEstimationRouteImport.update({
+    id: '/ai-estimation',
+    path: '/ai-estimation',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedUsersIndexRoute = AuthenticatedUsersIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -226,6 +233,7 @@ export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
   '/login': typeof LoginRoute
   '/register-mitra': typeof RegisterMitraRoute
+  '/ai-estimation': typeof AuthenticatedAiEstimationRoute
   '/barang': typeof AuthenticatedBarangRouteWithChildren
   '/company': typeof AuthenticatedCompanyRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
@@ -259,6 +267,7 @@ export interface FileRoutesByTo {
   '/': typeof PublicIndexRoute
   '/login': typeof LoginRoute
   '/register-mitra': typeof RegisterMitraRoute
+  '/ai-estimation': typeof AuthenticatedAiEstimationRoute
   '/company': typeof AuthenticatedCompanyRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/pokemon': typeof AuthenticatedPokemonRoute
@@ -286,6 +295,7 @@ export interface FileRoutesById {
   '/_public': typeof PublicRouteWithChildren
   '/login': typeof LoginRoute
   '/register-mitra': typeof RegisterMitraRoute
+  '/_authenticated/ai-estimation': typeof AuthenticatedAiEstimationRoute
   '/_authenticated/barang': typeof AuthenticatedBarangRouteWithChildren
   '/_authenticated/company': typeof AuthenticatedCompanyRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
@@ -322,6 +332,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/register-mitra'
+    | '/ai-estimation'
     | '/barang'
     | '/company'
     | '/dashboard'
@@ -355,6 +366,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/register-mitra'
+    | '/ai-estimation'
     | '/company'
     | '/dashboard'
     | '/pokemon'
@@ -381,6 +393,7 @@ export interface FileRouteTypes {
     | '/_public'
     | '/login'
     | '/register-mitra'
+    | '/_authenticated/ai-estimation'
     | '/_authenticated/barang'
     | '/_authenticated/company'
     | '/_authenticated/dashboard'
@@ -531,6 +544,13 @@ declare module '@tanstack/vue-router' {
       path: '/barang'
       fullPath: '/barang'
       preLoaderRoute: typeof AuthenticatedBarangRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/ai-estimation': {
+      id: '/_authenticated/ai-estimation'
+      path: '/ai-estimation'
+      fullPath: '/ai-estimation'
+      preLoaderRoute: typeof AuthenticatedAiEstimationRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/users/': {
@@ -777,6 +797,7 @@ const AuthenticatedUsersRouteWithChildren =
   AuthenticatedUsersRoute._addFileChildren(AuthenticatedUsersRouteChildren)
 
 interface AuthenticatedRouteChildren {
+  AuthenticatedAiEstimationRoute: typeof AuthenticatedAiEstimationRoute
   AuthenticatedBarangRoute: typeof AuthenticatedBarangRouteWithChildren
   AuthenticatedCompanyRoute: typeof AuthenticatedCompanyRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
@@ -791,6 +812,7 @@ interface AuthenticatedRouteChildren {
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
+  AuthenticatedAiEstimationRoute: AuthenticatedAiEstimationRoute,
   AuthenticatedBarangRoute: AuthenticatedBarangRouteWithChildren,
   AuthenticatedCompanyRoute: AuthenticatedCompanyRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,

@@ -5,7 +5,7 @@ export const apiClient = axios.create({
     baseURL: 'http://localhost:8080',
     // baseURL: 'https://jsonplaceholder.typicode.com/',    // json placeholder
     // baseURL: 'https://rickandmortyapi.com/api/character',   // format meta
-    timeout: 10000,
+    timeout: 60000,
 });
 
 // Request -> menambahkan bearer token pada headers
