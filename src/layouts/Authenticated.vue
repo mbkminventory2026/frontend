@@ -107,6 +107,10 @@ const navMainItems = computed(() => {
           url: "/po-client",
         },
         {
+          title: "Work Order",
+          url: "/work-order",
+        },
+        {
           title: "Laporan Pengiriman",
           url: "/report-pengiriman",
         },

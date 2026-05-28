@@ -14,6 +14,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as PublicRouteImport } from './routes/_public'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as PublicIndexRouteImport } from './routes/_public/index'
+import { Route as AuthenticatedWorkOrderRouteImport } from './routes/_authenticated/work-order'
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
 import { Route as AuthenticatedReportPengirimanRouteImport } from './routes/_authenticated/report-pengiriman'
 import { Route as AuthenticatedPokemonRouteImport } from './routes/_authenticated/pokemon'
@@ -26,6 +27,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedCompanyRouteImport } from './routes/_authenticated/company'
 import { Route as AuthenticatedBarangRouteImport } from './routes/_authenticated/barang'
 import { Route as AuthenticatedAiEstimationRouteImport } from './routes/_authenticated/ai-estimation'
+import { Route as AuthenticatedWorkOrderIndexRouteImport } from './routes/_authenticated/work-order.index'
 import { Route as AuthenticatedUsersIndexRouteImport } from './routes/_authenticated/users.index'
 import { Route as AuthenticatedReportPengirimanIndexRouteImport } from './routes/_authenticated/report-pengiriman.index'
 import { Route as AuthenticatedPoClientIndexRouteImport } from './routes/_authenticated/po-client.index'
@@ -66,6 +68,11 @@ const PublicIndexRoute = PublicIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => PublicRoute,
+} as any)
+const AuthenticatedWorkOrderRoute = AuthenticatedWorkOrderRouteImport.update({
+  id: '/work-order',
+  path: '/work-order',
+  getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedUsersRoute = AuthenticatedUsersRouteImport.update({
   id: '/users',
@@ -130,6 +137,12 @@ const AuthenticatedAiEstimationRoute =
     id: '/ai-estimation',
     path: '/ai-estimation',
     getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedWorkOrderIndexRoute =
+  AuthenticatedWorkOrderIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedWorkOrderRoute,
   } as any)
 const AuthenticatedUsersIndexRoute = AuthenticatedUsersIndexRouteImport.update({
   id: '/',
@@ -245,6 +258,7 @@ export interface FileRoutesByFullPath {
   '/pokemon': typeof AuthenticatedPokemonRoute
   '/report-pengiriman': typeof AuthenticatedReportPengirimanRouteWithChildren
   '/users': typeof AuthenticatedUsersRouteWithChildren
+  '/work-order': typeof AuthenticatedWorkOrderRouteWithChildren
   '/barang/$id': typeof AuthenticatedBarangIdRoute
   '/departemen/$id': typeof AuthenticatedDepartemenIdRoute
   '/jenis-barang/$id': typeof AuthenticatedJenisBarangIdRoute
@@ -261,6 +275,7 @@ export interface FileRoutesByFullPath {
   '/po-client/': typeof AuthenticatedPoClientIndexRoute
   '/report-pengiriman/': typeof AuthenticatedReportPengirimanIndexRoute
   '/users/': typeof AuthenticatedUsersIndexRoute
+  '/work-order/': typeof AuthenticatedWorkOrderIndexRoute
   '/po-client/edit/$id': typeof AuthenticatedPoClientEditIdRoute
 }
 export interface FileRoutesByTo {
@@ -287,6 +302,7 @@ export interface FileRoutesByTo {
   '/po-client': typeof AuthenticatedPoClientIndexRoute
   '/report-pengiriman': typeof AuthenticatedReportPengirimanIndexRoute
   '/users': typeof AuthenticatedUsersIndexRoute
+  '/work-order': typeof AuthenticatedWorkOrderIndexRoute
   '/po-client/edit/$id': typeof AuthenticatedPoClientEditIdRoute
 }
 export interface FileRoutesById {
@@ -307,6 +323,7 @@ export interface FileRoutesById {
   '/_authenticated/pokemon': typeof AuthenticatedPokemonRoute
   '/_authenticated/report-pengiriman': typeof AuthenticatedReportPengirimanRouteWithChildren
   '/_authenticated/users': typeof AuthenticatedUsersRouteWithChildren
+  '/_authenticated/work-order': typeof AuthenticatedWorkOrderRouteWithChildren
   '/_public/': typeof PublicIndexRoute
   '/_authenticated/barang/$id': typeof AuthenticatedBarangIdRoute
   '/_authenticated/departemen/$id': typeof AuthenticatedDepartemenIdRoute
@@ -324,6 +341,7 @@ export interface FileRoutesById {
   '/_authenticated/po-client/': typeof AuthenticatedPoClientIndexRoute
   '/_authenticated/report-pengiriman/': typeof AuthenticatedReportPengirimanIndexRoute
   '/_authenticated/users/': typeof AuthenticatedUsersIndexRoute
+  '/_authenticated/work-order/': typeof AuthenticatedWorkOrderIndexRoute
   '/_authenticated/po-client/edit/$id': typeof AuthenticatedPoClientEditIdRoute
 }
 export interface FileRouteTypes {
@@ -344,6 +362,7 @@ export interface FileRouteTypes {
     | '/pokemon'
     | '/report-pengiriman'
     | '/users'
+    | '/work-order'
     | '/barang/$id'
     | '/departemen/$id'
     | '/jenis-barang/$id'
@@ -360,6 +379,7 @@ export interface FileRouteTypes {
     | '/po-client/'
     | '/report-pengiriman/'
     | '/users/'
+    | '/work-order/'
     | '/po-client/edit/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -386,6 +406,7 @@ export interface FileRouteTypes {
     | '/po-client'
     | '/report-pengiriman'
     | '/users'
+    | '/work-order'
     | '/po-client/edit/$id'
   id:
     | '__root__'
@@ -405,6 +426,7 @@ export interface FileRouteTypes {
     | '/_authenticated/pokemon'
     | '/_authenticated/report-pengiriman'
     | '/_authenticated/users'
+    | '/_authenticated/work-order'
     | '/_public/'
     | '/_authenticated/barang/$id'
     | '/_authenticated/departemen/$id'
@@ -422,6 +444,7 @@ export interface FileRouteTypes {
     | '/_authenticated/po-client/'
     | '/_authenticated/report-pengiriman/'
     | '/_authenticated/users/'
+    | '/_authenticated/work-order/'
     | '/_authenticated/po-client/edit/$id'
   fileRoutesById: FileRoutesById
 }
@@ -468,6 +491,13 @@ declare module '@tanstack/vue-router' {
       fullPath: '/'
       preLoaderRoute: typeof PublicIndexRouteImport
       parentRoute: typeof PublicRoute
+    }
+    '/_authenticated/work-order': {
+      id: '/_authenticated/work-order'
+      path: '/work-order'
+      fullPath: '/work-order'
+      preLoaderRoute: typeof AuthenticatedWorkOrderRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/users': {
       id: '/_authenticated/users'
@@ -552,6 +582,13 @@ declare module '@tanstack/vue-router' {
       fullPath: '/ai-estimation'
       preLoaderRoute: typeof AuthenticatedAiEstimationRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/work-order/': {
+      id: '/_authenticated/work-order/'
+      path: '/'
+      fullPath: '/work-order/'
+      preLoaderRoute: typeof AuthenticatedWorkOrderIndexRouteImport
+      parentRoute: typeof AuthenticatedWorkOrderRoute
     }
     '/_authenticated/users/': {
       id: '/_authenticated/users/'
@@ -796,6 +833,20 @@ const AuthenticatedUsersRouteChildren: AuthenticatedUsersRouteChildren = {
 const AuthenticatedUsersRouteWithChildren =
   AuthenticatedUsersRoute._addFileChildren(AuthenticatedUsersRouteChildren)
 
+interface AuthenticatedWorkOrderRouteChildren {
+  AuthenticatedWorkOrderIndexRoute: typeof AuthenticatedWorkOrderIndexRoute
+}
+
+const AuthenticatedWorkOrderRouteChildren: AuthenticatedWorkOrderRouteChildren =
+  {
+    AuthenticatedWorkOrderIndexRoute: AuthenticatedWorkOrderIndexRoute,
+  }
+
+const AuthenticatedWorkOrderRouteWithChildren =
+  AuthenticatedWorkOrderRoute._addFileChildren(
+    AuthenticatedWorkOrderRouteChildren,
+  )
+
 interface AuthenticatedRouteChildren {
   AuthenticatedAiEstimationRoute: typeof AuthenticatedAiEstimationRoute
   AuthenticatedBarangRoute: typeof AuthenticatedBarangRouteWithChildren
@@ -809,6 +860,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedPokemonRoute: typeof AuthenticatedPokemonRoute
   AuthenticatedReportPengirimanRoute: typeof AuthenticatedReportPengirimanRouteWithChildren
   AuthenticatedUsersRoute: typeof AuthenticatedUsersRouteWithChildren
+  AuthenticatedWorkOrderRoute: typeof AuthenticatedWorkOrderRouteWithChildren
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -825,6 +877,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedReportPengirimanRoute:
     AuthenticatedReportPengirimanRouteWithChildren,
   AuthenticatedUsersRoute: AuthenticatedUsersRouteWithChildren,
+  AuthenticatedWorkOrderRoute: AuthenticatedWorkOrderRouteWithChildren,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
