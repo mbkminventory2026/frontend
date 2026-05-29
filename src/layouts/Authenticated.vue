@@ -114,6 +114,10 @@ const navMainItems = computed(() => {
           title: "Laporan Pengiriman",
           url: "/report-pengiriman",
         },
+        {
+          title: "Laporan Penerimaan",
+          url: "/report-penerimaan",
+        },
       ],
     },
   ]

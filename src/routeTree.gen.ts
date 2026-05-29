@@ -17,6 +17,7 @@ import { Route as PublicIndexRouteImport } from './routes/_public/index'
 import { Route as AuthenticatedWorkOrderRouteImport } from './routes/_authenticated/work-order'
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
 import { Route as AuthenticatedReportPengirimanRouteImport } from './routes/_authenticated/report-pengiriman'
+import { Route as AuthenticatedReportPenerimaanRouteImport } from './routes/_authenticated/report-penerimaan'
 import { Route as AuthenticatedPokemonRouteImport } from './routes/_authenticated/pokemon'
 import { Route as AuthenticatedPoClientRouteImport } from './routes/_authenticated/po-client'
 import { Route as AuthenticatedPermissionsRouteImport } from './routes/_authenticated/permissions'
@@ -30,6 +31,7 @@ import { Route as AuthenticatedAiEstimationRouteImport } from './routes/_authent
 import { Route as AuthenticatedWorkOrderIndexRouteImport } from './routes/_authenticated/work-order.index'
 import { Route as AuthenticatedUsersIndexRouteImport } from './routes/_authenticated/users.index'
 import { Route as AuthenticatedReportPengirimanIndexRouteImport } from './routes/_authenticated/report-pengiriman.index'
+import { Route as AuthenticatedReportPenerimaanIndexRouteImport } from './routes/_authenticated/report-penerimaan.index'
 import { Route as AuthenticatedPoClientIndexRouteImport } from './routes/_authenticated/po-client.index'
 import { Route as AuthenticatedPermissionsIndexRouteImport } from './routes/_authenticated/permissions.index'
 import { Route as AuthenticatedMitraIndexRouteImport } from './routes/_authenticated/mitra.index'
@@ -37,6 +39,7 @@ import { Route as AuthenticatedJenisBarangIndexRouteImport } from './routes/_aut
 import { Route as AuthenticatedDepartemenIndexRouteImport } from './routes/_authenticated/departemen.index'
 import { Route as AuthenticatedBarangIndexRouteImport } from './routes/_authenticated/barang.index'
 import { Route as AuthenticatedReportPengirimanIdRouteImport } from './routes/_authenticated/report-pengiriman.$id'
+import { Route as AuthenticatedReportPenerimaanIdRouteImport } from './routes/_authenticated/report-penerimaan.$id'
 import { Route as AuthenticatedPoClientCreateRouteImport } from './routes/_authenticated/po-client.create'
 import { Route as AuthenticatedPoClientIdRouteImport } from './routes/_authenticated/po-client.$id'
 import { Route as AuthenticatedPermissionsIdRouteImport } from './routes/_authenticated/permissions.$id'
@@ -83,6 +86,12 @@ const AuthenticatedReportPengirimanRoute =
   AuthenticatedReportPengirimanRouteImport.update({
     id: '/report-pengiriman',
     path: '/report-pengiriman',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedReportPenerimaanRoute =
+  AuthenticatedReportPenerimaanRouteImport.update({
+    id: '/report-penerimaan',
+    path: '/report-penerimaan',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedPokemonRoute = AuthenticatedPokemonRouteImport.update({
@@ -155,6 +164,12 @@ const AuthenticatedReportPengirimanIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedReportPengirimanRoute,
   } as any)
+const AuthenticatedReportPenerimaanIndexRoute =
+  AuthenticatedReportPenerimaanIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedReportPenerimaanRoute,
+  } as any)
 const AuthenticatedPoClientIndexRoute =
   AuthenticatedPoClientIndexRouteImport.update({
     id: '/',
@@ -195,6 +210,12 @@ const AuthenticatedReportPengirimanIdRoute =
     id: '/$id',
     path: '/$id',
     getParentRoute: () => AuthenticatedReportPengirimanRoute,
+  } as any)
+const AuthenticatedReportPenerimaanIdRoute =
+  AuthenticatedReportPenerimaanIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedReportPenerimaanRoute,
   } as any)
 const AuthenticatedPoClientCreateRoute =
   AuthenticatedPoClientCreateRouteImport.update({
@@ -256,6 +277,7 @@ export interface FileRoutesByFullPath {
   '/permissions': typeof AuthenticatedPermissionsRouteWithChildren
   '/po-client': typeof AuthenticatedPoClientRouteWithChildren
   '/pokemon': typeof AuthenticatedPokemonRoute
+  '/report-penerimaan': typeof AuthenticatedReportPenerimaanRouteWithChildren
   '/report-pengiriman': typeof AuthenticatedReportPengirimanRouteWithChildren
   '/users': typeof AuthenticatedUsersRouteWithChildren
   '/work-order': typeof AuthenticatedWorkOrderRouteWithChildren
@@ -266,6 +288,7 @@ export interface FileRoutesByFullPath {
   '/permissions/$id': typeof AuthenticatedPermissionsIdRoute
   '/po-client/$id': typeof AuthenticatedPoClientIdRoute
   '/po-client/create': typeof AuthenticatedPoClientCreateRoute
+  '/report-penerimaan/$id': typeof AuthenticatedReportPenerimaanIdRoute
   '/report-pengiriman/$id': typeof AuthenticatedReportPengirimanIdRoute
   '/barang/': typeof AuthenticatedBarangIndexRoute
   '/departemen/': typeof AuthenticatedDepartemenIndexRoute
@@ -273,6 +296,7 @@ export interface FileRoutesByFullPath {
   '/mitra/': typeof AuthenticatedMitraIndexRoute
   '/permissions/': typeof AuthenticatedPermissionsIndexRoute
   '/po-client/': typeof AuthenticatedPoClientIndexRoute
+  '/report-penerimaan/': typeof AuthenticatedReportPenerimaanIndexRoute
   '/report-pengiriman/': typeof AuthenticatedReportPengirimanIndexRoute
   '/users/': typeof AuthenticatedUsersIndexRoute
   '/work-order/': typeof AuthenticatedWorkOrderIndexRoute
@@ -293,6 +317,7 @@ export interface FileRoutesByTo {
   '/permissions/$id': typeof AuthenticatedPermissionsIdRoute
   '/po-client/$id': typeof AuthenticatedPoClientIdRoute
   '/po-client/create': typeof AuthenticatedPoClientCreateRoute
+  '/report-penerimaan/$id': typeof AuthenticatedReportPenerimaanIdRoute
   '/report-pengiriman/$id': typeof AuthenticatedReportPengirimanIdRoute
   '/barang': typeof AuthenticatedBarangIndexRoute
   '/departemen': typeof AuthenticatedDepartemenIndexRoute
@@ -300,6 +325,7 @@ export interface FileRoutesByTo {
   '/mitra': typeof AuthenticatedMitraIndexRoute
   '/permissions': typeof AuthenticatedPermissionsIndexRoute
   '/po-client': typeof AuthenticatedPoClientIndexRoute
+  '/report-penerimaan': typeof AuthenticatedReportPenerimaanIndexRoute
   '/report-pengiriman': typeof AuthenticatedReportPengirimanIndexRoute
   '/users': typeof AuthenticatedUsersIndexRoute
   '/work-order': typeof AuthenticatedWorkOrderIndexRoute
@@ -321,6 +347,7 @@ export interface FileRoutesById {
   '/_authenticated/permissions': typeof AuthenticatedPermissionsRouteWithChildren
   '/_authenticated/po-client': typeof AuthenticatedPoClientRouteWithChildren
   '/_authenticated/pokemon': typeof AuthenticatedPokemonRoute
+  '/_authenticated/report-penerimaan': typeof AuthenticatedReportPenerimaanRouteWithChildren
   '/_authenticated/report-pengiriman': typeof AuthenticatedReportPengirimanRouteWithChildren
   '/_authenticated/users': typeof AuthenticatedUsersRouteWithChildren
   '/_authenticated/work-order': typeof AuthenticatedWorkOrderRouteWithChildren
@@ -332,6 +359,7 @@ export interface FileRoutesById {
   '/_authenticated/permissions/$id': typeof AuthenticatedPermissionsIdRoute
   '/_authenticated/po-client/$id': typeof AuthenticatedPoClientIdRoute
   '/_authenticated/po-client/create': typeof AuthenticatedPoClientCreateRoute
+  '/_authenticated/report-penerimaan/$id': typeof AuthenticatedReportPenerimaanIdRoute
   '/_authenticated/report-pengiriman/$id': typeof AuthenticatedReportPengirimanIdRoute
   '/_authenticated/barang/': typeof AuthenticatedBarangIndexRoute
   '/_authenticated/departemen/': typeof AuthenticatedDepartemenIndexRoute
@@ -339,6 +367,7 @@ export interface FileRoutesById {
   '/_authenticated/mitra/': typeof AuthenticatedMitraIndexRoute
   '/_authenticated/permissions/': typeof AuthenticatedPermissionsIndexRoute
   '/_authenticated/po-client/': typeof AuthenticatedPoClientIndexRoute
+  '/_authenticated/report-penerimaan/': typeof AuthenticatedReportPenerimaanIndexRoute
   '/_authenticated/report-pengiriman/': typeof AuthenticatedReportPengirimanIndexRoute
   '/_authenticated/users/': typeof AuthenticatedUsersIndexRoute
   '/_authenticated/work-order/': typeof AuthenticatedWorkOrderIndexRoute
@@ -360,6 +389,7 @@ export interface FileRouteTypes {
     | '/permissions'
     | '/po-client'
     | '/pokemon'
+    | '/report-penerimaan'
     | '/report-pengiriman'
     | '/users'
     | '/work-order'
@@ -370,6 +400,7 @@ export interface FileRouteTypes {
     | '/permissions/$id'
     | '/po-client/$id'
     | '/po-client/create'
+    | '/report-penerimaan/$id'
     | '/report-pengiriman/$id'
     | '/barang/'
     | '/departemen/'
@@ -377,6 +408,7 @@ export interface FileRouteTypes {
     | '/mitra/'
     | '/permissions/'
     | '/po-client/'
+    | '/report-penerimaan/'
     | '/report-pengiriman/'
     | '/users/'
     | '/work-order/'
@@ -397,6 +429,7 @@ export interface FileRouteTypes {
     | '/permissions/$id'
     | '/po-client/$id'
     | '/po-client/create'
+    | '/report-penerimaan/$id'
     | '/report-pengiriman/$id'
     | '/barang'
     | '/departemen'
@@ -404,6 +437,7 @@ export interface FileRouteTypes {
     | '/mitra'
     | '/permissions'
     | '/po-client'
+    | '/report-penerimaan'
     | '/report-pengiriman'
     | '/users'
     | '/work-order'
@@ -424,6 +458,7 @@ export interface FileRouteTypes {
     | '/_authenticated/permissions'
     | '/_authenticated/po-client'
     | '/_authenticated/pokemon'
+    | '/_authenticated/report-penerimaan'
     | '/_authenticated/report-pengiriman'
     | '/_authenticated/users'
     | '/_authenticated/work-order'
@@ -435,6 +470,7 @@ export interface FileRouteTypes {
     | '/_authenticated/permissions/$id'
     | '/_authenticated/po-client/$id'
     | '/_authenticated/po-client/create'
+    | '/_authenticated/report-penerimaan/$id'
     | '/_authenticated/report-pengiriman/$id'
     | '/_authenticated/barang/'
     | '/_authenticated/departemen/'
@@ -442,6 +478,7 @@ export interface FileRouteTypes {
     | '/_authenticated/mitra/'
     | '/_authenticated/permissions/'
     | '/_authenticated/po-client/'
+    | '/_authenticated/report-penerimaan/'
     | '/_authenticated/report-pengiriman/'
     | '/_authenticated/users/'
     | '/_authenticated/work-order/'
@@ -511,6 +548,13 @@ declare module '@tanstack/vue-router' {
       path: '/report-pengiriman'
       fullPath: '/report-pengiriman'
       preLoaderRoute: typeof AuthenticatedReportPengirimanRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/report-penerimaan': {
+      id: '/_authenticated/report-penerimaan'
+      path: '/report-penerimaan'
+      fullPath: '/report-penerimaan'
+      preLoaderRoute: typeof AuthenticatedReportPenerimaanRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/pokemon': {
@@ -604,6 +648,13 @@ declare module '@tanstack/vue-router' {
       preLoaderRoute: typeof AuthenticatedReportPengirimanIndexRouteImport
       parentRoute: typeof AuthenticatedReportPengirimanRoute
     }
+    '/_authenticated/report-penerimaan/': {
+      id: '/_authenticated/report-penerimaan/'
+      path: '/'
+      fullPath: '/report-penerimaan/'
+      preLoaderRoute: typeof AuthenticatedReportPenerimaanIndexRouteImport
+      parentRoute: typeof AuthenticatedReportPenerimaanRoute
+    }
     '/_authenticated/po-client/': {
       id: '/_authenticated/po-client/'
       path: '/'
@@ -652,6 +703,13 @@ declare module '@tanstack/vue-router' {
       fullPath: '/report-pengiriman/$id'
       preLoaderRoute: typeof AuthenticatedReportPengirimanIdRouteImport
       parentRoute: typeof AuthenticatedReportPengirimanRoute
+    }
+    '/_authenticated/report-penerimaan/$id': {
+      id: '/_authenticated/report-penerimaan/$id'
+      path: '/$id'
+      fullPath: '/report-penerimaan/$id'
+      preLoaderRoute: typeof AuthenticatedReportPenerimaanIdRouteImport
+      parentRoute: typeof AuthenticatedReportPenerimaanRoute
     }
     '/_authenticated/po-client/create': {
       id: '/_authenticated/po-client/create'
@@ -805,6 +863,23 @@ const AuthenticatedPoClientRouteWithChildren =
     AuthenticatedPoClientRouteChildren,
   )
 
+interface AuthenticatedReportPenerimaanRouteChildren {
+  AuthenticatedReportPenerimaanIdRoute: typeof AuthenticatedReportPenerimaanIdRoute
+  AuthenticatedReportPenerimaanIndexRoute: typeof AuthenticatedReportPenerimaanIndexRoute
+}
+
+const AuthenticatedReportPenerimaanRouteChildren: AuthenticatedReportPenerimaanRouteChildren =
+  {
+    AuthenticatedReportPenerimaanIdRoute: AuthenticatedReportPenerimaanIdRoute,
+    AuthenticatedReportPenerimaanIndexRoute:
+      AuthenticatedReportPenerimaanIndexRoute,
+  }
+
+const AuthenticatedReportPenerimaanRouteWithChildren =
+  AuthenticatedReportPenerimaanRoute._addFileChildren(
+    AuthenticatedReportPenerimaanRouteChildren,
+  )
+
 interface AuthenticatedReportPengirimanRouteChildren {
   AuthenticatedReportPengirimanIdRoute: typeof AuthenticatedReportPengirimanIdRoute
   AuthenticatedReportPengirimanIndexRoute: typeof AuthenticatedReportPengirimanIndexRoute
@@ -858,6 +933,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedPermissionsRoute: typeof AuthenticatedPermissionsRouteWithChildren
   AuthenticatedPoClientRoute: typeof AuthenticatedPoClientRouteWithChildren
   AuthenticatedPokemonRoute: typeof AuthenticatedPokemonRoute
+  AuthenticatedReportPenerimaanRoute: typeof AuthenticatedReportPenerimaanRouteWithChildren
   AuthenticatedReportPengirimanRoute: typeof AuthenticatedReportPengirimanRouteWithChildren
   AuthenticatedUsersRoute: typeof AuthenticatedUsersRouteWithChildren
   AuthenticatedWorkOrderRoute: typeof AuthenticatedWorkOrderRouteWithChildren
@@ -874,6 +950,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedPermissionsRoute: AuthenticatedPermissionsRouteWithChildren,
   AuthenticatedPoClientRoute: AuthenticatedPoClientRouteWithChildren,
   AuthenticatedPokemonRoute: AuthenticatedPokemonRoute,
+  AuthenticatedReportPenerimaanRoute:
+    AuthenticatedReportPenerimaanRouteWithChildren,
   AuthenticatedReportPengirimanRoute:
     AuthenticatedReportPengirimanRouteWithChildren,
   AuthenticatedUsersRoute: AuthenticatedUsersRouteWithChildren,
