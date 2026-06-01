@@ -63,3 +63,6 @@ AGENTS.md
 go.work
 go.work.sum
 .worktrees/
+
+# TanStack Router generated temp files
+.tanstack/
