@@ -15,6 +15,8 @@ const {
     onSubmit
 } = useLoginForm()
 
+const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA';
+
 </script>
 
 <template>
@@ -49,7 +51,7 @@ const {
 
         <div class="flex justify-center my-4">
             <TurnstileWidget
-            site-key="1x00000000000000000000AA"
+            :site-key="siteKey"
             @verify="handleTurnstileSuccess"
             @error="handleTurnstileError"
             ></TurnstileWidget>

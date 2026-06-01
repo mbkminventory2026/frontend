@@ -15,6 +15,7 @@ import TurnstileWidget from '@/components/TurnstileWidget.vue';
 const isSuccess = ref(false);
 const isLoading = ref(false);
 const turnstileToken = ref('');
+const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || '1x00000000000000000000AA';
 
 const registerSchema = z.object({
   nama_perusahaan: z.string().min(1, 'Nama perusahaan wajib diisi'),
@@ -273,7 +274,7 @@ const onSubmit = form.handleSubmit(async (values) => {
             <!-- CaptchaWidget -->
             <div class="flex justify-center py-2">
               <TurnstileWidget
-                site-key="0x4AAAAAACm1QQwy4f0wxjXu"
+                :site-key="siteKey"
                 @verify="handleTurnstileSuccess"
                 @error="handleTurnstileError"
               />
