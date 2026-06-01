@@ -3,15 +3,23 @@ import { mapPayloadToSnakeCase, hasFile, prepareFormData } from "@/lib/utils";
 import type { DepartemenResponseItem } from '@/schemas/departemen/response';
 
 export const getDepartemen = async (params: {
-    limit: number,
-    offset: number,
-    search?: string
+    limit?: number,
+    offset?: number,
+    page?: number,
+    pageSize?: number,
+    search?: string,
+    sortBy?: string,
+    sortDesc?: boolean
 }) => {
     const response = await apiClient.get<DepartemenResponseItem[]>('/api/v1/master/departemen', {
         params: {
+            page: params.page,
+            pageSize: params.pageSize ?? params.limit,
             limit: params.limit,
             offset: params.offset,
-            q: params.search
+            q: params.search,
+            sortBy: params.sortBy,
+            sortDesc: params.sortDesc
         }
     })
 

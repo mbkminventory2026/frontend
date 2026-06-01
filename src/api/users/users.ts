@@ -15,15 +15,23 @@ export interface UserResponseItem {
 }
 
 export const getUsers = async (params: {
-    limit: number,
-    offset: number,
-    search?: string
+    limit?: number,
+    offset?: number,
+    page?: number,
+    pageSize?: number,
+    search?: string,
+    sortBy?: string,
+    sortDesc?: boolean
 }) => {
     const response = await apiClient.get<UserResponseItem[]>('/api/v1/users', {
         params: {
+            page: params.page,
+            pageSize: params.pageSize ?? params.limit,
             limit: params.limit,
             offset: params.offset,
-            q: params.search
+            q: params.search,
+            sortBy: params.sortBy,
+            sortDesc: params.sortDesc
         }
     })
 

@@ -7,6 +7,13 @@ export interface JenisBarangItem {
 }
 
 export const getJenisBarang = async () => {
-    const response = await apiClient.get<JenisBarangItem[]>('/api/v1/master/jenis-barang');
+    const response = await apiClient.get<JenisBarangItem[]>('/api/v1/master/jenis-barang', {
+        params: {
+            page: 1,
+            pageSize: 1000,
+            sortBy: 'nama_jenis_barang',
+            sortDesc: false
+        }
+    });
     return response.data;
 }

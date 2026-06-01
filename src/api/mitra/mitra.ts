@@ -3,15 +3,23 @@ import { mapPayloadToSnakeCase, hasFile, prepareFormData } from "@/lib/utils";
 import type { MitraResponseItem } from '@/schemas/mitra/response';
 
 export const getMitra = async (params: {
-    limit: number,
-    offset: number,
-    search?: string
+    limit?: number,
+    offset?: number,
+    page?: number,
+    pageSize?: number,
+    search?: string,
+    sortBy?: string,
+    sortDesc?: boolean
 }) => {
     const response = await apiClient.get<MitraResponseItem[]>('/api/v1/master/mitra', {
         params: {
+            page: params.page,
+            pageSize: params.pageSize ?? params.limit,
             limit: params.limit,
             offset: params.offset,
-            q: params.search
+            q: params.search,
+            sortBy: params.sortBy,
+            sortDesc: params.sortDesc
         }
     })
 

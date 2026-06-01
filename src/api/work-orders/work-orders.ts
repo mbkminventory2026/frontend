@@ -79,15 +79,22 @@ export interface WorkOrderDetailResponse {
 }
 
 export const getWorkOrders = async (params: {
-    limit: number;
-    offset: number;
+    limit?: number;
+    offset?: number;
+    page?: number;
+    pageSize?: number;
     search?: string;
+    sortBy?: string;
+    sortDesc?: boolean;
 }) => {
     const response = await apiClient.get<{ items: WorkOrderListItem[]; pagination: { total_items: number } }>('/api/v1/work-orders', {
         params: {
+            page: params.page ?? ((params.offset ?? 0) / (params.limit ?? 20)) + 1,
+            pageSize: params.pageSize ?? params.limit,
             limit: params.limit,
-            page: Math.floor(params.offset / params.limit) + 1,
-            search: params.search
+            search: params.search,
+            sortBy: params.sortBy,
+            sortDesc: params.sortDesc
         }
     });
 

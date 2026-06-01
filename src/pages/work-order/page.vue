@@ -91,11 +91,15 @@ const fetchData = async () => {
         const page = search.value?.page ?? 1;
         const pageSize = search.value?.pageSize ?? 20;
         const filter = search.value?.filter ?? '';
+        const sortBy = search.value?.sortBy;
+        const sortDesc = search.value?.sortDesc ?? false;
 
         const response = await getWorkOrders({
-            limit: pageSize,
-            offset: (page - 1) * pageSize,
-            search: filter
+            page,
+            pageSize,
+            search: filter,
+            sortBy,
+            sortDesc
         });
 
         data.value = response.results;
