@@ -19,6 +19,7 @@ import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedReportPengirimanRouteImport } from './routes/_authenticated/report-pengiriman'
 import { Route as AuthenticatedReportPenerimaanRouteImport } from './routes/_authenticated/report-penerimaan'
 import { Route as AuthenticatedPokemonRouteImport } from './routes/_authenticated/pokemon'
+import { Route as AuthenticatedPoInternalRouteImport } from './routes/_authenticated/po-internal'
 import { Route as AuthenticatedPoClientRouteImport } from './routes/_authenticated/po-client'
 import { Route as AuthenticatedPermissionsRouteImport } from './routes/_authenticated/permissions'
 import { Route as AuthenticatedMitraRouteImport } from './routes/_authenticated/mitra'
@@ -32,6 +33,7 @@ import { Route as AuthenticatedWorkOrderIndexRouteImport } from './routes/_authe
 import { Route as AuthenticatedUsersIndexRouteImport } from './routes/_authenticated/users.index'
 import { Route as AuthenticatedReportPengirimanIndexRouteImport } from './routes/_authenticated/report-pengiriman.index'
 import { Route as AuthenticatedReportPenerimaanIndexRouteImport } from './routes/_authenticated/report-penerimaan.index'
+import { Route as AuthenticatedPoInternalIndexRouteImport } from './routes/_authenticated/po-internal.index'
 import { Route as AuthenticatedPoClientIndexRouteImport } from './routes/_authenticated/po-client.index'
 import { Route as AuthenticatedPermissionsIndexRouteImport } from './routes/_authenticated/permissions.index'
 import { Route as AuthenticatedMitraIndexRouteImport } from './routes/_authenticated/mitra.index'
@@ -40,6 +42,8 @@ import { Route as AuthenticatedDepartemenIndexRouteImport } from './routes/_auth
 import { Route as AuthenticatedBarangIndexRouteImport } from './routes/_authenticated/barang.index'
 import { Route as AuthenticatedReportPengirimanIdRouteImport } from './routes/_authenticated/report-pengiriman.$id'
 import { Route as AuthenticatedReportPenerimaanIdRouteImport } from './routes/_authenticated/report-penerimaan.$id'
+import { Route as AuthenticatedPoInternalCreateRouteImport } from './routes/_authenticated/po-internal.create'
+import { Route as AuthenticatedPoInternalIdRouteImport } from './routes/_authenticated/po-internal.$id'
 import { Route as AuthenticatedPoClientCreateRouteImport } from './routes/_authenticated/po-client.create'
 import { Route as AuthenticatedPoClientIdRouteImport } from './routes/_authenticated/po-client.$id'
 import { Route as AuthenticatedPermissionsIdRouteImport } from './routes/_authenticated/permissions.$id'
@@ -97,6 +101,11 @@ const AuthenticatedReportPenerimaanRoute =
 const AuthenticatedPokemonRoute = AuthenticatedPokemonRouteImport.update({
   id: '/pokemon',
   path: '/pokemon',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedPoInternalRoute = AuthenticatedPoInternalRouteImport.update({
+  id: '/po-internal',
+  path: '/po-internal',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedPoClientRoute = AuthenticatedPoClientRouteImport.update({
@@ -170,6 +179,12 @@ const AuthenticatedReportPenerimaanIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedReportPenerimaanRoute,
   } as any)
+const AuthenticatedPoInternalIndexRoute =
+  AuthenticatedPoInternalIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedPoInternalRoute,
+  } as any)
 const AuthenticatedPoClientIndexRoute =
   AuthenticatedPoClientIndexRouteImport.update({
     id: '/',
@@ -216,6 +231,18 @@ const AuthenticatedReportPenerimaanIdRoute =
     id: '/$id',
     path: '/$id',
     getParentRoute: () => AuthenticatedReportPenerimaanRoute,
+  } as any)
+const AuthenticatedPoInternalCreateRoute =
+  AuthenticatedPoInternalCreateRouteImport.update({
+    id: '/create',
+    path: '/create',
+    getParentRoute: () => AuthenticatedPoInternalRoute,
+  } as any)
+const AuthenticatedPoInternalIdRoute =
+  AuthenticatedPoInternalIdRouteImport.update({
+    id: '/$id',
+    path: '/$id',
+    getParentRoute: () => AuthenticatedPoInternalRoute,
   } as any)
 const AuthenticatedPoClientCreateRoute =
   AuthenticatedPoClientCreateRouteImport.update({
@@ -276,6 +303,7 @@ export interface FileRoutesByFullPath {
   '/mitra': typeof AuthenticatedMitraRouteWithChildren
   '/permissions': typeof AuthenticatedPermissionsRouteWithChildren
   '/po-client': typeof AuthenticatedPoClientRouteWithChildren
+  '/po-internal': typeof AuthenticatedPoInternalRouteWithChildren
   '/pokemon': typeof AuthenticatedPokemonRoute
   '/report-penerimaan': typeof AuthenticatedReportPenerimaanRouteWithChildren
   '/report-pengiriman': typeof AuthenticatedReportPengirimanRouteWithChildren
@@ -288,6 +316,8 @@ export interface FileRoutesByFullPath {
   '/permissions/$id': typeof AuthenticatedPermissionsIdRoute
   '/po-client/$id': typeof AuthenticatedPoClientIdRoute
   '/po-client/create': typeof AuthenticatedPoClientCreateRoute
+  '/po-internal/$id': typeof AuthenticatedPoInternalIdRoute
+  '/po-internal/create': typeof AuthenticatedPoInternalCreateRoute
   '/report-penerimaan/$id': typeof AuthenticatedReportPenerimaanIdRoute
   '/report-pengiriman/$id': typeof AuthenticatedReportPengirimanIdRoute
   '/barang/': typeof AuthenticatedBarangIndexRoute
@@ -296,6 +326,7 @@ export interface FileRoutesByFullPath {
   '/mitra/': typeof AuthenticatedMitraIndexRoute
   '/permissions/': typeof AuthenticatedPermissionsIndexRoute
   '/po-client/': typeof AuthenticatedPoClientIndexRoute
+  '/po-internal/': typeof AuthenticatedPoInternalIndexRoute
   '/report-penerimaan/': typeof AuthenticatedReportPenerimaanIndexRoute
   '/report-pengiriman/': typeof AuthenticatedReportPengirimanIndexRoute
   '/users/': typeof AuthenticatedUsersIndexRoute
@@ -317,6 +348,8 @@ export interface FileRoutesByTo {
   '/permissions/$id': typeof AuthenticatedPermissionsIdRoute
   '/po-client/$id': typeof AuthenticatedPoClientIdRoute
   '/po-client/create': typeof AuthenticatedPoClientCreateRoute
+  '/po-internal/$id': typeof AuthenticatedPoInternalIdRoute
+  '/po-internal/create': typeof AuthenticatedPoInternalCreateRoute
   '/report-penerimaan/$id': typeof AuthenticatedReportPenerimaanIdRoute
   '/report-pengiriman/$id': typeof AuthenticatedReportPengirimanIdRoute
   '/barang': typeof AuthenticatedBarangIndexRoute
@@ -325,6 +358,7 @@ export interface FileRoutesByTo {
   '/mitra': typeof AuthenticatedMitraIndexRoute
   '/permissions': typeof AuthenticatedPermissionsIndexRoute
   '/po-client': typeof AuthenticatedPoClientIndexRoute
+  '/po-internal': typeof AuthenticatedPoInternalIndexRoute
   '/report-penerimaan': typeof AuthenticatedReportPenerimaanIndexRoute
   '/report-pengiriman': typeof AuthenticatedReportPengirimanIndexRoute
   '/users': typeof AuthenticatedUsersIndexRoute
@@ -346,6 +380,7 @@ export interface FileRoutesById {
   '/_authenticated/mitra': typeof AuthenticatedMitraRouteWithChildren
   '/_authenticated/permissions': typeof AuthenticatedPermissionsRouteWithChildren
   '/_authenticated/po-client': typeof AuthenticatedPoClientRouteWithChildren
+  '/_authenticated/po-internal': typeof AuthenticatedPoInternalRouteWithChildren
   '/_authenticated/pokemon': typeof AuthenticatedPokemonRoute
   '/_authenticated/report-penerimaan': typeof AuthenticatedReportPenerimaanRouteWithChildren
   '/_authenticated/report-pengiriman': typeof AuthenticatedReportPengirimanRouteWithChildren
@@ -359,6 +394,8 @@ export interface FileRoutesById {
   '/_authenticated/permissions/$id': typeof AuthenticatedPermissionsIdRoute
   '/_authenticated/po-client/$id': typeof AuthenticatedPoClientIdRoute
   '/_authenticated/po-client/create': typeof AuthenticatedPoClientCreateRoute
+  '/_authenticated/po-internal/$id': typeof AuthenticatedPoInternalIdRoute
+  '/_authenticated/po-internal/create': typeof AuthenticatedPoInternalCreateRoute
   '/_authenticated/report-penerimaan/$id': typeof AuthenticatedReportPenerimaanIdRoute
   '/_authenticated/report-pengiriman/$id': typeof AuthenticatedReportPengirimanIdRoute
   '/_authenticated/barang/': typeof AuthenticatedBarangIndexRoute
@@ -367,6 +404,7 @@ export interface FileRoutesById {
   '/_authenticated/mitra/': typeof AuthenticatedMitraIndexRoute
   '/_authenticated/permissions/': typeof AuthenticatedPermissionsIndexRoute
   '/_authenticated/po-client/': typeof AuthenticatedPoClientIndexRoute
+  '/_authenticated/po-internal/': typeof AuthenticatedPoInternalIndexRoute
   '/_authenticated/report-penerimaan/': typeof AuthenticatedReportPenerimaanIndexRoute
   '/_authenticated/report-pengiriman/': typeof AuthenticatedReportPengirimanIndexRoute
   '/_authenticated/users/': typeof AuthenticatedUsersIndexRoute
@@ -388,6 +426,7 @@ export interface FileRouteTypes {
     | '/mitra'
     | '/permissions'
     | '/po-client'
+    | '/po-internal'
     | '/pokemon'
     | '/report-penerimaan'
     | '/report-pengiriman'
@@ -400,6 +439,8 @@ export interface FileRouteTypes {
     | '/permissions/$id'
     | '/po-client/$id'
     | '/po-client/create'
+    | '/po-internal/$id'
+    | '/po-internal/create'
     | '/report-penerimaan/$id'
     | '/report-pengiriman/$id'
     | '/barang/'
@@ -408,6 +449,7 @@ export interface FileRouteTypes {
     | '/mitra/'
     | '/permissions/'
     | '/po-client/'
+    | '/po-internal/'
     | '/report-penerimaan/'
     | '/report-pengiriman/'
     | '/users/'
@@ -429,6 +471,8 @@ export interface FileRouteTypes {
     | '/permissions/$id'
     | '/po-client/$id'
     | '/po-client/create'
+    | '/po-internal/$id'
+    | '/po-internal/create'
     | '/report-penerimaan/$id'
     | '/report-pengiriman/$id'
     | '/barang'
@@ -437,6 +481,7 @@ export interface FileRouteTypes {
     | '/mitra'
     | '/permissions'
     | '/po-client'
+    | '/po-internal'
     | '/report-penerimaan'
     | '/report-pengiriman'
     | '/users'
@@ -457,6 +502,7 @@ export interface FileRouteTypes {
     | '/_authenticated/mitra'
     | '/_authenticated/permissions'
     | '/_authenticated/po-client'
+    | '/_authenticated/po-internal'
     | '/_authenticated/pokemon'
     | '/_authenticated/report-penerimaan'
     | '/_authenticated/report-pengiriman'
@@ -470,6 +516,8 @@ export interface FileRouteTypes {
     | '/_authenticated/permissions/$id'
     | '/_authenticated/po-client/$id'
     | '/_authenticated/po-client/create'
+    | '/_authenticated/po-internal/$id'
+    | '/_authenticated/po-internal/create'
     | '/_authenticated/report-penerimaan/$id'
     | '/_authenticated/report-pengiriman/$id'
     | '/_authenticated/barang/'
@@ -478,6 +526,7 @@ export interface FileRouteTypes {
     | '/_authenticated/mitra/'
     | '/_authenticated/permissions/'
     | '/_authenticated/po-client/'
+    | '/_authenticated/po-internal/'
     | '/_authenticated/report-penerimaan/'
     | '/_authenticated/report-pengiriman/'
     | '/_authenticated/users/'
@@ -562,6 +611,13 @@ declare module '@tanstack/vue-router' {
       path: '/pokemon'
       fullPath: '/pokemon'
       preLoaderRoute: typeof AuthenticatedPokemonRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/po-internal': {
+      id: '/_authenticated/po-internal'
+      path: '/po-internal'
+      fullPath: '/po-internal'
+      preLoaderRoute: typeof AuthenticatedPoInternalRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/po-client': {
@@ -655,6 +711,13 @@ declare module '@tanstack/vue-router' {
       preLoaderRoute: typeof AuthenticatedReportPenerimaanIndexRouteImport
       parentRoute: typeof AuthenticatedReportPenerimaanRoute
     }
+    '/_authenticated/po-internal/': {
+      id: '/_authenticated/po-internal/'
+      path: '/'
+      fullPath: '/po-internal/'
+      preLoaderRoute: typeof AuthenticatedPoInternalIndexRouteImport
+      parentRoute: typeof AuthenticatedPoInternalRoute
+    }
     '/_authenticated/po-client/': {
       id: '/_authenticated/po-client/'
       path: '/'
@@ -710,6 +773,20 @@ declare module '@tanstack/vue-router' {
       fullPath: '/report-penerimaan/$id'
       preLoaderRoute: typeof AuthenticatedReportPenerimaanIdRouteImport
       parentRoute: typeof AuthenticatedReportPenerimaanRoute
+    }
+    '/_authenticated/po-internal/create': {
+      id: '/_authenticated/po-internal/create'
+      path: '/create'
+      fullPath: '/po-internal/create'
+      preLoaderRoute: typeof AuthenticatedPoInternalCreateRouteImport
+      parentRoute: typeof AuthenticatedPoInternalRoute
+    }
+    '/_authenticated/po-internal/$id': {
+      id: '/_authenticated/po-internal/$id'
+      path: '/$id'
+      fullPath: '/po-internal/$id'
+      preLoaderRoute: typeof AuthenticatedPoInternalIdRouteImport
+      parentRoute: typeof AuthenticatedPoInternalRoute
     }
     '/_authenticated/po-client/create': {
       id: '/_authenticated/po-client/create'
@@ -863,6 +940,24 @@ const AuthenticatedPoClientRouteWithChildren =
     AuthenticatedPoClientRouteChildren,
   )
 
+interface AuthenticatedPoInternalRouteChildren {
+  AuthenticatedPoInternalIdRoute: typeof AuthenticatedPoInternalIdRoute
+  AuthenticatedPoInternalCreateRoute: typeof AuthenticatedPoInternalCreateRoute
+  AuthenticatedPoInternalIndexRoute: typeof AuthenticatedPoInternalIndexRoute
+}
+
+const AuthenticatedPoInternalRouteChildren: AuthenticatedPoInternalRouteChildren =
+  {
+    AuthenticatedPoInternalIdRoute: AuthenticatedPoInternalIdRoute,
+    AuthenticatedPoInternalCreateRoute: AuthenticatedPoInternalCreateRoute,
+    AuthenticatedPoInternalIndexRoute: AuthenticatedPoInternalIndexRoute,
+  }
+
+const AuthenticatedPoInternalRouteWithChildren =
+  AuthenticatedPoInternalRoute._addFileChildren(
+    AuthenticatedPoInternalRouteChildren,
+  )
+
 interface AuthenticatedReportPenerimaanRouteChildren {
   AuthenticatedReportPenerimaanIdRoute: typeof AuthenticatedReportPenerimaanIdRoute
   AuthenticatedReportPenerimaanIndexRoute: typeof AuthenticatedReportPenerimaanIndexRoute
@@ -932,6 +1027,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedMitraRoute: typeof AuthenticatedMitraRouteWithChildren
   AuthenticatedPermissionsRoute: typeof AuthenticatedPermissionsRouteWithChildren
   AuthenticatedPoClientRoute: typeof AuthenticatedPoClientRouteWithChildren
+  AuthenticatedPoInternalRoute: typeof AuthenticatedPoInternalRouteWithChildren
   AuthenticatedPokemonRoute: typeof AuthenticatedPokemonRoute
   AuthenticatedReportPenerimaanRoute: typeof AuthenticatedReportPenerimaanRouteWithChildren
   AuthenticatedReportPengirimanRoute: typeof AuthenticatedReportPengirimanRouteWithChildren
@@ -949,6 +1045,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedMitraRoute: AuthenticatedMitraRouteWithChildren,
   AuthenticatedPermissionsRoute: AuthenticatedPermissionsRouteWithChildren,
   AuthenticatedPoClientRoute: AuthenticatedPoClientRouteWithChildren,
+  AuthenticatedPoInternalRoute: AuthenticatedPoInternalRouteWithChildren,
   AuthenticatedPokemonRoute: AuthenticatedPokemonRoute,
   AuthenticatedReportPenerimaanRoute:
     AuthenticatedReportPenerimaanRouteWithChildren,
