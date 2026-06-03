@@ -10,7 +10,7 @@ const { state, handleConfirm, handleCancel } = useConfirmDialog()
 
 <template>
   <RouterProvider :router="router" />
-  <Toaster />
+  <Toaster position="top-right" />
 
   <!-- Global confirmation dialog — dikontrol via useConfirmDialog() composable -->
   <AppConfirmDialog

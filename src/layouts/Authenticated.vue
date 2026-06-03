@@ -122,6 +122,10 @@ const navMainItems = computed(() => {
           title: "Laporan Penerimaan",
           url: "/report-penerimaan",
         },
+        {
+          title: "Production Summary",
+          url: "/production-summary",
+        },
       ],
     },
   ]
