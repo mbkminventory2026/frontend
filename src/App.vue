@@ -21,6 +21,7 @@ const { state, handleConfirm, handleCancel } = useConfirmDialog()
     :type="state.options?.type"
     :confirm-label="state.options?.confirmLabel"
     :cancel-label="state.options?.cancelLabel"
+    :show-cancel="state.options?.showCancel"
     @confirm="handleConfirm"
     @cancel="handleCancel"
     @update:is-open="(v) => { if (!v) handleCancel() }"

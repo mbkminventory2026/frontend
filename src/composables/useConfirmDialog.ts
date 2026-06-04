@@ -13,6 +13,8 @@ export interface ConfirmDialogOptions {
     confirmLabel?: string
     /** Label tombol batal. Default: `'Batal'` */
     cancelLabel?: string
+    /** Menampilkan tombol batal. Default: `true` */
+    showCancel?: boolean
     /** Callback yang dijalankan saat user menekan tombol konfirmasi. */
     onConfirm: () => Promise<void> | void
     /** Callback opsional yang dijalankan saat user membatalkan. */

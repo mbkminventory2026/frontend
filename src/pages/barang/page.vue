@@ -122,8 +122,7 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
                 size: 'sm',
                 onClick: async () => {
                     try {
-                        const res = await getBarangById(id);
-                        const detailData = Array.isArray(res) ? { ...(res[0] as any) } : { ...(res as any) };
+                        const detailData = (await getBarangById(id)) as any;
                         
                         // Fallback mapping if IDs are missing but names are present
                         if ((detailData.id_jenis_barang === undefined || detailData.id_jenis_barang === null) && detailData.nama_jenis_barang) {
@@ -156,7 +155,8 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
                     await deleteBarang(id);
                     await fetchData()
                 },
-                confirmMessage: 'Apakah Anda yakin ingin menghapus Barang ini?'
+                confirmMessage: 'Apakah Anda yakin ingin menghapus Barang ini?',
+                resourceName: 'Barang'
             }));
         }
 

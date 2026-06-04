@@ -153,7 +153,8 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
                         await deleteRole(item.id_role);
                         await fetchData();
                     },
-                    confirmMessage: 'Apakah Anda yakin ingin menghapus Role ini?'
+                    confirmMessage: 'Apakah Anda yakin ingin menghapus Role ini?',
+                    resourceName: 'Role'
                 }));
             }
 

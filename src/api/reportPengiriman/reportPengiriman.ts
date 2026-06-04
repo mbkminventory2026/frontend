@@ -53,5 +53,6 @@ export const getReportPengirimanById = async (id: string | number) => {
     if (!id) throw new Error("ID is required");
 
     const response = await apiClient.get<ReportPengirimanItem[]>(`/api/v1/report-pengiriman/${id}`);
-    return response.data;
+    const data = response.data;
+    return Array.isArray(data) ? data[0] : data;
 }

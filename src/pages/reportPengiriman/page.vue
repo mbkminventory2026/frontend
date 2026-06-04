@@ -92,8 +92,7 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
                 size: 'sm',
                 onClick: async () => {
                     try {
-                        const res = await getReportPengirimanById(id);
-                        const detailData = Array.isArray(res) ? res[0] : res;
+                        const detailData = await getReportPengirimanById(id);
                         createDialog.openDialog(detailData);
                     } catch (error) {
                         console.error("Gagal fetch detail untuk edit:", error);
@@ -108,7 +107,8 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
                     await deleteReportPengiriman(id);
                     await fetchData()
                 },
-                confirmMessage: 'Apakah Anda yakin ingin menghapus Report Pengiriman ini?'
+                confirmMessage: 'Apakah Anda yakin ingin menghapus Report Pengiriman ini?',
+                resourceName: 'Laporan Pengiriman'
             })
         ]) } 
     }
