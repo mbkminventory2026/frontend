@@ -124,6 +124,11 @@ const navMainItems = computed(() => {
           url: "/warna",
           permission: "MASTER_WARNA_READ",
         },
+        {
+          title: "Profil Perusahaan",
+          url: "/company",
+          permission: "MASTER_COMPANY_READ",
+        },
       ],
     },
     {

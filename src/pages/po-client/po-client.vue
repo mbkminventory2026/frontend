@@ -3,7 +3,6 @@ import { h, ref, watch, onMounted, computed } from 'vue';
 import { useSearch, useRouter } from '@tanstack/vue-router';
 import { PlusIcon, EyeIcon, PencilIcon } from 'lucide-vue-next';
 
-import { useAuthStore } from '@/store/authStore';
 import { getPOClients, type POClientListItem } from '@/api/po-clients/po-clients';
 import { poClientSchema } from '@/routes/_authenticated/po-client.index';
 
@@ -16,7 +15,6 @@ import { usePermission } from '@/composables/usePermission';
 
 const search = useSearch({ strict: false }) as any;
 const router = useRouter();
-const authStore = useAuthStore();
 const { hasPermission } = usePermission();
 
 const data = ref<POClientListItem[]>([]);
@@ -24,12 +22,10 @@ const totalCount = ref(0);
 const isLoading = ref(false);
 
 const canCreate = computed(() => {
-    if (authStore.isMitra) return true;
     return hasPermission('PO_CLIENT_CREATE');
 });
 
 const canUpdate = computed(() => {
-    if (authStore.isMitra) return true;
     return hasPermission('PO_CLIENT_UPDATE');
 });
 

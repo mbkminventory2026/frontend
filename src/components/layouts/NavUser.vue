@@ -28,6 +28,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
+import { useRouter } from "@tanstack/vue-router"
+import { useAuthStore } from "@/store/authStore"
 
 const props = defineProps<{
   user: {
@@ -38,6 +40,13 @@ const props = defineProps<{
 }>()
 
 const { isMobile } = useSidebar()
+const authStore = useAuthStore()
+const router = useRouter()
+
+const handleLogout = () => {
+  authStore.logout()
+  router.navigate({ to: "/login" })
+}
 </script>
 
 <template>
@@ -105,7 +114,7 @@ const { isMobile } = useSidebar()
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>
+          <DropdownMenuItem @click="handleLogout">
             <LogOut />
             Log out
           </DropdownMenuItem>

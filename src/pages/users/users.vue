@@ -1,8 +1,15 @@
 <script setup lang="ts">
 import { h, ref, watch, onMounted, computed } from 'vue';
 import { useNavigate, useSearch } from '@tanstack/vue-router';
-import { PlusIcon, PencilIcon, CheckIcon, XIcon } from 'lucide-vue-next';
+import { PlusIcon, PencilIcon, CheckIcon, XIcon, CopyIcon, KeyRoundIcon, AlertTriangleIcon } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 
 import { 
     getUsers, 
@@ -143,14 +150,36 @@ const createDialog = useDialog({
     },
     onSuccess: (result) => {
         if (result?.temporary_password) {
-            toast.success('Password sementara berhasil dibuat', {
-                description: `Sampaikan password ini ke user: ${result.temporary_password}`,
-                duration: 15000,
-            });
+            generatedTempPassword.value = result.temporary_password;
+            generatedTempUsername.value = result.username || 'User';
+            isTempPasswordModalOpen.value = true;
+            isCopied.value = false;
+            toast.success('User berhasil ditambahkan!');
+        } else {
+            toast.success(createDialog.isEditMode.value ? 'Pengguna berhasil diupdate!' : 'Pengguna berhasil ditambahkan!');
         }
         fetchData();
     } 
 });
+
+// Temporary password display modal state
+const generatedTempPassword = ref('');
+const generatedTempUsername = ref('');
+const isTempPasswordModalOpen = ref(false);
+const isCopied = ref(false);
+
+const copyToClipboard = async () => {
+    try {
+        await navigator.clipboard.writeText(generatedTempPassword.value);
+        isCopied.value = true;
+        toast.success('Password berhasil disalin!');
+        setTimeout(() => {
+            isCopied.value = false;
+        }, 2000);
+    } catch (err) {
+        toast.error('Gagal menyalin password ke clipboard');
+    }
+};
 
 const filteredData = computed(() => {
     if (currentStatusTab.value === 'all') {
@@ -441,5 +470,56 @@ watch(() => search, () => {
             @update:is-open="createDialog.isOpen.value = $event"
             @submit="createDialog.handleSubmit"
         />
+
+        <!-- Generated Temporary Password Modal -->
+        <Dialog :open="isTempPasswordModalOpen" @update:open="isTempPasswordModalOpen = $event">
+            <DialogContent class="sm:max-w-md bg-white border border-slate-200 shadow-xl rounded-xl p-6">
+                <DialogHeader class="flex flex-col items-center text-center space-y-2">
+                    <div class="bg-amber-50 p-3 rounded-full border border-amber-200">
+                        <KeyRoundIcon class="w-8 h-8 text-amber-600 animate-pulse" />
+                    </div>
+                    <DialogTitle class="text-xl font-bold text-slate-900">Karyawan Baru Terdaftar</DialogTitle>
+                    <DialogDescription class="text-xs text-slate-500">
+                        Akun pengguna untuk <strong>{{ generatedTempUsername }}</strong> berhasil dibuat dengan password acak.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div class="mt-4 space-y-4">
+                    <!-- Password display box -->
+                    <div class="flex items-center justify-between gap-3 p-3.5 bg-slate-50 border border-slate-200 rounded-lg font-mono text-base font-bold text-slate-800">
+                        <span class="select-all tracking-wide break-all">{{ generatedTempPassword }}</span>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            class="flex-shrink-0 border-slate-300 hover:bg-slate-100"
+                            @click="copyToClipboard"
+                        >
+                            <component :is="isCopied ? CheckIcon : CopyIcon" class="w-4 h-4 mr-1.5" :class="isCopied ? 'text-green-600' : 'text-slate-600'" />
+                            {{ isCopied ? 'Disalin' : 'Salin' }}
+                        </Button>
+                    </div>
+
+                    <!-- Alert box -->
+                    <div class="flex items-start gap-2.5 p-3.5 bg-amber-50 border border-amber-100 rounded-lg text-amber-800">
+                        <AlertTriangleIcon class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                        <div class="text-xs space-y-1">
+                            <p class="font-bold">Perhatian Penting:</p>
+                            <p class="leading-relaxed">Salin dan bagikan password sementara ini secara aman kepada pengguna. Password ini <strong>hanya muncul satu kali ini saja</strong> dan tidak dapat dipulihkan atau dilihat kembali setelah menutup dialog.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <Button
+                        type="button"
+                        class="bg-slate-900 text-white hover:bg-slate-800 font-semibold px-6"
+                        @click="isTempPasswordModalOpen = false"
+                    >
+                        Selesai & Tutup
+                    </Button>
+                </div>
+            </DialogContent>
+        </Dialog>
     </div>
 </template>

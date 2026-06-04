@@ -23,18 +23,15 @@ import { Spinner } from '@/components/ui/spinner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { formatDate } from '@/lib/formatter';
-import { useAuthStore } from '@/store/authStore';
 
 import { usePermission } from '@/composables/usePermission';
 
 const router = useRouter();
-const authStore = useAuthStore();
 const { hasPermission } = usePermission();
 const params = useParams({ from: '/_authenticated/po-client/$id' });
 const id = computed(() => params.value.id);
 
 const canCreateOrEdit = computed(() => {
-    if (authStore.isMitra) return true;
     return hasPermission('PO_CLIENT_CREATE') || hasPermission('PO_CLIENT_UPDATE');
 });
 

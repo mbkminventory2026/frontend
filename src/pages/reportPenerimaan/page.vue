@@ -16,9 +16,11 @@ import { Button } from '@/components/ui/button';
 import { useTable } from '@/composables/useTable';
 import { formatDate } from '@/lib/formatter';
 import DeleteButton from '@/components/DeleteButton.vue';
+import { usePermission } from '@/composables/usePermission';
 
 const search = useSearch({ strict: false }) as any
 const router = useRouter();
+const { hasPermission } = usePermission();
 
 const data = ref<ReportPenerimaanItem[]>([]);
 const totalCount = ref(0);
@@ -60,34 +62,40 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
         { header: 'Keterangan', accessorKey: 'keterangan' },
         { header: 'Actions', id: 'actions', cell:({ row }) => {
         const id = row.getValue('id_received') as number;
+        const buttons = [];
 
-        return h('div', { class: 'flex gap-2 justify-center items-center' }, [
-            h(Button, {
-                variant: 'outline',
-                size: 'sm',
-                onClick: () => router.navigate({ to: '/report-penerimaan/$id', params: { id: String(id) } })
-            }, () => [
-                h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
-                'View'
-            ]),
-            h(Button, {
-                variant: 'ghost',
-                size: 'sm',
-                onClick: () => router.navigate({ to: '/report-penerimaan/edit/$id', params: { id: String(id) } })
-            }, () => [
-                h(PencilIcon, { class: 'w-4 h-4 mr-1' }),
-                'Edit'
-            ]),
-            h(DeleteButton, {
-                onConfirm: async() => {
-                    await deleteReportPenerimaan(id);
-                    await fetchData()
-                },
-                confirmMessage: 'Apakah Anda yakin ingin menghapus Laporan Penerimaan ini?',
-                resourceName: 'Laporan Penerimaan'
-            })
-        ]) }
-    }
+        buttons.push(h(Button, {
+            variant: 'outline',
+            size: 'sm',
+            onClick: () => router.navigate({ to: '/report-penerimaan/$id', params: { id: String(id) } })
+        }, () => [
+            h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
+            'View'
+        ]));
+
+        if (hasPermission('INVENTORY_RECEIVE')) {
+            buttons.push(
+                h(Button, {
+                    variant: 'ghost',
+                    size: 'sm',
+                    onClick: () => router.navigate({ to: '/report-penerimaan/edit/$id', params: { id: String(id) } })
+                }, () => [
+                    h(PencilIcon, { class: 'w-4 h-4 mr-1' }),
+                    'Edit'
+                ]),
+                h(DeleteButton, {
+                    onConfirm: async() => {
+                        await deleteReportPenerimaan(id);
+                        await fetchData()
+                    },
+                    confirmMessage: 'Apakah Anda yakin ingin menghapus Laporan Penerimaan ini?',
+                    resourceName: 'Laporan Penerimaan'
+                })
+            );
+        }
+
+        return h('div', { class: 'flex gap-2 justify-center items-center' }, buttons);
+        } }
     ],
     search: search,
     schema: reportPenerimaanSchema,
@@ -113,7 +121,7 @@ watch(() => search, () => {
         @clear-filter="clearFilter"
     >
         <template #actions>
-            <Button @click="router.navigate({ to: '/report-penerimaan/create' })" variant="outline">
+            <Button v-if="hasPermission('INVENTORY_RECEIVE')" @click="router.navigate({ to: '/report-penerimaan/create' })" variant="outline">
                 <PlusIcon class="w-4 h-4" />
                 <span class="hidden lg:inline">Tambah Data</span>
             </Button>

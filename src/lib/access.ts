@@ -19,6 +19,9 @@ const internalDefaultTargets: RouteTarget[] = [
   { path: '/po-client', permission: 'PO_CLIENT_READ' },
   { path: '/work-order', permission: 'WO_READ' },
   { path: '/production-summary', permission: 'PRODUCTION_SUMMARY_READ' },
+  { path: '/po-internal', permission: 'PO_INTERNAL_READ' },
+  { path: '/report-penerimaan', permission: 'REPORT_READ' },
+  { path: '/barang', permission: 'MASTER_BARANG_READ' },
 ]
 
 export function hasPermissionFromClaims(claims: DecodedAuthClaims | null, permission: string): boolean {
