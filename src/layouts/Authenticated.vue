@@ -60,6 +60,12 @@ const navMainItems = computed(() => {
   if (authStore.isMitra) {
     return [
       {
+        title: "Dashboard",
+        url: "/dashboard",
+        icon: LayoutDashboard,
+        permission: "DASHBOARD_READ",
+      },
+      {
         title: "PO Client",
         url: "/po-client",
         icon: Truck,
@@ -92,7 +98,7 @@ const navMainItems = computed(() => {
       title: "Estimasi AI (AI)",
       url: "/ai-estimation",
       icon: Sparkles,
-      permission: "DASHBOARD_READ",
+      permission: "AI_ESTIMATION_READ",
     },
     {
       title: "Master Data",

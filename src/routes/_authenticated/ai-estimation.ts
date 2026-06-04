@@ -4,7 +4,7 @@ import { requirePermission } from '@/lib/requirePermission'
 
 export const Route = createFileRoute('/_authenticated/ai-estimation')({
   beforeLoad: () => {
-    requirePermission('DASHBOARD_READ')()
+    requirePermission('AI_ESTIMATION_READ')()
   },
   component: AIEstimationPage,
   staticData: {
