@@ -84,20 +84,28 @@ const fetchDropdowns = async () => {
             label: d.nama_departemen,
             value: d.id_departemen
         }));
+    } catch (error) {
+        console.warn("Gagal fetch departemen (mungkin tidak ada izin):", error);
+    }
 
+    try {
         const mitraRes = await getMitra({ limit: 100, offset: 0 });
         mitraOptions.value = mitraRes.results.map(m => ({
             label: m.nama_perusahaan,
             value: m.id_mitra
         }));
+    } catch (error) {
+        console.warn("Gagal fetch mitra (mungkin tidak ada izin):", error);
+    }
 
+    try {
         const rolesRes = await getRoles({ limit: 100, offset: 0 });
         roleOptions.value = rolesRes.results.map((r: any) => ({
             label: r.nama_role,
             value: r.id_role
         }));
     } catch (error) {
-        console.error("Gagal fetch dropdowns:", error);
+        console.error("Gagal fetch roles:", error);
     }
 }
 
@@ -139,13 +147,14 @@ const createDialog = useDialog({
 
         if (isEdit) {
             const originalRoleId = createDialog.initialValues.value?.id_role;
-            const result = await updateUser(values.id_user, payload);
+            const res = await updateUser(values.id_user, payload);
             if (selectedRoleId && selectedRoleId !== originalRoleId) {
                 await assignUserRole(values.id_user, selectedRoleId);
             }
-            return result;
+            return res.data;
         } else {
-            return await createUser(payload);
+            const res = await createUser(payload);
+            return res.data;
         }
     },
     onSuccess: (result) => {
@@ -180,6 +189,16 @@ const copyToClipboard = async () => {
         toast.error('Gagal menyalin password ke clipboard');
     }
 };
+
+const activeFormValues = ref<Record<string, any>>({});
+
+watch(() => createDialog.isOpen.value, (isOpen) => {
+    if (isOpen) {
+        activeFormValues.value = { ...createDialog.initialValues.value };
+    } else {
+        activeFormValues.value = {};
+    }
+});
 
 const filteredData = computed(() => {
     if (currentStatusTab.value === 'all') {
@@ -312,6 +331,18 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
 const UserDialogSchema = computed<DialogSchemaType>(() => {
     const isEdit = createDialog.isEditMode.value;
     
+    // Filter role options based on user_type
+    let filteredRoles = roleOptions.value;
+    const currentUserType = activeFormValues.value?.user_type;
+    
+    if (currentUserType === 'Karyawan') {
+        // Exclude CLIENT role for internal employees
+        filteredRoles = roleOptions.value.filter(r => String(r.label).toUpperCase() !== 'CLIENT');
+    } else if (currentUserType === 'Mitra') {
+        // Only allow CLIENT role for external partners
+        filteredRoles = roleOptions.value.filter(r => String(r.label).toUpperCase() === 'CLIENT');
+    }
+    
     return [
         {
             key: "username",
@@ -377,7 +408,7 @@ const UserDialogSchema = computed<DialogSchemaType>(() => {
             type: "select",
             placeholder: "Pilih role pengguna",
             rules: "required",
-            options: roleOptions.value,
+            options: filteredRoles,
             position: "full",
             dependency: {
                 parentKey: "user_type",
@@ -469,6 +500,7 @@ watch(() => search, () => {
             :submit-label="createDialog.isLoading.value ? 'Sending...' : (createDialog.isEditMode.value ? 'Update' : 'Create')"
             @update:is-open="createDialog.isOpen.value = $event"
             @submit="createDialog.handleSubmit"
+            @change="activeFormValues = $event"
         />
 
         <!-- Generated Temporary Password Modal -->
