@@ -57,12 +57,13 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
     rowCount: totalCount,
     columns: [
         { header: 'Created At', accessorKey: 'created_at', cell: ({ row }) => formatDate(row.getValue('created_at')) },
+        { header: 'ID Barang', accessorKey: 'id_barang' },
         { header: 'Kode Barang', accessorKey: 'kode' },
         { header: 'Nama Barang', accessorKey: 'nama_barang' },
         { header: 'Jenis', accessorKey: 'nama_jenis_barang' },
         { header: 'Perusahaan', accessorKey: 'nama_perusahaan' },
         { header: 'Actions', id: 'actions', cell:({ row }) => {
-        const id = row.getValue('id_barang') as number;
+        const id = row.original.id_barang;
         const buttons = [];
 
         buttons.push(h(Button, {
