@@ -25,11 +25,11 @@ import {
 
 import { useTable } from '@/composables/useTable';
 import { formatDate } from '@/lib/formatter';
-import { useAuthStore } from '@/store/authStore';
+import { usePermission } from '@/composables/usePermission';
 
 const router = useRouter();
 const search = useSearch({ strict: false }) as any;
-const authStore = useAuthStore();
+const { hasPermission } = usePermission();
 
 // ─── Table State ───────────────────────────────────────
 const data = ref<WorkOrderListItem[]>([]);
@@ -37,11 +37,8 @@ const totalCount = ref(0);
 const isLoading = ref(false);
 
 // ─── Permission ────────────────────────────────────────
-const canCreateOrClose = computed(() => {
-    const role = authStore.user?.role?.toLowerCase() || '';
-    const isSuperAdmin = role === 'super-admin' || role === 'super_admin' || role === 'admin';
-    return isSuperAdmin || authStore.permissions.includes('WO_CREATE') || authStore.isManager;
-});
+const canCreate = computed(() => hasPermission('WO_CREATE'));
+const canClose = computed(() => hasPermission('WO_CLOSE'));
 
 // ─── Fetch WO List ─────────────────────────────────────
 const fetchData = async () => {
@@ -233,6 +230,7 @@ const hasDuplicateTrimColor = (trimIdx: number) => {
     return trims.value.some((t, idx) => idx !== trimIdx && t.color === trim.color);
 };
 
+// @ts-ignore
 const openWizard = () => {
     // Reset all state
     wizardStep.value = 1;
@@ -415,7 +413,7 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
                         h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
                         'View'
                     ]),
-                    ...(canCreateOrClose.value && isOpen ? [
+                    ...(canClose.value && isOpen ? [
                         h(Button, {
                             variant: 'ghost',
                             size: 'sm',
@@ -454,8 +452,8 @@ watch(() => search, () => { fetchData(); }, { deep: true });
                     <p class="text-[13px] text-neutral-500 mt-1">Daftar perintah kerja produksi dan relasi detail pesanan produksi.</p>
                 </div>
             </div>
-            <div class="flex items-center gap-3" v-if="canCreateOrClose">
-                <Button @click="openWizard" variant="outline" class="shadow-sm border-neutral-300">
+            <div class="flex items-center gap-3" v-if="canCreate">
+                <Button @click="router.navigate({ to: '/work-order/create' })" variant="outline" class="shadow-sm border-neutral-300">
                     <PlusIcon class="w-4 h-4 mr-2" />
                     Tambah Work Order
                 </Button>
@@ -631,9 +629,9 @@ watch(() => search, () => { fetchData(); }, { deep: true });
                         <div class="space-y-2">
                             <div class="flex items-center justify-between">
                                 <span class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Distribusi Ukuran (Sizes) *</span>
-                                <button 
-                                    @click="addSize(si)" 
-                                    type="button" 
+                                <button
+                                    @click="addSize(si)"
+                                    type="button"
                                     :disabled="!step1.qty || getShellTotalQty(si) >= step1.qty"
                                     class="text-xs font-semibold text-neutral-600 hover:text-neutral-900 flex items-center gap-1 transition disabled:opacity-50 disabled:cursor-not-allowed"
                                 >

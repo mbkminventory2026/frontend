@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useParams, useRouter } from '@tanstack/vue-router';
-import { 
-    Building, 
-    Hash, 
-    PencilIcon, 
-    SaveIcon, 
-    XIcon,
+import {
+    Building,
+    Hash,
+    PencilIcon,
     Calendar,
     Info,
     Mail,
@@ -15,34 +13,39 @@ import {
     MapPin
 } from 'lucide-vue-next';
 
-import { getMitraById, updateMitra } from '@/api/mitra/mitra';
-import { useForm } from '@/composables/form/useForm';
+import { getMitraById } from '@/api/mitra/mitra';
+import { usePermission } from '@/composables/usePermission';
 
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import AppForm from '@/components/form/AppForm.vue';
-import AppFormField from '@/components/form/AppFormField.vue';
 import { formatDate } from '@/lib/formatter';
 
 const router = useRouter();
+const { hasPermission } = usePermission();
 const params = useParams({ from: '/_authenticated/mitra/$id' });
 const id = computed(() => params.value.id);
 
-const form = useForm({
-    api: {
-        get: () => getMitraById(id.value),
-        update: (_id, payload) => {
-            const { created_at, id_mitra, ...data } = payload;
-            return updateMitra(id_mitra, data);
-        }
-    },
-    id: id.value,
-    immediate: true
-});
+const values = ref<any>(null);
+const isLoading = ref(false);
 
-const { values, isLoading, isSaving, isEditing } = form;
+const fetchData = async () => {
+    isLoading.value = true;
+    try {
+        const response = await getMitraById(id.value);
+        const data = Array.isArray(response) ? response[0] : response;
+        values.value = data;
+    } catch (error) {
+        console.error('Gagal fetch data:', error);
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+onMounted(() => {
+    fetchData();
+});
 </script>
 
 <template>
@@ -58,7 +61,7 @@ const { values, isLoading, isSaving, isEditing } = form;
                 <div class="bg-primary/10 p-4 rounded-2xl">
                     <Building class="w-12 h-12 text-primary" />
                 </div>
-                
+
                 <div class="flex-1 space-y-1 text-center md:text-left">
                     <h1 class="text-3xl font-bold tracking-tight">{{ values.nama_perusahaan }}</h1>
                     <div class="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-muted-foreground">
@@ -75,13 +78,12 @@ const { values, isLoading, isSaving, isEditing } = form;
                     <Button @click="router.history.back()" variant="ghost" class="flex-1 md:flex-none">
                         Kembali
                     </Button>
-                    <Button @click="form.toggleEdit" :variant="isEditing ? 'outline' : 'default'" class="flex-1 md:flex-none">
-                        <template v-if="isEditing">
-                            <XIcon class="w-4 h-4 mr-2" /> Batal
-                        </template>
-                        <template v-else>
-                            <PencilIcon class="w-4 h-4 mr-2" /> Edit Mitra
-                        </template>
+                    <Button
+                        v-if="hasPermission('MASTER_MITRA_UPDATE')"
+                        @click="router.navigate({ to: '/mitra/edit/$id', params: { id } })"
+                        class="flex-1 md:flex-none"
+                    >
+                        <PencilIcon class="w-4 h-4 mr-2" /> Edit Mitra
                     </Button>
                 </div>
             </div>
@@ -98,8 +100,7 @@ const { values, isLoading, isSaving, isEditing } = form;
                             </CardTitle>
                         </CardHeader>
                         <CardContent class="pt-6">
-                            <!-- VIEW MODE -->
-                            <div v-if="!isEditing" class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                     <div class="space-y-1">
                                         <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Nama Perusahaan</p>
@@ -124,9 +125,9 @@ const { values, isLoading, isSaving, isEditing } = form;
                                         </div>
                                     </div>
                                 </div>
-                                
+
                                 <Separator />
-                                
+
                                 <div class="space-y-4">
                                     <h3 class="text-sm font-semibold flex items-center gap-2">
                                         <MapPin class="w-4 h-4 text-primary" /> Lokasi
@@ -146,36 +147,6 @@ const { values, isLoading, isSaving, isEditing } = form;
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            <!-- EDIT MODE -->
-                            <div v-else class="animate-in fade-in slide-in-from-top-4 duration-500">
-                                <AppForm :form="form">
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                        <div class="sm:col-span-2">
-                                            <AppFormField name="nama_perusahaan" label="Nama Perusahaan" placeholder="Masukkan nama perusahaan" />
-                                        </div>
-                                        <AppFormField name="tipe_perusahaan" label="Tipe Perusahaan" placeholder="Contoh: Supplier, Client, dll" />
-                                        <AppFormField name="email" label="Email" placeholder="contoh@email.com" />
-                                        <AppFormField name="no_telp" label="No. Telp" placeholder="08xxxxxxxxxx" />
-                                        <AppFormField name="kota" label="Kota" placeholder="Masukkan kota" />
-                                        <AppFormField name="kode_pos" label="Kode Pos" placeholder="xxxxx" />
-                                        <div class="sm:col-span-2">
-                                            <AppFormField name="alamat" type="textarea" label="Alamat" placeholder="Masukkan alamat lengkap" class="min-h-[100px]" />
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="flex justify-end pt-4">
-                                        <Button type="submit" :disabled="isSaving" class="px-8 shadow-lg shadow-primary/20">
-                                            <template v-if="isSaving">
-                                                <Spinner class="w-4 h-4 mr-2" /> Menyimpan...
-                                            </template>
-                                            <template v-else>
-                                                <SaveIcon class="w-4 h-4 mr-2" /> Simpan Perubahan
-                                            </template>
-                                        </Button>
-                                    </div>
-                                </AppForm>
                             </div>
                         </CardContent>
                     </Card>

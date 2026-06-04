@@ -1,45 +1,49 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useParams, useRouter } from '@tanstack/vue-router';
-import { 
-    Layers, 
-    Hash, 
-    PencilIcon, 
-    SaveIcon, 
-    XIcon,
+import {
+    Layers,
+    Hash,
+    PencilIcon,
     Calendar,
     Info,
     Package
 } from 'lucide-vue-next';
 
-import { getJenisBarangById, updateJenisBarang } from '@/api/jenis-barang/jenis-barang';
-import { useForm } from '@/composables/form/useForm';
+import { getJenisBarangById } from '@/api/jenis-barang/jenis-barang';
+import { usePermission } from '@/composables/usePermission';
 
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import AppForm from '@/components/form/AppForm.vue';
-import AppFormField from '@/components/form/AppFormField.vue';
 import { formatDate } from '@/lib/formatter';
+import { ref, onMounted } from 'vue';
 
 const router = useRouter();
+const { hasPermission } = usePermission();
 const params = useParams({ from: '/_authenticated/jenis-barang/$id' });
 const id = computed(() => params.value.id);
 
-const form = useForm({
-    api: {
-        get: () => getJenisBarangById(id.value),
-        update: (_id, payload) => {
-            const { created_at, id_jenis_barang, ...data } = payload;
-            return updateJenisBarang(id_jenis_barang, data);
-        }
-    },
-    id: id.value,
-    immediate: true
-});
+const values = ref<any>(null);
+const isLoading = ref(false);
 
-const { values, isLoading, isSaving, isEditing } = form;
+const fetchData = async () => {
+    isLoading.value = true;
+    try {
+        const response = await getJenisBarangById(id.value);
+        const data = Array.isArray(response) ? response[0] : response;
+        values.value = data;
+    } catch (error) {
+        console.error('Gagal fetch data:', error);
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+onMounted(() => {
+    fetchData();
+});
 </script>
 
 <template>
@@ -55,7 +59,7 @@ const { values, isLoading, isSaving, isEditing } = form;
                 <div class="bg-primary/10 p-4 rounded-2xl">
                     <Layers class="w-12 h-12 text-primary" />
                 </div>
-                
+
                 <div class="flex-1 space-y-1 text-center md:text-left">
                     <div class="flex items-center justify-center md:justify-start gap-2">
                         <h1 class="text-3xl font-bold tracking-tight">{{ values.nama_jenis_barang }}</h1>
@@ -68,13 +72,12 @@ const { values, isLoading, isSaving, isEditing } = form;
                     <Button @click="router.history.back()" variant="ghost" class="flex-1 md:flex-none">
                         Kembali
                     </Button>
-                    <Button @click="form.toggleEdit" :variant="isEditing ? 'outline' : 'default'" class="flex-1 md:flex-none">
-                        <template v-if="isEditing">
-                            <XIcon class="w-4 h-4 mr-2" /> Batal
-                        </template>
-                        <template v-else>
-                            <PencilIcon class="w-4 h-4 mr-2" /> Edit Jenis Barang
-                        </template>
+                    <Button
+                        v-if="hasPermission('MASTER_JENIS_BARANG_UPDATE')"
+                        @click="router.navigate({ to: '/jenis-barang/edit/$id', params: { id } })"
+                        class="flex-1 md:flex-none"
+                    >
+                        <PencilIcon class="w-4 h-4 mr-2" /> Edit Jenis Barang
                     </Button>
                 </div>
             </div>
@@ -91,8 +94,7 @@ const { values, isLoading, isSaving, isEditing } = form;
                             </CardTitle>
                         </CardHeader>
                         <CardContent class="pt-6">
-                            <!-- VIEW MODE -->
-                            <div v-if="!isEditing" class="grid grid-cols-1 sm:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 <div class="space-y-1">
                                     <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Nama Jenis Barang</p>
                                     <p class="text-lg font-semibold">{{ values.nama_jenis_barang }}</p>
@@ -101,27 +103,6 @@ const { values, isLoading, isSaving, isEditing } = form;
                                     <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Kode Jenis</p>
                                     <p class="text-lg font-mono">{{ values.kode }}</p>
                                 </div>
-                            </div>
-
-                            <!-- EDIT MODE -->
-                            <div v-else class="animate-in fade-in slide-in-from-top-4 duration-500">
-                                <AppForm :form="form">
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                        <AppFormField name="nama_jenis_barang" label="Nama Jenis Barang" placeholder="Masukkan nama jenis barang" />
-                                        <AppFormField name="kode" label="Kode Jenis Barang" placeholder="Contoh: JNS-001" />
-                                    </div>
-                                    
-                                    <div class="flex justify-end pt-4">
-                                        <Button type="submit" :disabled="isSaving" class="px-8 shadow-lg shadow-primary/20">
-                                            <template v-if="isSaving">
-                                                <Spinner class="w-4 h-4 mr-2" /> Menyimpan...
-                                            </template>
-                                            <template v-else>
-                                                <SaveIcon class="w-4 h-4 mr-2" /> Simpan Perubahan
-                                            </template>
-                                        </Button>
-                                    </div>
-                                </AppForm>
                             </div>
                         </CardContent>
                     </Card>

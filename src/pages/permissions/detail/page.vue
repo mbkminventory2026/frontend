@@ -1,44 +1,45 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { useParams, useRouter } from '@tanstack/vue-router';
-import { 
-    Shield, 
-    Hash, 
-    PencilIcon, 
-    SaveIcon, 
-    XIcon,
+import {
+    Shield,
+    Hash,
+    PencilIcon,
     Calendar,
     Layout
 } from 'lucide-vue-next';
 
-import { getPermissionsById, updatePermissions } from '@/api/permissions/permissions';
-import { useForm } from '@/composables/form/useForm';
+import { getPermissionsById } from '@/api/permissions/permissions';
 
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import AppForm from '@/components/form/AppForm.vue';
-import AppFormField from '@/components/form/AppFormField.vue';
 import { formatDate } from '@/lib/formatter';
 
 const router = useRouter();
 const params = useParams({ from: '/_authenticated/permissions/$id' });
 const id = computed(() => params.value.id);
 
-const form = useForm({
-    api: {
-        get: () => getPermissionsById(id.value),
-        update: (_id, payload) => {
-            const { created_at, id_hak_akses, ...data } = payload;
-            return updatePermissions(id_hak_akses, data);
-        }
-    },
-    id: id.value,
-    immediate: true
-});
+const values = ref<any>(null);
+const isLoading = ref(false);
 
-const { values, isLoading, isSaving, isEditing } = form;
+const fetchData = async () => {
+    isLoading.value = true;
+    try {
+        const response = await getPermissionsById(id.value);
+        const data = Array.isArray(response) ? response[0] : response;
+        values.value = data;
+    } catch (error) {
+        console.error('Gagal fetch data:', error);
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+onMounted(() => {
+    fetchData();
+});
 </script>
 
 <template>
@@ -54,7 +55,7 @@ const { values, isLoading, isSaving, isEditing } = form;
                 <div class="bg-primary/10 p-4 rounded-2xl">
                     <Shield class="w-12 h-12 text-primary" />
                 </div>
-                
+
                 <div class="flex-1 space-y-1 text-center md:text-left">
                     <h1 class="text-3xl font-bold tracking-tight">{{ values.nama_halaman }}</h1>
                     <p class="text-muted-foreground">ID Hak Akses: {{ values.id_hak_akses }}</p>
@@ -64,13 +65,11 @@ const { values, isLoading, isSaving, isEditing } = form;
                     <Button @click="router.history.back()" variant="ghost" class="flex-1 md:flex-none">
                         Kembali
                     </Button>
-                    <Button @click="form.toggleEdit" :variant="isEditing ? 'outline' : 'default'" class="flex-1 md:flex-none">
-                        <template v-if="isEditing">
-                            <XIcon class="w-4 h-4 mr-2" /> Batal
-                        </template>
-                        <template v-else>
-                            <PencilIcon class="w-4 h-4 mr-2" /> Edit Permission
-                        </template>
+                    <Button
+                        @click="router.navigate({ to: '/permissions/edit/$id', params: { id } })"
+                        class="flex-1 md:flex-none"
+                    >
+                        <PencilIcon class="w-4 h-4 mr-2" /> Edit Permission
                     </Button>
                 </div>
             </div>
@@ -87,32 +86,29 @@ const { values, isLoading, isSaving, isEditing } = form;
                             </CardTitle>
                         </CardHeader>
                         <CardContent class="pt-6">
-                            <!-- VIEW MODE -->
-                            <div v-if="!isEditing" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                <div class="space-y-1">
-                                    <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Nama Halaman / Modul</p>
-                                    <p class="text-xl font-semibold">{{ values.nama_halaman }}</p>
+                            <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="space-y-1">
+                                        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Nama Halaman / Modul</p>
+                                        <p class="text-lg font-semibold">{{ values.nama_halaman }}</p>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Kode Permission</p>
+                                        <p class="text-lg font-mono font-semibold text-primary">{{ values.kode_permission }}</p>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Domain Permission</p>
+                                        <p class="text-lg font-semibold">{{ values.domain_permission || '-' }}</p>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Aksi Permission</p>
+                                        <p class="text-lg font-semibold">{{ values.aksi_permission || '-' }}</p>
+                                    </div>
+                                    <div class="space-y-1 md:col-span-2">
+                                        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Deskripsi</p>
+                                        <p class="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100 min-h-[80px] whitespace-pre-wrap">{{ values.deskripsi || 'Tidak ada deskripsi.' }}</p>
+                                    </div>
                                 </div>
-                            </div>
-
-                            <!-- EDIT MODE -->
-                            <div v-else class="animate-in fade-in slide-in-from-top-4 duration-500">
-                                <AppForm :form="form">
-                                    <div class="space-y-4">
-                                        <AppFormField name="nama_halaman" label="Nama Halaman" placeholder="Masukkan nama halaman" />
-                                    </div>
-                                    
-                                    <div class="flex justify-end pt-4">
-                                        <Button type="submit" :disabled="isSaving" class="px-8 shadow-lg shadow-primary/20">
-                                            <template v-if="isSaving">
-                                                <Spinner class="w-4 h-4 mr-2" /> Menyimpan...
-                                            </template>
-                                            <template v-else>
-                                                <SaveIcon class="w-4 h-4 mr-2" /> Simpan Perubahan
-                                            </template>
-                                        </Button>
-                                    </div>
-                                </AppForm>
                             </div>
                         </CardContent>
                     </Card>

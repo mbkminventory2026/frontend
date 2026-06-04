@@ -1,82 +1,48 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { useParams, useRouter } from '@tanstack/vue-router';
-import { 
-    Package, 
-    Hash, 
-    Layers, 
-    BuildingIcon, 
-    PencilIcon, 
-    SaveIcon, 
-    XIcon,
+import {
+    Package,
+    Hash,
+    Layers,
+    BuildingIcon,
+    PencilIcon,
     Calendar,
     Info
 } from 'lucide-vue-next';
 
-import { getBarangById, updateBarang } from '@/api/barang/barang';
-import { getJenisBarang } from '@/api/barang/jenisBarang';
-import { getMitra } from '@/api/mitra/mitra';
-import { useForm } from '@/composables/form/useForm';
+import { getBarangById } from '@/api/barang/barang';
+import { usePermission } from '@/composables/usePermission';
 
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import AppForm from '@/components/form/AppForm.vue';
-import AppFormField from '@/components/form/AppFormField.vue';
 import { formatDate } from '@/lib/formatter';
 
 const router = useRouter();
+const { hasPermission } = usePermission();
 const params = useParams({ from: '/_authenticated/barang/$id' });
 const id = computed(() => params.value.id);
 
-const jenisBarangOptions = ref<{ label: string, value: number }[]>([]);
-const mitraOptions = ref<{ label: string, value: number }[]>([]);
+const values = ref<any>(null);
+const isLoading = ref(false);
 
-const fetchOptions = async () => {
+const fetchData = async () => {
+    isLoading.value = true;
     try {
-        const [jbRes, mRes] = await Promise.all([
-            getJenisBarang(),
-            getMitra({ limit: 100, offset: 0 })
-        ]);
-        
-        jenisBarangOptions.value = jbRes.map(item => ({
-            label: item.nama_jenis_barang,
-            value: item.id_jenis_barang
-        }));
-        
-        mitraOptions.value = mRes.results.map((item: any) => ({
-            label: item.nama_perusahaan,
-            value: item.id_mitra
-        }));
+        const response = await getBarangById(id.value);
+        const data = Array.isArray(response) ? response[0] : response;
+        values.value = data;
     } catch (error) {
-        console.error("Gagal fetch options:", error);
+        console.error('Gagal fetch data:', error);
+    } finally {
+        isLoading.value = false;
     }
-}
-
-const form = useForm({
-    api: {
-        get: () => getBarangById(id.value),
-        update: (_id, payload) => {
-            // Remove read-only or extra fields
-            const { 
-                created_at, 
-                nama_jenis_barang, 
-                nama_perusahaan, 
-                id_barang,
-                ...data 
-            } = payload;
-            return updateBarang(id_barang, data);
-        }
-    },
-    id: id.value,
-    immediate: true
-});
-
-const { values, isLoading, isSaving, isEditing } = form;
+};
 
 onMounted(() => {
-    fetchOptions();
+    fetchData();
 });
 </script>
 
@@ -93,7 +59,7 @@ onMounted(() => {
                 <div class="bg-primary/10 p-4 rounded-2xl">
                     <Package class="w-12 h-12 text-primary" />
                 </div>
-                
+
                 <div class="flex-1 space-y-1 text-center md:text-left">
                     <div class="flex items-center justify-center md:justify-start gap-2">
                         <h1 class="text-3xl font-bold tracking-tight">{{ values.nama_barang }}</h1>
@@ -106,13 +72,12 @@ onMounted(() => {
                     <Button @click="router.history.back()" variant="ghost" class="flex-1 md:flex-none">
                         Kembali
                     </Button>
-                    <Button @click="form.toggleEdit" :variant="isEditing ? 'outline' : 'default'" class="flex-1 md:flex-none">
-                        <template v-if="isEditing">
-                            <XIcon class="w-4 h-4 mr-2" /> Batal
-                        </template>
-                        <template v-else>
-                            <PencilIcon class="w-4 h-4 mr-2" /> Edit Barang
-                        </template>
+                    <Button
+                        v-if="hasPermission('MASTER_BARANG_UPDATE')"
+                        @click="router.navigate({ to: '/barang/edit/$id', params: { id } })"
+                        class="flex-1 md:flex-none"
+                    >
+                        <PencilIcon class="w-4 h-4 mr-2" /> Edit Barang
                     </Button>
                 </div>
             </div>
@@ -129,8 +94,7 @@ onMounted(() => {
                             </CardTitle>
                         </CardHeader>
                         <CardContent class="pt-6">
-                            <!-- VIEW MODE -->
-                            <div v-if="!isEditing" class="grid grid-cols-1 sm:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 <div class="space-y-1">
                                     <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Nama Barang</p>
                                     <p class="text-lg font-semibold">{{ values.nama_barang }}</p>
@@ -153,41 +117,6 @@ onMounted(() => {
                                         <p class="font-medium">{{ values.nama_perusahaan }}</p>
                                     </div>
                                 </div>
-                            </div>
-
-                            <!-- EDIT MODE -->
-                            <div v-else class="animate-in fade-in slide-in-from-top-4 duration-500">
-                                <AppForm :form="form">
-                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                        <AppFormField name="nama_barang" label="Nama Barang" placeholder="Masukkan nama barang" />
-                                        <AppFormField name="kode" label="Kode Barang" placeholder="Contoh: BRG-001" />
-                                        <AppFormField 
-                                            name="id_jenis_barang" 
-                                            type="select" 
-                                            label="Jenis Barang" 
-                                            placeholder="Pilih jenis barang" 
-                                            :options="jenisBarangOptions"
-                                        />
-                                        <AppFormField 
-                                            name="id_mitra" 
-                                            type="select" 
-                                            label="Perusahaan (Mitra)" 
-                                            placeholder="Pilih mitra" 
-                                            :options="mitraOptions"
-                                        />
-                                    </div>
-                                    
-                                    <div class="flex justify-end pt-4">
-                                        <Button type="submit" :disabled="isSaving" class="px-8 shadow-lg shadow-primary/20">
-                                            <template v-if="isSaving">
-                                                <Spinner class="w-4 h-4 mr-2" /> Menyimpan...
-                                            </template>
-                                            <template v-else>
-                                                <SaveIcon class="w-4 h-4 mr-2" /> Simpan Perubahan
-                                            </template>
-                                        </Button>
-                                    </div>
-                                </AppForm>
                             </div>
                         </CardContent>
                     </Card>
@@ -224,7 +153,7 @@ onMounted(() => {
                         </CardHeader>
                         <CardContent>
                             <p class="text-xs text-primary/80 leading-relaxed">
-                                Anda dapat memperbarui informasi barang dengan menekan tombol Edit. Pastikan semua field wajib diisi sebelum menyimpan.
+                                Anda dapat memperbarui informasi barang dengan menggunakan halaman Edit terpisah. Pastikan semua field wajib diisi sebelum menyimpan.
                             </p>
                         </CardContent>
                     </Card>

@@ -61,5 +61,6 @@ export const getBarangById = async (id: string | number) => {
     if (!id) throw new Error("ID is required");
 
     const response = await apiClient.get<BarangResponseItem[]>(`/api/v1/master/barang/${id}`);
-    return response.data;
+    const data = response.data;
+    return Array.isArray(data) ? data[0] : data;
 }

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { SeparatorProps } from "reka-ui"
-import type { HTMLAttributes } from "vue"
-import { reactiveOmit } from "@vueuse/core"
+import { type HTMLAttributes, computed } from "vue"
 import { Separator } from "reka-ui"
 import { cn } from "@/lib/utils"
 
@@ -12,7 +11,10 @@ const props = withDefaults(defineProps<
   decorative: true,
 })
 
-const delegatedProps = reactiveOmit(props, "class")
+const delegatedProps = computed(() => {
+  const { class: _, ...delegated } = props
+  return delegated
+})
 </script>
 
 <template>

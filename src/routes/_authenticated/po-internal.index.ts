@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/vue-router'
 import POInternalPage from '@/pages/po-internal/po-internal.vue'
 import { createTableParamsSchema } from '@/schemas/table-params'
 import { validateTableSearchRedirect, stripTableDefaults } from '@/lib/table-utils'
+import { requirePermission } from '@/lib/requirePermission'
 
 export const poInternalColumns: [string, ...string[]] = [
     'created_at',
@@ -22,6 +23,7 @@ export const Route = createFileRoute('/_authenticated/po-internal/')({
     },
 
     beforeLoad: ({ search, location }) => {
+        requirePermission('PO_INTERNAL_READ')()
         validateTableSearchRedirect(
             '/_authenticated/po-internal',
             location.search as Record<string, any>,

@@ -3,23 +3,17 @@ import { h, ref, watch, onMounted } from 'vue';
 import { useSearch, useRouter } from '@tanstack/vue-router';
 import { PlusIcon, EyeIcon, PencilIcon } from 'lucide-vue-next';
 
-import { 
-    deleteReportPenerimaan, 
-    getReportPenerimaan, 
-    getReportPenerimaanById,
-    createReportPenerimaan,
-    updateReportPenerimaan 
+import {
+    deleteReportPenerimaan,
+    getReportPenerimaan
 } from '@/api/reportPenerimaan/reportPenerimaan';
 import { type ReportPenerimaanItem } from '@/schemas/reportPenerimaan/reportPenerimaan';
 import { reportPenerimaanSchema } from '@/routes/_authenticated/report-penerimaan.index';
 
 import DataTable from '@/components/DataTable.vue';
-import AppDialog from '@/components/AppDialog.vue';
 import { Button } from '@/components/ui/button';
 
 import { useTable } from '@/composables/useTable';
-import { useDialog } from '@/composables/useDialog';
-import { type DialogSchemaType } from '@/schemas/dialog/dialog';
 import { formatDate } from '@/lib/formatter';
 import DeleteButton from '@/components/DeleteButton.vue';
 
@@ -52,18 +46,7 @@ const fetchData = async () => {
     }
 }
 
-// Dialog
-const createDialog = useDialog({
-    onSubmit: async (values, isEdit) => {
-        if (isEdit) {
-            const id = values.id_received || values.idReceived;
-            return await updateReportPenerimaan(id, values);
-        } else {
-            return await createReportPenerimaan(values);
-        }
-    },
-    onSuccess: () => fetchData() // Refresh tabel setelah tambah/edit
-});
+
 
 const { table, searchTerm, onSearch, clearFilter } = useTable({
     data: data,
@@ -79,26 +62,18 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
         const id = row.getValue('id_received') as number;
 
         return h('div', { class: 'flex gap-2 justify-center items-center' }, [
-            h(Button, { 
+            h(Button, {
                 variant: 'outline',
                 size: 'sm',
-                onClick: () => router.navigate({ to: '/report-penerimaan/$id', params: { id: String(id) } }) 
+                onClick: () => router.navigate({ to: '/report-penerimaan/$id', params: { id: String(id) } })
             }, () => [
                 h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
                 'View'
             ]),
-            h(Button, { 
+            h(Button, {
                 variant: 'ghost',
                 size: 'sm',
-                onClick: async () => {
-                    try {
-                        const res = await getReportPenerimaanById(id);
-                        const detailData = Array.isArray(res) ? res[0] : res;
-                        createDialog.openDialog(detailData);
-                    } catch (error) {
-                        console.error("Gagal fetch detail untuk edit:", error);
-                    }
-                }
+                onClick: () => router.navigate({ to: '/report-penerimaan/edit/$id', params: { id: String(id) } })
             }, () => [
                 h(PencilIcon, { class: 'w-4 h-4 mr-1' }),
                 'Edit'
@@ -108,49 +83,17 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
                     await deleteReportPenerimaan(id);
                     await fetchData()
                 },
-                confirmMessage: 'Apakah Anda yakin ingin menghapus Laporan Penerimaan ini?'
+                confirmMessage: 'Apakah Anda yakin ingin menghapus Laporan Penerimaan ini?',
+                resourceName: 'Laporan Penerimaan'
             })
-        ]) } 
+        ]) }
     }
     ],
     search: search,
     schema: reportPenerimaanSchema,
 })
 
-const reportPenerimaanDialogSchema: DialogSchemaType = [
-    {
-        key: "tanggal",
-        label: "Tanggal Penerimaan",
-        type: "date",
-        placeholder: "Pilih tanggal penerimaan",
-        rules: "required",
-        position: "full"
-    },
-    {
-        key: "id_material_list",
-        label: "ID Material List",
-        type: "number",
-        placeholder: "Masukkan ID Material List",
-        rules: "required",
-        position: "full"
-    },
-    {
-        key: "qty",
-        label: "Quantity (Qty)",
-        type: "number",
-        placeholder: "Masukkan quantity yang diterima",
-        rules: "required",
-        position: "full"
-    },
-    {
-        key: "keterangan",
-        label: "Keterangan",
-        type: "text",
-        placeholder: "Masukkan keterangan (opsional)",
-        rules: "",
-        position: "full"
-    },
-];
+
 
 onMounted(() => {
     fetchData();
@@ -170,21 +113,10 @@ watch(() => search, () => {
         @clear-filter="clearFilter"
     >
         <template #actions>
-            <Button @click="createDialog.openDialog()" variant="outline">
+            <Button @click="router.navigate({ to: '/report-penerimaan/create' })" variant="outline">
                 <PlusIcon class="w-4 h-4" />
                 <span class="hidden lg:inline">Tambah Data</span>
             </Button>
         </template>
     </DataTable>
-
-    <AppDialog
-        :title="createDialog.isEditMode.value ? 'Edit Laporan Penerimaan' : 'Tambah Laporan Penerimaan'"
-        :description="createDialog.isEditMode.value ? 'Perbarui informasi laporan penerimaan di bawah ini.' : 'Masukkan detail laporan penerimaan baru di sini.'"
-        :schema="reportPenerimaanDialogSchema"
-        :is-open="createDialog.isOpen.value"
-        :initial-values="createDialog.initialValues.value"
-        :submit-label="createDialog.isLoading.value ? 'Sending...' : (createDialog.isEditMode.value ? 'Update' : 'Create')"
-        @update:is-open="createDialog.isOpen.value = $event"
-        @submit="createDialog.handleSubmit"
-    />
 </template>

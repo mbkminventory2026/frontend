@@ -1,8 +1,11 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { getProductionSummary, createFactoryReport, getWorkOrderList } from '@/api/production/production'
 import type { ProductionAggregateResponse, WorkOrderOption } from '@/schemas/production/production'
+import { usePermission } from '@/composables/usePermission'
 
 export function useProductionDashboard() {
+  const { hasPermission } = usePermission()
+
   // ─── State ─────────────────────────────────────────────
   const data = ref<ProductionAggregateResponse[]>([])
   const totalCount = ref(0)
@@ -39,6 +42,10 @@ export function useProductionDashboard() {
 
   // ─── Fetch ─────────────────────────────────────────────
   const fetchWorkOrders = async () => {
+    if (!hasPermission('WO_READ')) {
+      workOrders.value = []
+      return
+    }
     try {
       workOrders.value = await getWorkOrderList()
     } catch (error) {

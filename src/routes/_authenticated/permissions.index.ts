@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/vue-router'
 import PermissionsPage from '@/pages/permissions/permissions.vue'
 import { createTableParamsSchema } from '@/schemas/table-params'
 import { validateTableSearchRedirect, stripTableDefaults } from '@/lib/table-utils'
+import { requirePermission } from '@/lib/requirePermission'
 
 export const permissionsColumns: [string, ...string[]] = [
     'created_at',
@@ -18,6 +19,7 @@ export const Route = createFileRoute('/_authenticated/permissions/')({
     },
 
     beforeLoad: ({ search, location }) => {
+        requirePermission('PERMISSION_READ')()
         validateTableSearchRedirect(
             '/_authenticated/permissions',
             location.search as Record<string, any>,

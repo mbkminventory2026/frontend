@@ -2,15 +2,20 @@
 import { Trash2, Loader2 } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import { useConfirmDialog } from '@/composables/useConfirmDialog';
+import { useDeleteError } from '@/composables/useDeleteError';
 import { ref } from 'vue';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     onConfirm: () => Promise<void>;
     confirmMessage?: string;
-}>();
+    resourceName?: string;
+}>(), {
+    resourceName: 'Data'
+});
 
 const isLoading = ref(false);
 const { openConfirm } = useConfirmDialog();
+const { handleDeleteError } = useDeleteError();
 
 const handleClick = () => {
     openConfirm({
@@ -20,6 +25,11 @@ const handleClick = () => {
             isLoading.value = true;
             try {
                 await props.onConfirm();
+                import('vue-sonner').then(({ toast }) => {
+                    toast.success(`${props.resourceName} berhasil dihapus.`);
+                });
+            } catch (error) {
+                handleDeleteError(error, props.resourceName);
             } finally {
                 isLoading.value = false;
             }

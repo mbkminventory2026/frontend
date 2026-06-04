@@ -25,16 +25,17 @@ import { Separator } from '@/components/ui/separator';
 import { formatDate } from '@/lib/formatter';
 import { useAuthStore } from '@/store/authStore';
 
+import { usePermission } from '@/composables/usePermission';
+
 const router = useRouter();
 const authStore = useAuthStore();
+const { hasPermission } = usePermission();
 const params = useParams({ from: '/_authenticated/po-client/$id' });
 const id = computed(() => params.value.id);
 
 const canCreateOrEdit = computed(() => {
     if (authStore.isMitra) return true;
-    const role = authStore.user?.role?.toLowerCase() || '';
-    const isSuperAdmin = role === 'super-admin' || role === 'super_admin' || role === 'admin';
-    return isSuperAdmin || authStore.permissions.includes('PO_CREATE') || authStore.isManager;
+    return hasPermission('PO_CLIENT_CREATE') || hasPermission('PO_CLIENT_UPDATE');
 });
 
 const detail = ref<POClientDetailResponse | null>(null);

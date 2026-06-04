@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/vue-router'
 import DepartemenPage from '@/pages/departemen/departemen.vue'
 import { createTableParamsSchema } from '@/schemas/table-params'
 import { validateTableSearchRedirect, stripTableDefaults } from '@/lib/table-utils'
+import { requirePermission } from '@/lib/requirePermission'
 
 export const departemenColumns: [string, ...string[]] = [
     'created_at',
@@ -18,6 +19,7 @@ export const Route = createFileRoute('/_authenticated/departemen/')({
     },
 
     beforeLoad: ({ search, location }) => {
+        requirePermission('MASTER_DEPARTEMEN_READ')()
         validateTableSearchRedirect(
             '/_authenticated/departemen',
             location.search as Record<string, any>,

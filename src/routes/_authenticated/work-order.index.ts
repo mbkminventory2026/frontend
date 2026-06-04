@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/vue-router'
 import WorkOrderPage from '@/pages/work-order/page.vue'
 import { createTableParamsSchema } from '@/schemas/table-params'
 import { validateTableSearchRedirect, stripTableDefaults } from '@/lib/table-utils'
+import { requirePermission } from '@/lib/requirePermission'
 
 export const workOrderColumns: [string, ...string[]] = [
     'created_at',
@@ -23,6 +24,7 @@ export const Route = createFileRoute('/_authenticated/work-order/')({
     },
 
     beforeLoad: ({ search, location }) => {
+        requirePermission('WO_READ')()
         validateTableSearchRedirect(
             '/_authenticated/work-order',
             location.search as Record<string, any>,

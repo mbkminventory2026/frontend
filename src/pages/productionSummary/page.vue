@@ -31,6 +31,9 @@ import { useTable } from '@/composables/useTable'
 import { useDialog } from '@/composables/useDialog'
 import { useProductionDashboard } from '@/composables/dashboard/useProductionDashboard'
 import { type DialogSchemaType } from '@/schemas/dialog/dialog'
+import { usePermission } from '@/composables/usePermission'
+
+const { hasPermission } = usePermission()
 
 // ─── Composable ──────────────────────────────────────────
 const {
@@ -358,7 +361,7 @@ watch(() => search, () => {
         <RefreshCwIcon class="w-4 h-4 mr-1.5" :class="{ 'animate-spin': isLoading }" />
         Refresh
       </Button>
-      <Button type="button" size="sm" @click="openReportDialog">
+      <Button v-if="hasPermission('PRODUCTION_REPORT_CREATE')" type="button" size="sm" @click="openReportDialog">
         <PlusIcon class="w-4 h-4 mr-1.5" />
         Lapor Output Divisi
       </Button>

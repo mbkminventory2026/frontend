@@ -19,13 +19,16 @@ import {
   Truck,
   LifeBuoy,
   Send,
-  Sparkles
+  Sparkles,
+  Shield
 } from "lucide-vue-next"
 import { useAuthStore } from "@/store/authStore"
+import { usePermission } from '@/composables/usePermission'
 import { computed } from "vue"
 
 const { breadcrumbs } = useBreadcrumbs()
 const authStore = useAuthStore()
+const { hasPermission } = usePermission()
 
 const currentUser = computed(() => {
   const name = authStore.user?.username || "User"
@@ -47,7 +50,7 @@ const navMainItems = computed(() => {
       }
     ]
   }
-  return [
+  const rawItems = [
     {
       title: "Dashboard",
       url: "/dashboard",
@@ -67,18 +70,22 @@ const navMainItems = computed(() => {
         {
           title: "Daftar Barang",
           url: "/barang",
+          permission: "MASTER_BARANG_READ",
         },
         {
           title: "Jenis Barang",
           url: "/jenis-barang",
+          permission: "MASTER_JENIS_BARANG_READ",
         },
         {
           title: "Departemen",
           url: "/departemen",
+          permission: "MASTER_DEPARTEMEN_READ",
         },
         {
           title: "Mitra Perusahaan",
           url: "/mitra",
+          permission: "MASTER_MITRA_READ",
         },
         {
           title: "Daftar Warna",
@@ -94,10 +101,24 @@ const navMainItems = computed(() => {
         {
           title: "Daftar Pengguna",
           url: "/users",
+          permission: "USER_READ",
+        },
+      ],
+    },
+    {
+      title: "Role & Hak Akses",
+      url: "#",
+      icon: Shield,
+      items: [
+        {
+          title: "Manajemen Role",
+          url: "/roles",
+          permission: "ROLE_READ",
         },
         {
           title: "Hak Akses & Fitur",
           url: "/permissions",
+          permission: "PERMISSION_READ",
         },
       ],
     },
@@ -109,30 +130,58 @@ const navMainItems = computed(() => {
         {
           title: "PO Client",
           url: "/po-client",
+          permission: "PO_CLIENT_READ",
         },
         {
           title: "Work Order",
           url: "/work-order",
+          permission: "WO_READ",
         },
         {
           title: "PO Internal",
           url: "/po-internal",
+          permission: "PO_INTERNAL_READ",
         },
         {
           title: "Laporan Pengiriman",
           url: "/report-pengiriman",
+          permission: "REPORT_READ",
         },
         {
           title: "Laporan Penerimaan",
           url: "/report-penerimaan",
+          permission: "REPORT_READ",
         },
         {
           title: "Production Summary",
           url: "/production-summary",
+          permission: "PRODUCTION_SUMMARY_READ",
         },
       ],
     },
   ]
+
+  return rawItems
+    .map((item: any) => {
+      if (item.items) {
+        return {
+          ...item,
+          items: item.items.filter((subItem: any) => {
+            return !subItem.permission || hasPermission(subItem.permission)
+          })
+        }
+      }
+      return item
+    })
+    .filter((item: any) => {
+      if (item.permission && !hasPermission(item.permission)) {
+        return false
+      }
+      if (item.items) {
+        return item.items.length > 0
+      }
+      return true
+    })
 })
 
 const data = {

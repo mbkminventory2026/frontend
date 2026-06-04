@@ -11,24 +11,26 @@ import {
     deleteUser, 
     approveUser, 
     rejectUser,
-    getUserById,
+    assignUserRole,
     type UserResponseItem 
 } from '@/api/users/users';
 import { getDepartemen } from '@/api/departemen/departemen';
 import { getMitra } from '@/api/mitra/mitra';
-import { getPermissions } from '@/api/permissions/permissions';
+import { getRoles } from '@/api/roles/roles';
 import { usersSchema } from '@/routes/_authenticated/users.index';
 
 import DataTable from '@/components/DataTable.vue';
 import AppDialog from '@/components/AppDialog.vue';
 import { Button } from '@/components/ui/button';
 
+import { usePermission } from '@/composables/usePermission';
 import { useTable } from '@/composables/useTable';
 import { useDialog } from '@/composables/useDialog';
 import { type DialogSchemaType } from '@/schemas/dialog/dialog';
 import { formatDate } from '@/lib/formatter';
 import DeleteButton from '@/components/DeleteButton.vue';
 
+const { hasPermission } = usePermission();
 const search = useSearch({ strict: false }) as any;
 
 const data = ref<UserResponseItem[]>([]);
@@ -38,7 +40,7 @@ const currentStatusTab = ref<string>('all');
 
 const departemenOptions = ref<{ label: string, value: string | number }[]>([]);
 const mitraOptions = ref<{ label: string, value: string | number }[]>([]);
-const permissionOptions = ref<{ label: string, value: string | number }[]>([]);
+const roleOptions = ref<{ label: string, value: string | number }[]>([]);
 
 const fetchData = async () => {
     isLoading.value = true;
@@ -81,10 +83,10 @@ const fetchDropdowns = async () => {
             value: m.id_mitra
         }));
 
-        const permRes = await getPermissions({ limit: 100, offset: 0 });
-        permissionOptions.value = permRes.results.map(p => ({
-            label: p.nama_halaman,
-            value: p.id_hak_akses
+        const rolesRes = await getRoles({ limit: 100, offset: 0 });
+        roleOptions.value = rolesRes.results.map((r: any) => ({
+            label: r.nama_role,
+            value: r.id_role
         }));
     } catch (error) {
         console.error("Gagal fetch dropdowns:", error);
@@ -115,17 +117,22 @@ const handleReject = async (id: number) => {
 
 const createDialog = useDialog({
     onSubmit: async (values, isEdit) => {
-        // Map user_type to appropriate fields
         const payload = { ...values };
         if (payload.user_type === 'Karyawan') {
             payload.id_mitra = null;
         } else if (payload.user_type === 'Mitra') {
             payload.id_departemen = null;
         }
+        const selectedRoleId = payload.id_role;
         delete payload.user_type;
 
         if (isEdit) {
-            return await updateUser(values.id_user, payload);
+            const originalRoleId = createDialog.initialValues.value?.id_role;
+            const result = await updateUser(values.id_user, payload);
+            if (selectedRoleId && selectedRoleId !== originalRoleId) {
+                await assignUserRole(values.id_user, selectedRoleId);
+            }
+            return result;
         } else {
             return await createUser(payload);
         }
@@ -164,12 +171,12 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
         },
         { 
             header: 'Role', 
-            accessorKey: 'is_manager',
+            accessorKey: 'nama_role',
             cell: ({ row }) => {
-                const isManager = row.getValue('is_manager') as boolean;
+                const roleName = row.getValue('nama_role') as string;
                 return h('span', { 
-                    class: `px-2 py-0.5 rounded text-xs font-semibold ${isManager ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-100 text-slate-800'}` 
-                }, isManager ? 'Manager' : 'Staff');
+                    class: 'px-2 py-0.5 rounded text-xs font-semibold bg-indigo-100 text-indigo-800' 
+                }, roleName || '-');
             }
         },
         {
@@ -192,66 +199,68 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
             id: 'actions', 
             cell: ({ row }) => {
                 const item = row.original;
+                const buttons = [];
                 
                 if (item.status === 'pending') {
-                    return h('div', { class: 'flex gap-2 justify-center items-center' }, [
-                        h(Button, { 
-                            variant: 'outline',
-                            size: 'sm',
-                            class: 'border-green-600 text-green-600 hover:bg-green-50 hover:text-green-700',
-                            onClick: () => handleApprove(item.id_user) 
-                        }, () => [
-                            h(CheckIcon, { class: 'w-4 h-4 mr-1' }),
-                            'Setujui'
-                        ]),
-                        h(Button, { 
-                            variant: 'outline',
-                            size: 'sm',
-                            class: 'border-red-600 text-red-600 hover:bg-red-50 hover:text-red-700',
-                            onClick: () => handleReject(item.id_user) 
-                        }, () => [
-                            h(XIcon, { class: 'w-4 h-4 mr-1' }),
-                            'Tolak'
-                        ])
-                    ]);
+                    if (hasPermission('USER_APPROVE')) {
+                        buttons.push(
+                            h(Button, { 
+                                variant: 'outline',
+                                size: 'sm',
+                                class: 'border-green-600 text-green-600 hover:bg-green-50 hover:text-green-700 mr-2',
+                                onClick: () => handleApprove(item.id_user) 
+                            }, () => [
+                                h(CheckIcon, { class: 'w-4 h-4 mr-1' }),
+                                'Setujui'
+                            ]),
+                            h(Button, { 
+                                variant: 'outline',
+                                size: 'sm',
+                                class: 'border-red-600 text-red-600 hover:bg-red-50 hover:text-red-700',
+                                onClick: () => handleReject(item.id_user) 
+                            }, () => [
+                                h(XIcon, { class: 'w-4 h-4 mr-1' }),
+                                'Tolak'
+                            ])
+                        );
+                    }
+                } else {
+                    if (hasPermission('USER_UPDATE')) {
+                        buttons.push(
+                            h(Button, { 
+                                variant: 'ghost',
+                                size: 'sm',
+                                onClick: () => {
+                                    const mappedData = {
+                                        ...item,
+                                        user_type: item.id_departemen ? 'Karyawan' : 'Mitra',
+                                        id_departemen: item.id_departemen ? item.id_departemen : undefined,
+                                        id_mitra: item.id_mitra ? item.id_mitra : undefined,
+                                        id_role: item.id_role
+                                    };
+                                    createDialog.openDialog(mappedData);
+                                }
+                            }, () => [
+                                h(PencilIcon, { class: 'w-4 h-4 mr-1' }),
+                                'Edit'
+                            ])
+                        );
+                    }
+                    if (hasPermission('USER_DELETE')) {
+                        buttons.push(
+                            h(DeleteButton, {
+                                onConfirm: async () => {
+                                    await deleteUser(item.id_user);
+                                    await fetchData();
+                                },
+                                confirmMessage: 'Apakah Anda yakin ingin menghapus Pengguna ini?'
+                            })
+                        );
+                    }
                 }
 
-                return h('div', { class: 'flex gap-2 justify-center items-center' }, [
-                    h(Button, { 
-                        variant: 'ghost',
-                        size: 'sm',
-                        onClick: () => {
-                            // Map existing properties into the user_type structure for dialog editing
-                            // Fetch full details including numeric IDs and permission IDs
-                            const mappedData = {
-                                ...item,
-                                user_type: item.id_departemen ? 'Karyawan' : 'Mitra',
-                                id_departemen: item.id_departemen ? item.id_departemen : undefined,
-                                id_mitra: item.id_mitra ? item.id_mitra : undefined,
-                                hak_akses_ids: [] as number[]
-                            };
-                            
-                            // Load complete user details asynchronously before opening dialog
-                            getUserById(item.id_user).then((fullUser) => {
-                                mappedData.hak_akses_ids = fullUser.hak_akses_ids || [];
-                                createDialog.openDialog(mappedData);
-                            }).catch((err) => {
-                                console.error("Gagal fetch detail user:", err);
-                                createDialog.openDialog(mappedData);
-                            });
-                        }
-                    }, () => [
-                        h(PencilIcon, { class: 'w-4 h-4 mr-1' }),
-                        'Edit'
-                    ]),
-                    h(DeleteButton, {
-                        onConfirm: async () => {
-                            await deleteUser(item.id_user);
-                            await fetchData();
-                        },
-                        confirmMessage: 'Apakah Anda yakin ingin menghapus Pengguna ini?'
-                    })
-                ]);
+                if (buttons.length === 0) return h('span', { class: 'text-xs text-slate-400' }, '-');
+                return h('div', { class: 'flex gap-2 justify-center items-center' }, buttons);
             } 
         }
     ],
@@ -280,14 +289,6 @@ const UserDialogSchema = computed<DialogSchemaType>(() => {
             position: "right"
         },
         {
-            key: "is_manager",
-            label: "Manager Status",
-            type: "switch",
-            placeholder: "Apakah pengguna adalah manager?",
-            rules: "",
-            position: "full"
-        },
-        {
             key: "user_type",
             label: "Jenis Pengguna",
             type: "select",
@@ -304,7 +305,7 @@ const UserDialogSchema = computed<DialogSchemaType>(() => {
             label: "Departemen",
             type: "select",
             placeholder: "Pilih departemen",
-            rules: "",
+            rules: "required",
             options: departemenOptions.value,
             dependency: {
                 parentKey: "user_type",
@@ -312,14 +313,14 @@ const UserDialogSchema = computed<DialogSchemaType>(() => {
                 value: "Karyawan",
                 action: "show"
             },
-            position: "left"
+            position: "full"
         },
         {
             key: "id_mitra",
             label: "Mitra Perusahaan",
             type: "select",
             placeholder: "Pilih mitra perusahaan",
-            rules: "",
+            rules: "required",
             options: mitraOptions.value,
             dependency: {
                 parentKey: "user_type",
@@ -327,22 +328,22 @@ const UserDialogSchema = computed<DialogSchemaType>(() => {
                 value: "Mitra",
                 action: "show"
             },
-            position: "right"
+            position: "full"
         },
         {
-            key: "hak_akses_ids",
-            label: "Hak Akses Halaman (Permissions)",
-            type: "multi-checkbox",
-            placeholder: "Pilih hak akses",
-            rules: "",
-            options: permissionOptions.value,
+            key: "id_role",
+            label: "Role",
+            type: "select",
+            placeholder: "Pilih role pengguna",
+            rules: "required",
+            options: roleOptions.value,
+            position: "full",
             dependency: {
                 parentKey: "user_type",
-                condition: "===",
-                value: "Karyawan",
+                condition: "in",
+                value: "Karyawan,Mitra",
                 action: "show"
-            },
-            position: "full"
+            }
         }
     ];
 });
@@ -365,7 +366,7 @@ watch(() => search, () => {
                 <h1 class="text-xl font-bold text-slate-900">Manajemen Akses & Pengguna</h1>
                 <p class="text-xs text-slate-500 mt-0.5">Kelola verifikasi pendaftaran mitra eksternal dan hak akses karyawan.</p>
             </div>
-            <Button @click="createDialog.openDialog()" class="bg-indigo-600 hover:bg-indigo-700">
+            <Button v-if="hasPermission('USER_CREATE')" @click="createDialog.openDialog()" class="bg-indigo-600 hover:bg-indigo-700">
                 <PlusIcon class="w-4 h-4 mr-2" />
                 Tambah Karyawan
             </Button>

@@ -24,12 +24,14 @@ interface Props {
     type?: ConfirmDialogType
     confirmLabel?: string
     cancelLabel?: string
+    showCancel?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
     isLoading: false,
     type: 'info',
     cancelLabel: 'Batal',
+    showCancel: true,
 })
 
 const emit = defineEmits<{
@@ -142,6 +144,7 @@ function onOpenChange(val: boolean) {
 
             <DialogFooter class="mt-2 flex gap-2 sm:justify-end">
                 <Button
+                    v-if="props.showCancel"
                     variant="outline"
                     :disabled="props.isLoading"
                     @click="onCancel"
