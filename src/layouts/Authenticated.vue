@@ -80,6 +80,10 @@ const navMainItems = computed(() => {
           title: "Mitra Perusahaan",
           url: "/mitra",
         },
+        {
+          title: "Daftar Warna",
+          url: "/warna",
+        },
       ],
     },
     {
@@ -111,12 +115,20 @@ const navMainItems = computed(() => {
           url: "/work-order",
         },
         {
+          title: "PO Internal",
+          url: "/po-internal",
+        },
+        {
           title: "Laporan Pengiriman",
           url: "/report-pengiriman",
         },
         {
           title: "Laporan Penerimaan",
           url: "/report-penerimaan",
+        },
+        {
+          title: "Production Summary",
+          url: "/production-summary",
         },
       ],
     },

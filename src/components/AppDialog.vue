@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/select'
 import AppFilePicker from '@/components/AppFilePicker.vue'
 import { type DialogSchemaType, type DialogField } from '@/schemas/dialog/dialog'
+import { AlertTriangle } from 'lucide-vue-next'
 
 interface Props {
   title: string
@@ -40,6 +41,7 @@ interface Props {
   schema: DialogSchemaType
   isOpen: boolean
   initialValues?: Record<string, any>
+  warningMessage?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -47,10 +49,18 @@ const props = withDefaults(defineProps<Props>(), {
   initialValues: () => ({}),
 })
 
-const emit = defineEmits(['submit', 'update:isOpen'])
+const emit = defineEmits(['submit', 'update:isOpen', 'change'])
 
 // Reactive form values tracker — keeps track of current form values for dependency evaluation
 const formValues = ref<Record<string, any>>({})
+
+watch(
+  formValues,
+  (newVals) => {
+    emit('change', newVals)
+  },
+  { deep: true }
+)
 
 // Normalized initial values — ensures select values are strings for Radix UI
 const normalizedInitialValues = computed(() => {
@@ -809,7 +819,11 @@ function getFileAccept(field: DialogField): string | undefined {
                 </div>
                 </form>
             </Form>
-            <DialogFooter>
+            <div v-if="props.warningMessage" class="mt-4 p-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm rounded-lg flex items-start gap-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <AlertTriangle class="w-4 h-4 mt-0.5 shrink-0 text-amber-600" />
+                <div>{{ props.warningMessage }}</div>
+            </div>
+            <DialogFooter class="mt-4">
                 <Button variant="ghost" @click="updateOpen(false)">Cancel</Button>
                 <Button type="submit" form="dialogForm">
                 {{ props.submitLabel }}

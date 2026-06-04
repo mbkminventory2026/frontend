@@ -92,10 +92,13 @@ const removePIC = (index: any) => {
     }
 };
 
+const hasSubmitted = ref(false);
+
 // Override the save function to inject custom validation and payload mapping
 const originalSave = form.save;
 form.save = async () => {
-    if (!values.value.poNumber || !values.value.tanggal || !values.value.delivery || !values.value.idMitra) {
+    hasSubmitted.value = true;
+    if (!values.value.poNumber || !values.value.tanggal || !values.value.delivery || (!authStore.isMitra && !values.value.idMitra)) {
         toast.error("Harap lengkapi semua field wajib (PO Number, Tanggal, Delivery, dan Mitra).");
         return;
     }
@@ -278,9 +281,9 @@ const grandFormTotal = computed(() => {
                 <!-- Info Utama Card -->
                 <Card class="border border-neutral-200 bg-white p-6 shadow-sm rounded-xl">
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <AppFormField name="poNumber" label="PO Number *" placeholder="Contoh: PO-2026-0001" />
-                        <AppFormField name="tanggal" type="date" label="Tanggal *" />
-                        <AppFormField name="delivery" type="date" label="Delivery Date *" />
+                        <AppFormField name="poNumber" label="PO Number *" placeholder="Contoh: PO-2026-0001" :error="hasSubmitted && !values.poNumber" />
+                        <AppFormField name="tanggal" type="date" label="Tanggal *" :error="hasSubmitted && !values.tanggal" />
+                        <AppFormField name="delivery" type="date" label="Delivery Date *" :error="hasSubmitted && !values.delivery" />
                         <AppFormField name="season" label="Season" placeholder="Contoh: Spring/Summer 2026" />
                         <AppFormField name="paymentTerm" label="Payment Term" placeholder="Contoh: Net 30" />
                         
@@ -292,6 +295,7 @@ const grandFormTotal = computed(() => {
                             label="Mitra Perusahaan *" 
                             placeholder="Pilih Mitra Partner"
                             :options="mitraOptions"
+                            :error="hasSubmitted && !values.idMitra"
                         />
 
                         <!-- Attached File Picker (Images) -->
@@ -334,13 +338,13 @@ const grandFormTotal = computed(() => {
                             <tbody class="divide-y divide-neutral-100">
                                 <tr v-for="(item, idx) in values.items" :key="idx" class="hover:bg-neutral-50/40 transition-colors duration-150">
                                     <td class="p-3">
-                                        <Input v-model="item.style" placeholder="Style/Model" class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" />
+                                        <Input v-model="item.style" placeholder="Style/Model" class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" :aria-invalid="hasSubmitted && !item.style ? 'true' : undefined" />
                                     </td>
                                     <td class="p-3">
-                                        <Input v-model="item.colour" placeholder="Colour" class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" />
+                                        <Input v-model="item.colour" placeholder="Colour" class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" :aria-invalid="hasSubmitted && !item.colour ? 'true' : undefined" />
                                     </td>
                                     <td class="p-3">
-                                        <Input v-model="item.qty" type="number" min="1" class="h-9 text-sm border-neutral-200 text-center focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" />
+                                        <Input v-model="item.qty" type="number" min="1" class="h-9 text-sm border-neutral-200 text-center focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" :aria-invalid="hasSubmitted && (!item.qty || item.qty <= 0) ? 'true' : undefined" />
                                     </td>
                                     <td class="p-3">
                                         <input 
@@ -349,6 +353,7 @@ const grandFormTotal = computed(() => {
                                             @input="handlePriceInput($event, item)"
                                             placeholder="Rp 0" 
                                             class="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-neutral-400 outline-none focus-visible:ring-2 focus-visible:ring-neutral-800 disabled:cursor-not-allowed disabled:opacity-50" 
+                                            :class="hasSubmitted && (!item.price || parseRupiahToNumber(item.price) < 0) ? 'border-destructive ring-destructive/20 ring-[3px]' : ''"
                                         />
                                     </td>
                                     <td class="p-3">
@@ -402,10 +407,10 @@ const grandFormTotal = computed(() => {
                             <tbody class="divide-y divide-neutral-100">
                                 <tr v-for="(pic, idx) in values.penanggungJawab" :key="idx" class="hover:bg-neutral-50/40 transition-colors duration-150">
                                     <td class="p-3">
-                                        <Input v-model="pic.nama" placeholder="Nama Lengkap" class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" />
+                                        <Input v-model="pic.nama" placeholder="Nama Lengkap" class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" :aria-invalid="hasSubmitted && !pic.nama ? 'true' : undefined" />
                                     </td>
                                     <td class="p-3">
-                                        <Input v-model="pic.noTelp" placeholder="08xxxxxxxxxx" class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" />
+                                        <Input v-model="pic.noTelp" placeholder="08xxxxxxxxxx" class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" :aria-invalid="hasSubmitted && !pic.noTelp ? 'true' : undefined" />
                                     </td>
                                     <td class="p-3">
                                         <Input v-model="pic.email" placeholder="contoh@email.com" class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" />

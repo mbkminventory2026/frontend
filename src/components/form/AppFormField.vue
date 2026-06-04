@@ -20,6 +20,7 @@ interface Props {
   placeholder?: string
   className?: string
   options?: { label: string, value: string | number }[]
+  error?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -56,7 +57,7 @@ const { values } = form
     <!-- Select -->
     <template v-else-if="props.type === 'select'">
       <Select v-model="values[props.name]">
-        <SelectTrigger>
+        <SelectTrigger :aria-invalid="props.error ? 'true' : undefined">
           <SelectValue :placeholder="props.placeholder" />
         </SelectTrigger>
         <SelectContent>
@@ -74,6 +75,7 @@ const { values } = form
         v-model="values[props.name]" 
         :placeholder="props.placeholder"
         class="min-h-[200px] leading-relaxed"
+        :aria-invalid="props.error ? 'true' : undefined"
       />
     </template>
 
@@ -84,6 +86,7 @@ const { values } = form
         :type="props.type" 
         v-model="values[props.name]" 
         :placeholder="props.placeholder" 
+        :aria-invalid="props.error ? 'true' : undefined"
       />
     </template>
   </div>

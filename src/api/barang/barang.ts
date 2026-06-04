@@ -5,15 +5,23 @@ import type {
 } from '@/schemas/barang/response';
 
 export const getBarang = async (params: {
-    limit: number,
-    offset: number,
-    search?: string
+    limit?: number,
+    offset?: number,
+    page?: number,
+    pageSize?: number,
+    search?: string,
+    sortBy?: string,
+    sortDesc?: boolean
 }) => {
     const response = await apiClient.get<BarangResponseItem[]>('/api/v1/master/barang', {
         params: {
+            page: params.page,
+            pageSize: params.pageSize ?? params.limit,
             limit: params.limit,
             offset: params.offset,
-            q: params.search
+            q: params.search,
+            sortBy: params.sortBy,
+            sortDesc: params.sortDesc
         }
     })
 
