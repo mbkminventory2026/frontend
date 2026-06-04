@@ -1,6 +1,7 @@
 import { createFileRoute, redirect } from '@tanstack/vue-router'
 import AuthenticatedLayout from '@/layouts/Authenticated.vue'
 import { decodeJwt } from '@/lib/auth'
+import { canClientAccessPath, getDefaultAuthenticatedPath } from '@/lib/access'
 
 export const Route = createFileRoute('/_authenticated')({
   beforeLoad: ({ location }) => {
@@ -15,7 +16,6 @@ export const Route = createFileRoute('/_authenticated')({
     }
 
     const claims = decodeJwt(token)
-    const isMitra = claims?.id_mitra != null
     const mustChangePassword = Boolean(claims?.must_change_password)
 
     if (mustChangePassword && location.pathname !== '/change-password') {
@@ -24,13 +24,10 @@ export const Route = createFileRoute('/_authenticated')({
       });
     }
 
-    if (isMitra) {
-      // Mitra is restricted to only po-client routes
-      if (!location.pathname.startsWith('/po-client') && location.pathname !== '/change-password') {
-        throw redirect({
-          to: '/po-client',
-        });
-      }
+    if (!canClientAccessPath(claims, location.pathname)) {
+      throw redirect({
+        to: getDefaultAuthenticatedPath(claims),
+      });
     }
   },
   component: AuthenticatedLayout,

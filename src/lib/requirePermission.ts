@@ -1,5 +1,6 @@
 import { redirect } from '@tanstack/vue-router'
 import { decodeJwt } from './auth'
+import { hasPermissionFromClaims } from './access'
 
 export function requirePermission(permission: string) {
     return () => {
@@ -9,11 +10,7 @@ export function requirePermission(permission: string) {
         let hasAccess = false
         try {
             const claims = decodeJwt(token)
-            const permissions: string[] = claims?.permissions || []
-
-            if (permissions.includes('ALL_ACCESS') || permissions.includes(permission)) {
-                hasAccess = true
-            }
+            hasAccess = hasPermissionFromClaims(claims, permission)
         } catch (e) {
             console.error('Failed to parse token permissions:', e)
         }

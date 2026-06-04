@@ -20,7 +20,8 @@ import {
   LifeBuoy,
   Send,
   Sparkles,
-  Shield
+  Shield,
+  Factory,
 } from "lucide-vue-next"
 import { useAuthStore } from "@/store/authStore"
 import { usePermission } from '@/composables/usePermission'
@@ -29,6 +30,21 @@ import { computed } from "vue"
 const { breadcrumbs } = useBreadcrumbs()
 const authStore = useAuthStore()
 const { hasPermission } = usePermission()
+
+type NavLeaf = {
+  title: string
+  url: string
+  permission?: string
+}
+
+type NavSection = {
+  title: string
+  url: string
+  icon: any
+  isActive?: boolean
+  permission?: string
+  items?: NavLeaf[]
+}
 
 const currentUser = computed(() => {
   const name = authStore.user?.username || "User"
@@ -47,20 +63,36 @@ const navMainItems = computed(() => {
         title: "PO Client",
         url: "/po-client",
         icon: Truck,
-      }
-    ]
+        permission: "PO_CLIENT_READ",
+      },
+      {
+        title: "Work Order",
+        url: "/work-order",
+        icon: Factory,
+        permission: "WO_READ",
+      },
+      {
+        title: "Production Summary",
+        url: "/production-summary",
+        icon: LayoutDashboard,
+        permission: "PRODUCTION_SUMMARY_READ",
+      },
+    ].filter((item) => !item.permission || hasPermission(item.permission))
   }
-  const rawItems = [
+
+  const rawItems: NavSection[] = [
     {
       title: "Dashboard",
       url: "/dashboard",
       icon: LayoutDashboard,
       isActive: true,
+      permission: "DASHBOARD_READ",
     },
     {
       title: "Estimasi AI (AI)",
       url: "/ai-estimation",
       icon: Sparkles,
+      permission: "DASHBOARD_READ",
     },
     {
       title: "Master Data",
@@ -90,6 +122,7 @@ const navMainItems = computed(() => {
         {
           title: "Daftar Warna",
           url: "/warna",
+          permission: "MASTER_WARNA_READ",
         },
       ],
     },
@@ -102,6 +135,11 @@ const navMainItems = computed(() => {
           title: "Daftar Pengguna",
           url: "/users",
           permission: "USER_READ",
+        },
+        {
+          title: "Reset Password Request",
+          url: "/password-reset-requests",
+          permission: "PASSWORD_RESET_REQUEST_READ",
         },
       ],
     },
@@ -162,21 +200,23 @@ const navMainItems = computed(() => {
   ]
 
   return rawItems
-    .map((item: any) => {
+    .map((item) => {
+      if (item.permission && !hasPermission(item.permission)) {
+        return null
+      }
+
       if (item.items) {
         return {
           ...item,
-          items: item.items.filter((subItem: any) => {
+          items: item.items.filter((subItem) => {
             return !subItem.permission || hasPermission(subItem.permission)
           })
         }
       }
       return item
     })
-    .filter((item: any) => {
-      if (item.permission && !hasPermission(item.permission)) {
-        return false
-      }
+    .filter((item): item is NavSection => {
+      if (!item) return false
       if (item.items) {
         return item.items.length > 0
       }

@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/vue-router'
 import WarnaPage from '@/pages/warna/page.vue'
 import { createTableParamsSchema } from '@/schemas/table-params'
 import { validateTableSearchRedirect, stripTableDefaults } from '@/lib/table-utils'
+import { requirePermission } from '@/lib/requirePermission'
 
 export const warnaColumns: [string, ...string[]] = [
     'created_at',
@@ -19,6 +20,7 @@ export const Route = createFileRoute('/_authenticated/warna/')({
     },
 
     beforeLoad: ({ search, location }) => {
+        requirePermission('MASTER_WARNA_READ')()
         validateTableSearchRedirect(
             '/_authenticated/warna',
             location.search as Record<string, any>,

@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/vue-router'
 import PokemonPage from '@/pages/pokemon/list/page.vue'
 import { createTableParamsSchema } from '@/schemas/table-params'
 import { validateTableSearchRedirect, stripTableDefaults } from '@/lib/table-utils';
+import { requirePermission } from '@/lib/requirePermission'
 
 export const pokemonColumns: [string, ...string[]] = ['albumId', 'id', 'title', 'url', 'thumbnailUrl'];
 export const pokemonSearchSchema = createTableParamsSchema(pokemonColumns)
@@ -15,6 +16,7 @@ export const Route = createFileRoute('/_authenticated/pokemon')({
 
   // Redirect logic ada di beforeLoad — di sini throw redirect() baru bekerja
   beforeLoad: ({ search, location }) => {
+    requirePermission('DASHBOARD_READ')()
     validateTableSearchRedirect(
       '/_authenticated/pokemon',
       location.search as Record<string, any>,

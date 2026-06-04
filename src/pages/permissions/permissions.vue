@@ -14,6 +14,7 @@ import DataTable from '@/components/DataTable.vue';
 import { Button } from '@/components/ui/button';
 
 import { useTable } from '@/composables/useTable';
+import { usePermission } from '@/composables/usePermission';
 import { formatDate } from '@/lib/formatter';
 import DeleteButton from '@/components/DeleteButton.vue';
 
@@ -23,6 +24,7 @@ const router = useRouter();
 const data = ref<PermissionsResponseItem[]>([]);
 const totalCount = ref(0);
 const isLoading = ref(false);
+const { hasPermission } = usePermission();
 
 const fetchData = async () => {
     isLoading.value = true;
@@ -62,31 +64,39 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
         { header: 'Actions', id: 'actions', cell:({ row }) => {
         const id = row.getValue('id_hak_akses') as number;
 
-        return h('div', { class: 'flex gap-2 justify-center items-center' }, [
-            h(Button, {
-                variant: 'outline',
-                size: 'sm',
-                onClick: () => router.navigate({ to: '/permissions/$id', params: { id: String(id) } })
-            }, () => [
-                h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
-                'View'
-            ]),
-            h(Button, {
-                variant: 'ghost',
-                size: 'sm',
-                onClick: () => router.navigate({ to: '/permissions/edit/$id', params: { id: String(id) } })
-            }, () => [
-                h(PencilIcon, { class: 'w-4 h-4 mr-1' }),
-                'Edit'
-            ]),
-            h(DeleteButton, {
-                onConfirm: async() => {
-                    await deletePermissions(id);
-                    await fetchData()
-                },
-                confirmMessage: 'Apakah Anda yakin ingin menghapus Permissions ini?'
-            })
-        ]) }
+        return h(
+            'div',
+            { class: 'flex gap-2 justify-center items-center' },
+            [
+                h(Button, {
+                    variant: 'outline',
+                    size: 'sm',
+                    onClick: () => router.navigate({ to: '/permissions/$id', params: { id: String(id) } })
+                }, () => [
+                    h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
+                    'View'
+                ]),
+                hasPermission('PERMISSION_UPDATE')
+                    ? h(Button, {
+                        variant: 'ghost',
+                        size: 'sm',
+                        onClick: () => router.navigate({ to: '/permissions/edit/$id', params: { id: String(id) } })
+                    }, () => [
+                        h(PencilIcon, { class: 'w-4 h-4 mr-1' }),
+                        'Edit'
+                    ])
+                    : null,
+                hasPermission('PERMISSION_DELETE')
+                    ? h(DeleteButton, {
+                        onConfirm: async() => {
+                            await deletePermissions(id);
+                            await fetchData()
+                        },
+                        confirmMessage: 'Apakah Anda yakin ingin menghapus Permissions ini?'
+                    })
+                    : null,
+            ].filter(Boolean)
+        ) }
     }
     ],
     search: search,
@@ -113,7 +123,11 @@ watch(() => search, () => {
         @clear-filter="clearFilter"
     >
         <template #actions>
-            <Button @click="router.navigate({ to: '/permissions/create' })" variant="outline">
+            <Button
+                v-if="hasPermission('PERMISSION_CREATE')"
+                @click="router.navigate({ to: '/permissions/create' })"
+                variant="outline"
+            >
                 <PlusIcon class="w-4 h-4 mr-2" />
                 Tambah Permissions
             </Button>

@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { usePermission } from '@/composables/usePermission';
 import { formatDate } from '@/lib/formatter';
 
 const router = useRouter();
@@ -23,6 +24,7 @@ const id = computed(() => params.value.id);
 
 const values = ref<any>(null);
 const isLoading = ref(false);
+const { hasPermission } = usePermission();
 
 const fetchData = async () => {
     isLoading.value = true;
@@ -66,6 +68,7 @@ onMounted(() => {
                         Kembali
                     </Button>
                     <Button
+                        v-if="hasPermission('PERMISSION_UPDATE')"
                         @click="router.navigate({ to: '/permissions/edit/$id', params: { id } })"
                         class="flex-1 md:flex-none"
                     >

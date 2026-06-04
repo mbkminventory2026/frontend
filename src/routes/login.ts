@@ -2,6 +2,7 @@ import { createFileRoute, redirect } from '@tanstack/vue-router'
 import LoginPage from '@/pages/login/page.vue'
 import { z } from 'zod'
 import { decodeJwt } from '@/lib/auth'
+import { getDefaultAuthenticatedPath } from '@/lib/access'
 
 export const Route = createFileRoute('/login')({
   validateSearch: z.object({
@@ -15,7 +16,7 @@ export const Route = createFileRoute('/login')({
     if (!claims) return
 
     throw redirect({
-      to: claims.must_change_password ? '/change-password' : '/dashboard',
+      to: getDefaultAuthenticatedPath(claims),
     })
   },
   component: LoginPage,
