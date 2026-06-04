@@ -66,9 +66,9 @@ export const getUserById = async (id: string | number) => {
     return response.data;
 }
 
-export const approveUser = async (id: string | number) => {
+export const approveUser = async (id: string | number, data: { username: string }) => {
     if (!id) throw new Error("ID is required for approval");
-    const response = await apiClient.put(`/api/v1/users/${id}/approve`);
+    const response = await apiClient.put(`/api/v1/users/${id}/approve`, data);
     return response.data;
 }
 

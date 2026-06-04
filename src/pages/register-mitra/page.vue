@@ -4,7 +4,7 @@ import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import * as z from 'zod';
 import { Link } from '@tanstack/vue-router';
-import { CheckCircle2Icon, ArrowLeftIcon, Building2Icon, UserPlusIcon } from 'lucide-vue-next';
+import { CheckCircle2Icon, ArrowLeftIcon, Building2Icon } from 'lucide-vue-next';
 
 import { registerMitraApi } from '@/api/auth/auth';
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -27,12 +27,6 @@ const registerSchema = z.object({
   alamat: z.string().min(5, 'Alamat lengkap wajib diisi').optional(),
   kota: z.string().min(2, 'Kota wajib diisi').optional(),
   kode_pos: z.string().min(3, 'Kode pos minimal 3 digit').optional(),
-  username: z.string().min(3, 'Username minimal 3 karakter'),
-  password: z.string().min(6, 'Password minimal 6 karakter'),
-  confirm_password: z.string().min(6, 'Konfirmasi password minimal 6 karakter')
-}).refine((data) => data.password === data.confirm_password, {
-  message: "Konfirmasi password tidak cocok",
-  path: ["confirm_password"]
 });
 
 const form = useForm({
@@ -45,9 +39,6 @@ const form = useForm({
     alamat: '',
     kota: '',
     kode_pos: '',
-    username: '',
-    password: '',
-    confirm_password: ''
   }
 });
 
@@ -70,8 +61,6 @@ const onSubmit = form.handleSubmit(async (values) => {
       alamat: values.alamat || undefined,
       kota: values.kota || undefined,
       kode_pos: values.kode_pos || undefined,
-      username: values.username,
-      password: values.password,
       turnstile_token: turnstileToken.value
     });
     isSuccess.value = true;
@@ -96,7 +85,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         </div>
         <h2 class="text-3xl font-bold text-slate-900 tracking-tight">Registrasi Berhasil!</h2>
         <p class="text-slate-500 max-w-md mx-auto mt-4 leading-relaxed">
-          Akun kemitraan Anda telah didaftarkan ke sistem dan saat ini sedang menunggu proses verifikasi dan persetujuan dari Super Admin Pabrik.
+          Pendaftaran kemitraan perusahaan Anda telah diajukan ke sistem dan saat ini sedang menunggu proses verifikasi dari Operator. Jika disetujui, akun login Anda akan dibuatkan oleh pihak operator.
         </p>
         <div class="mt-8 flex gap-4 justify-center">
           <Link to="/login">
@@ -134,8 +123,8 @@ const onSubmit = form.handleSubmit(async (values) => {
         <!-- Bagian Input Form -->
         <div class="lg:col-span-8 p-8 lg:p-10">
           <div class="mb-8">
-            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Daftar Akun Mitra</h1>
-            <p class="text-slate-500 text-sm mt-1">Lengkapi informasi profil perusahaan dan kredensial akun login Anda.</p>
+            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Daftar Kemitraan</h1>
+            <p class="text-slate-500 text-sm mt-1">Lengkapi informasi profil perusahaan Anda untuk mengajukan kemitraan.</p>
           </div>
 
           <form @submit="onSubmit" class="space-y-6">
@@ -229,46 +218,6 @@ const onSubmit = form.handleSubmit(async (values) => {
                   <FormMessage />
                 </FormItem>
               </FormField>
-            </div>
-
-            <!-- Bagian Kredensial Akun -->
-            <div class="space-y-4 pt-4 border-t">
-              <div class="flex items-center gap-2 pb-2 border-b">
-                <UserPlusIcon class="w-5 h-5 text-slate-500" />
-                <h3 class="font-semibold text-slate-800 text-sm">Akun Login</h3>
-              </div>
-
-              <FormField v-slot="{ componentField }" name="username">
-                <FormItem>
-                  <FormLabel>Username</FormLabel>
-                  <FormControl>
-                    <Input type="text" placeholder="Masukkan username login" v-bind="componentField" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              </FormField>
-
-              <div class="grid md:grid-cols-2 gap-4">
-                <FormField v-slot="{ componentField }" name="password">
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="••••••••" v-bind="componentField" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                </FormField>
-
-                <FormField v-slot="{ componentField }" name="confirm_password">
-                  <FormItem>
-                    <FormLabel>Konfirmasi Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="••••••••" v-bind="componentField" />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                </FormField>
-              </div>
             </div>
 
             <!-- CaptchaWidget -->

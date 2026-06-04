@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { h, ref, watch, onMounted, computed } from 'vue';
 import { useNavigate, useSearch } from '@tanstack/vue-router';
-import { PlusIcon, PencilIcon, CheckIcon, XIcon, CopyIcon, KeyRoundIcon, AlertTriangleIcon } from 'lucide-vue-next';
+import { PlusIcon, PencilIcon, CheckIcon, XIcon, CopyIcon, KeyRoundIcon, AlertTriangleIcon, EyeIcon, Building2Icon } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 import {
     Dialog,
@@ -22,7 +22,7 @@ import {
     type UserResponseItem 
 } from '@/api/users/users';
 import { getDepartemen } from '@/api/departemen/departemen';
-import { getMitra } from '@/api/mitra/mitra';
+import { getMitra, getMitraById } from '@/api/mitra/mitra';
 import { getRoles } from '@/api/roles/roles';
 import { usersSchema } from '@/routes/_authenticated/users.index';
 
@@ -109,16 +109,7 @@ const fetchDropdowns = async () => {
     }
 }
 
-const handleApprove = async (id: number) => {
-    try {
-        await approveUser(id);
-        toast.success("Pengguna berhasil disetujui!");
-        fetchData();
-    } catch (error) {
-        console.error("Gagal menyetujui pengguna:", error);
-        toast.error("Gagal menyetujui pendaftaran pengguna");
-    }
-}
+
 
 const handleReject = async (id: number) => {
     try {
@@ -190,6 +181,66 @@ const copyToClipboard = async () => {
     }
 };
 
+// Approve Mitra modal state
+const isApproveModalOpen = ref(false);
+const approveUserId = ref<number | null>(null);
+const approveUsernameInput = ref('');
+
+const openApproveModal = (userId: number) => {
+    approveUserId.value = userId;
+    approveUsernameInput.value = '';
+    isApproveModalOpen.value = true;
+};
+
+const submitApprove = async () => {
+    if (!approveUserId.value) return;
+    if (!approveUsernameInput.value.trim()) {
+        toast.error("Username wajib diisi");
+        return;
+    }
+
+    try {
+        const result = await approveUser(approveUserId.value, { username: approveUsernameInput.value.trim() });
+        isApproveModalOpen.value = false;
+        
+        if (result?.temporary_password) {
+            generatedTempPassword.value = result.temporary_password;
+            generatedTempUsername.value = result.username || approveUsernameInput.value.trim();
+            isTempPasswordModalOpen.value = true;
+            isCopied.value = false;
+            toast.success("Pengguna berhasil disetujui!");
+        } else {
+            toast.success("Pengguna berhasil disetujui!");
+        }
+        fetchData();
+    } catch (error: any) {
+        console.error("Gagal menyetujui pengguna:", error);
+        const errorMsg = error.response?.data?.message || "Gagal menyetujui pendaftaran pengguna";
+        toast.error(errorMsg);
+    }
+};
+
+// Mitra Detail modal state
+const isMitraDetailModalOpen = ref(false);
+const isMitraDetailLoading = ref(false);
+const selectedMitraDetails = ref<any>(null);
+
+const viewMitraDetails = async (mitraId: number) => {
+    selectedMitraDetails.value = null;
+    isMitraDetailModalOpen.value = true;
+    isMitraDetailLoading.value = true;
+    try {
+        const response = await getMitraById(mitraId);
+        selectedMitraDetails.value = response;
+    } catch (error) {
+        console.error("Gagal memuat detail mitra:", error);
+        toast.error("Gagal memuat rincian informasi mitra");
+        isMitraDetailModalOpen.value = false;
+    } finally {
+        isMitraDetailLoading.value = false;
+    }
+};
+
 const activeFormValues = ref<Record<string, any>>({});
 
 watch(() => createDialog.isOpen.value, (isOpen) => {
@@ -213,7 +264,17 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
     columns: [
         { header: 'Created At', accessorKey: 'created_at', cell: ({ row }) => formatDate(row.getValue('created_at')) },
         { header: 'ID User', accessorKey: 'id_user' },
-        { header: 'Username', accessorKey: 'username' },
+        { 
+            header: 'Username', 
+            accessorKey: 'username',
+            cell: ({ row }) => {
+                const item = row.original;
+                if (item.status === 'pending' && item.id_mitra) {
+                    return '-';
+                }
+                return item.username;
+            }
+        },
         { 
             header: 'Status', 
             accessorKey: 'status',
@@ -262,13 +323,26 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
                 const buttons = [];
                 
                 if (item.status === 'pending') {
+                    if (item.id_mitra) {
+                        buttons.push(
+                            h(Button, { 
+                                variant: 'outline',
+                                size: 'sm',
+                                class: 'border-slate-300 text-slate-700 hover:bg-slate-50 mr-2',
+                                onClick: () => viewMitraDetails(item.id_mitra!) 
+                            }, () => [
+                                h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
+                                'Detail Mitra'
+                            ])
+                        );
+                    }
                     if (hasPermission('USER_APPROVE')) {
                         buttons.push(
                             h(Button, { 
                                 variant: 'outline',
                                 size: 'sm',
                                 class: 'border-green-600 text-green-600 hover:bg-green-50 hover:text-green-700 mr-2',
-                                onClick: () => handleApprove(item.id_user) 
+                                onClick: () => openApproveModal(item.id_user) 
                             }, () => [
                                 h(CheckIcon, { class: 'w-4 h-4 mr-1' }),
                                 'Setujui'
@@ -549,6 +623,140 @@ watch(() => search, () => {
                         @click="isTempPasswordModalOpen = false"
                     >
                         Selesai & Tutup
+                    </Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+
+        <!-- Approve Mitra Modal -->
+        <Dialog :open="isApproveModalOpen" @update:open="isApproveModalOpen = $event">
+            <DialogContent class="sm:max-w-md bg-white border border-slate-200 shadow-xl rounded-xl p-6">
+                <DialogHeader class="flex flex-col space-y-2">
+                    <DialogTitle class="text-xl font-bold text-slate-900">Setujui Pendaftaran Mitra</DialogTitle>
+                    <DialogDescription class="text-xs text-slate-500">
+                        Masukkan username login untuk mitra ini. Password acak akan digenerate otomatis.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div class="mt-4 space-y-4">
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm font-semibold text-slate-700">Username Login</label>
+                        <input
+                            v-model="approveUsernameInput"
+                            type="text"
+                            placeholder="username-mitra"
+                            class="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2"
+                        />
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        @click="isApproveModalOpen = false"
+                    >
+                        Batal
+                    </Button>
+                    <Button
+                        type="button"
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold"
+                        @click="submitApprove"
+                    >
+                        Setujui & Buat Akun
+                    </Button>
+                </div>
+            </DialogContent>
+        </Dialog>
+
+        <!-- Detail Mitra Modal -->
+        <Dialog :open="isMitraDetailModalOpen" @update:open="isMitraDetailModalOpen = $event">
+            <DialogContent class="sm:max-w-lg bg-white border border-slate-200 shadow-xl rounded-xl p-6">
+                <DialogHeader class="flex flex-col space-y-2">
+                    <div class="flex items-center gap-2 text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg w-fit">
+                        <Building2Icon class="w-4 h-4" />
+                        <span class="text-xs font-bold uppercase tracking-wider">Informasi Pendaftaran Mitra</span>
+                    </div>
+                    <DialogTitle class="text-xl font-bold text-slate-900">Detail Profil Mitra</DialogTitle>
+                    <DialogDescription class="text-xs text-slate-500">
+                        Rincian data pendaftaran yang diisi oleh calon mitra saat registrasi.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div v-if="isMitraDetailLoading" class="flex flex-col items-center justify-center py-12 gap-3 text-slate-500">
+                    <div class="animate-spin rounded-full h-8 w-8 border-2 border-indigo-600 border-t-transparent"></div>
+                    <span class="text-sm font-medium">Memuat data mitra...</span>
+                </div>
+
+                <div v-else-if="selectedMitraDetails" class="mt-4 space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2 bg-slate-50 p-4 rounded-lg border border-slate-100 flex flex-col gap-1">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Nama Perusahaan</span>
+                            <span class="text-base font-bold text-slate-800">{{ selectedMitraDetails.nama_perusahaan }}</span>
+                        </div>
+
+                        <div class="flex flex-col gap-1">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tipe Perusahaan</span>
+                            <span class="text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 px-2 py-0.5 rounded w-fit">
+                                {{ selectedMitraDetails.tipe_perusahaan || '-' }}
+                            </span>
+                        </div>
+
+                        <div class="flex flex-col gap-1">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tanggal Daftar</span>
+                            <span class="text-xs font-semibold text-slate-700">
+                                {{ formatDate(selectedMitraDetails.created_at) }}
+                            </span>
+                        </div>
+
+                        <div class="flex flex-col gap-1">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Email</span>
+                            <a :href="`mailto:${selectedMitraDetails.email}`" class="text-xs font-semibold text-indigo-600 hover:underline">
+                                {{ selectedMitraDetails.email }}
+                            </a>
+                        </div>
+
+                        <div class="flex flex-col gap-1">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">No. Telepon</span>
+                            <a :href="`tel:${selectedMitraDetails.no_telp}`" class="text-xs font-semibold text-slate-700 hover:text-indigo-600">
+                                {{ selectedMitraDetails.no_telp }}
+                            </a>
+                        </div>
+
+                        <div class="col-span-2 flex flex-col gap-1">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Alamat Lengkap</span>
+                            <span class="text-xs text-slate-700 leading-relaxed bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                {{ selectedMitraDetails.alamat || '-' }}
+                            </span>
+                        </div>
+
+                        <div class="flex flex-col gap-1">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Kota</span>
+                            <span class="text-xs font-semibold text-slate-700">
+                                {{ selectedMitraDetails.kota || '-' }}
+                            </span>
+                        </div>
+
+                        <div class="flex flex-col gap-1">
+                            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Kode Pos</span>
+                            <span class="text-xs font-semibold text-slate-700">
+                                {{ selectedMitraDetails.kode_pos || '-' }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-else class="flex flex-col items-center justify-center py-12 gap-3 text-red-500">
+                    <span class="text-sm font-semibold">Data mitra tidak ditemukan atau gagal dimuat.</span>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <Button
+                        type="button"
+                        class="bg-slate-900 text-white hover:bg-slate-800 font-semibold px-6"
+                        @click="isMitraDetailModalOpen = false"
+                    >
+                        Tutup
                     </Button>
                 </div>
             </DialogContent>
