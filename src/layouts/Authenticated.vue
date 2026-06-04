@@ -80,6 +80,10 @@ const navMainItems = computed(() => {
           title: "Mitra Perusahaan",
           url: "/mitra",
         },
+        {
+          title: "Daftar Warna",
+          url: "/warna",
+        },
       ],
     },
     {

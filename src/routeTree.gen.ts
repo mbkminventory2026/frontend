@@ -15,6 +15,7 @@ import { Route as PublicRouteImport } from './routes/_public'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as PublicIndexRouteImport } from './routes/_public/index'
 import { Route as AuthenticatedWorkOrderRouteImport } from './routes/_authenticated/work-order'
+import { Route as AuthenticatedWarnaRouteImport } from './routes/_authenticated/warna'
 import { Route as AuthenticatedUsersRouteImport } from './routes/_authenticated/users'
 import { Route as AuthenticatedReportPengirimanRouteImport } from './routes/_authenticated/report-pengiriman'
 import { Route as AuthenticatedReportPenerimaanRouteImport } from './routes/_authenticated/report-penerimaan'
@@ -31,6 +32,7 @@ import { Route as AuthenticatedCompanyRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedBarangRouteImport } from './routes/_authenticated/barang'
 import { Route as AuthenticatedAiEstimationRouteImport } from './routes/_authenticated/ai-estimation'
 import { Route as AuthenticatedWorkOrderIndexRouteImport } from './routes/_authenticated/work-order.index'
+import { Route as AuthenticatedWarnaIndexRouteImport } from './routes/_authenticated/warna.index'
 import { Route as AuthenticatedUsersIndexRouteImport } from './routes/_authenticated/users.index'
 import { Route as AuthenticatedReportPengirimanIndexRouteImport } from './routes/_authenticated/report-pengiriman.index'
 import { Route as AuthenticatedReportPenerimaanIndexRouteImport } from './routes/_authenticated/report-penerimaan.index'
@@ -42,6 +44,7 @@ import { Route as AuthenticatedJenisBarangIndexRouteImport } from './routes/_aut
 import { Route as AuthenticatedDepartemenIndexRouteImport } from './routes/_authenticated/departemen.index'
 import { Route as AuthenticatedBarangIndexRouteImport } from './routes/_authenticated/barang.index'
 import { Route as AuthenticatedWorkOrderIdRouteImport } from './routes/_authenticated/work-order.$id'
+import { Route as AuthenticatedWarnaIdRouteImport } from './routes/_authenticated/warna.$id'
 import { Route as AuthenticatedReportPengirimanIdRouteImport } from './routes/_authenticated/report-pengiriman.$id'
 import { Route as AuthenticatedReportPenerimaanIdRouteImport } from './routes/_authenticated/report-penerimaan.$id'
 import { Route as AuthenticatedPoInternalCreateRouteImport } from './routes/_authenticated/po-internal.create'
@@ -81,6 +84,11 @@ const PublicIndexRoute = PublicIndexRouteImport.update({
 const AuthenticatedWorkOrderRoute = AuthenticatedWorkOrderRouteImport.update({
   id: '/work-order',
   path: '/work-order',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedWarnaRoute = AuthenticatedWarnaRouteImport.update({
+  id: '/warna',
+  path: '/warna',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedUsersRoute = AuthenticatedUsersRouteImport.update({
@@ -170,6 +178,11 @@ const AuthenticatedWorkOrderIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedWorkOrderRoute,
   } as any)
+const AuthenticatedWarnaIndexRoute = AuthenticatedWarnaIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedWarnaRoute,
+} as any)
 const AuthenticatedUsersIndexRoute = AuthenticatedUsersIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -234,6 +247,11 @@ const AuthenticatedWorkOrderIdRoute =
     path: '/$id',
     getParentRoute: () => AuthenticatedWorkOrderRoute,
   } as any)
+const AuthenticatedWarnaIdRoute = AuthenticatedWarnaIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthenticatedWarnaRoute,
+} as any)
 const AuthenticatedReportPengirimanIdRoute =
   AuthenticatedReportPengirimanIdRouteImport.update({
     id: '/$id',
@@ -323,6 +341,7 @@ export interface FileRoutesByFullPath {
   '/report-penerimaan': typeof AuthenticatedReportPenerimaanRouteWithChildren
   '/report-pengiriman': typeof AuthenticatedReportPengirimanRouteWithChildren
   '/users': typeof AuthenticatedUsersRouteWithChildren
+  '/warna': typeof AuthenticatedWarnaRouteWithChildren
   '/work-order': typeof AuthenticatedWorkOrderRouteWithChildren
   '/barang/$id': typeof AuthenticatedBarangIdRoute
   '/departemen/$id': typeof AuthenticatedDepartemenIdRoute
@@ -335,6 +354,7 @@ export interface FileRoutesByFullPath {
   '/po-internal/create': typeof AuthenticatedPoInternalCreateRoute
   '/report-penerimaan/$id': typeof AuthenticatedReportPenerimaanIdRoute
   '/report-pengiriman/$id': typeof AuthenticatedReportPengirimanIdRoute
+  '/warna/$id': typeof AuthenticatedWarnaIdRoute
   '/work-order/$id': typeof AuthenticatedWorkOrderIdRoute
   '/barang/': typeof AuthenticatedBarangIndexRoute
   '/departemen/': typeof AuthenticatedDepartemenIndexRoute
@@ -346,6 +366,7 @@ export interface FileRoutesByFullPath {
   '/report-penerimaan/': typeof AuthenticatedReportPenerimaanIndexRoute
   '/report-pengiriman/': typeof AuthenticatedReportPengirimanIndexRoute
   '/users/': typeof AuthenticatedUsersIndexRoute
+  '/warna/': typeof AuthenticatedWarnaIndexRoute
   '/work-order/': typeof AuthenticatedWorkOrderIndexRoute
   '/po-client/edit/$id': typeof AuthenticatedPoClientEditIdRoute
 }
@@ -369,6 +390,7 @@ export interface FileRoutesByTo {
   '/po-internal/create': typeof AuthenticatedPoInternalCreateRoute
   '/report-penerimaan/$id': typeof AuthenticatedReportPenerimaanIdRoute
   '/report-pengiriman/$id': typeof AuthenticatedReportPengirimanIdRoute
+  '/warna/$id': typeof AuthenticatedWarnaIdRoute
   '/work-order/$id': typeof AuthenticatedWorkOrderIdRoute
   '/barang': typeof AuthenticatedBarangIndexRoute
   '/departemen': typeof AuthenticatedDepartemenIndexRoute
@@ -380,6 +402,7 @@ export interface FileRoutesByTo {
   '/report-penerimaan': typeof AuthenticatedReportPenerimaanIndexRoute
   '/report-pengiriman': typeof AuthenticatedReportPengirimanIndexRoute
   '/users': typeof AuthenticatedUsersIndexRoute
+  '/warna': typeof AuthenticatedWarnaIndexRoute
   '/work-order': typeof AuthenticatedWorkOrderIndexRoute
   '/po-client/edit/$id': typeof AuthenticatedPoClientEditIdRoute
 }
@@ -404,6 +427,7 @@ export interface FileRoutesById {
   '/_authenticated/report-penerimaan': typeof AuthenticatedReportPenerimaanRouteWithChildren
   '/_authenticated/report-pengiriman': typeof AuthenticatedReportPengirimanRouteWithChildren
   '/_authenticated/users': typeof AuthenticatedUsersRouteWithChildren
+  '/_authenticated/warna': typeof AuthenticatedWarnaRouteWithChildren
   '/_authenticated/work-order': typeof AuthenticatedWorkOrderRouteWithChildren
   '/_public/': typeof PublicIndexRoute
   '/_authenticated/barang/$id': typeof AuthenticatedBarangIdRoute
@@ -417,6 +441,7 @@ export interface FileRoutesById {
   '/_authenticated/po-internal/create': typeof AuthenticatedPoInternalCreateRoute
   '/_authenticated/report-penerimaan/$id': typeof AuthenticatedReportPenerimaanIdRoute
   '/_authenticated/report-pengiriman/$id': typeof AuthenticatedReportPengirimanIdRoute
+  '/_authenticated/warna/$id': typeof AuthenticatedWarnaIdRoute
   '/_authenticated/work-order/$id': typeof AuthenticatedWorkOrderIdRoute
   '/_authenticated/barang/': typeof AuthenticatedBarangIndexRoute
   '/_authenticated/departemen/': typeof AuthenticatedDepartemenIndexRoute
@@ -428,6 +453,7 @@ export interface FileRoutesById {
   '/_authenticated/report-penerimaan/': typeof AuthenticatedReportPenerimaanIndexRoute
   '/_authenticated/report-pengiriman/': typeof AuthenticatedReportPengirimanIndexRoute
   '/_authenticated/users/': typeof AuthenticatedUsersIndexRoute
+  '/_authenticated/warna/': typeof AuthenticatedWarnaIndexRoute
   '/_authenticated/work-order/': typeof AuthenticatedWorkOrderIndexRoute
   '/_authenticated/po-client/edit/$id': typeof AuthenticatedPoClientEditIdRoute
 }
@@ -452,6 +478,7 @@ export interface FileRouteTypes {
     | '/report-penerimaan'
     | '/report-pengiriman'
     | '/users'
+    | '/warna'
     | '/work-order'
     | '/barang/$id'
     | '/departemen/$id'
@@ -464,6 +491,7 @@ export interface FileRouteTypes {
     | '/po-internal/create'
     | '/report-penerimaan/$id'
     | '/report-pengiriman/$id'
+    | '/warna/$id'
     | '/work-order/$id'
     | '/barang/'
     | '/departemen/'
@@ -475,6 +503,7 @@ export interface FileRouteTypes {
     | '/report-penerimaan/'
     | '/report-pengiriman/'
     | '/users/'
+    | '/warna/'
     | '/work-order/'
     | '/po-client/edit/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -498,6 +527,7 @@ export interface FileRouteTypes {
     | '/po-internal/create'
     | '/report-penerimaan/$id'
     | '/report-pengiriman/$id'
+    | '/warna/$id'
     | '/work-order/$id'
     | '/barang'
     | '/departemen'
@@ -509,6 +539,7 @@ export interface FileRouteTypes {
     | '/report-penerimaan'
     | '/report-pengiriman'
     | '/users'
+    | '/warna'
     | '/work-order'
     | '/po-client/edit/$id'
   id:
@@ -532,6 +563,7 @@ export interface FileRouteTypes {
     | '/_authenticated/report-penerimaan'
     | '/_authenticated/report-pengiriman'
     | '/_authenticated/users'
+    | '/_authenticated/warna'
     | '/_authenticated/work-order'
     | '/_public/'
     | '/_authenticated/barang/$id'
@@ -545,6 +577,7 @@ export interface FileRouteTypes {
     | '/_authenticated/po-internal/create'
     | '/_authenticated/report-penerimaan/$id'
     | '/_authenticated/report-pengiriman/$id'
+    | '/_authenticated/warna/$id'
     | '/_authenticated/work-order/$id'
     | '/_authenticated/barang/'
     | '/_authenticated/departemen/'
@@ -556,6 +589,7 @@ export interface FileRouteTypes {
     | '/_authenticated/report-penerimaan/'
     | '/_authenticated/report-pengiriman/'
     | '/_authenticated/users/'
+    | '/_authenticated/warna/'
     | '/_authenticated/work-order/'
     | '/_authenticated/po-client/edit/$id'
   fileRoutesById: FileRoutesById
@@ -609,6 +643,13 @@ declare module '@tanstack/vue-router' {
       path: '/work-order'
       fullPath: '/work-order'
       preLoaderRoute: typeof AuthenticatedWorkOrderRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/warna': {
+      id: '/_authenticated/warna'
+      path: '/warna'
+      fullPath: '/warna'
+      preLoaderRoute: typeof AuthenticatedWarnaRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/users': {
@@ -723,6 +764,13 @@ declare module '@tanstack/vue-router' {
       preLoaderRoute: typeof AuthenticatedWorkOrderIndexRouteImport
       parentRoute: typeof AuthenticatedWorkOrderRoute
     }
+    '/_authenticated/warna/': {
+      id: '/_authenticated/warna/'
+      path: '/'
+      fullPath: '/warna/'
+      preLoaderRoute: typeof AuthenticatedWarnaIndexRouteImport
+      parentRoute: typeof AuthenticatedWarnaRoute
+    }
     '/_authenticated/users/': {
       id: '/_authenticated/users/'
       path: '/'
@@ -799,6 +847,13 @@ declare module '@tanstack/vue-router' {
       fullPath: '/work-order/$id'
       preLoaderRoute: typeof AuthenticatedWorkOrderIdRouteImport
       parentRoute: typeof AuthenticatedWorkOrderRoute
+    }
+    '/_authenticated/warna/$id': {
+      id: '/_authenticated/warna/$id'
+      path: '/$id'
+      fullPath: '/warna/$id'
+      preLoaderRoute: typeof AuthenticatedWarnaIdRouteImport
+      parentRoute: typeof AuthenticatedWarnaRoute
     }
     '/_authenticated/report-pengiriman/$id': {
       id: '/_authenticated/report-pengiriman/$id'
@@ -1043,6 +1098,19 @@ const AuthenticatedUsersRouteChildren: AuthenticatedUsersRouteChildren = {
 const AuthenticatedUsersRouteWithChildren =
   AuthenticatedUsersRoute._addFileChildren(AuthenticatedUsersRouteChildren)
 
+interface AuthenticatedWarnaRouteChildren {
+  AuthenticatedWarnaIdRoute: typeof AuthenticatedWarnaIdRoute
+  AuthenticatedWarnaIndexRoute: typeof AuthenticatedWarnaIndexRoute
+}
+
+const AuthenticatedWarnaRouteChildren: AuthenticatedWarnaRouteChildren = {
+  AuthenticatedWarnaIdRoute: AuthenticatedWarnaIdRoute,
+  AuthenticatedWarnaIndexRoute: AuthenticatedWarnaIndexRoute,
+}
+
+const AuthenticatedWarnaRouteWithChildren =
+  AuthenticatedWarnaRoute._addFileChildren(AuthenticatedWarnaRouteChildren)
+
 interface AuthenticatedWorkOrderRouteChildren {
   AuthenticatedWorkOrderIdRoute: typeof AuthenticatedWorkOrderIdRoute
   AuthenticatedWorkOrderIndexRoute: typeof AuthenticatedWorkOrderIndexRoute
@@ -1075,6 +1143,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedReportPenerimaanRoute: typeof AuthenticatedReportPenerimaanRouteWithChildren
   AuthenticatedReportPengirimanRoute: typeof AuthenticatedReportPengirimanRouteWithChildren
   AuthenticatedUsersRoute: typeof AuthenticatedUsersRouteWithChildren
+  AuthenticatedWarnaRoute: typeof AuthenticatedWarnaRouteWithChildren
   AuthenticatedWorkOrderRoute: typeof AuthenticatedWorkOrderRouteWithChildren
 }
 
@@ -1096,6 +1165,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedReportPengirimanRoute:
     AuthenticatedReportPengirimanRouteWithChildren,
   AuthenticatedUsersRoute: AuthenticatedUsersRouteWithChildren,
+  AuthenticatedWarnaRoute: AuthenticatedWarnaRouteWithChildren,
   AuthenticatedWorkOrderRoute: AuthenticatedWorkOrderRouteWithChildren,
 }
 
