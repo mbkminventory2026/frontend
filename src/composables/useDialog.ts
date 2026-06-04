@@ -3,7 +3,7 @@ import { toast } from 'vue-sonner'
 
 interface UseDialogOptions {
     onSubmit: (values: any, isEdit: boolean) => Promise<any>
-    onSuccess?: () => void
+    onSuccess?: (result?: any) => void
     onError?: (error: any) => void
 }
 
@@ -36,12 +36,12 @@ export function useDialog({
     const handleSubmit = async (values: any) => {
         isLoading.value = true
         try {
-            await onSubmit(values, isEditMode.value)
+            const result = await onSubmit(values, isEditMode.value)
             
             toast.success(isEditMode.value ? 'Data berhasil diperbarui' : 'Data berhasil ditambahkan')
 
             closeDialog()
-            if (onSuccess) onSuccess()
+            if (onSuccess) onSuccess(result)
         } catch (error: any) {
             console.error('API Error:', error.response?.data)
             toast.error(error.response?.data?.message || 'Terjadi kesalahan sistem')

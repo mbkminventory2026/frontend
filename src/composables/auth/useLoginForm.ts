@@ -38,11 +38,19 @@ export function useLoginForm() {
                 turnstile_token: turnstileToken.value
             })
 
-            authStore.login(response.access_token, { username: values.username, role: 'admin' });
+            authStore.login(response.access_token, {
+                username: values.username,
+                role: response.role_name,
+                mustChangePassword: response.must_change_password,
+            });
 
             const search = router.latestLocation.search as { redirect?: string };
-            
-            if (search.redirect) {
+
+            if (response.must_change_password) {
+                router.navigate({
+                    to: '/change-password' as any,
+                })
+            } else if (search.redirect) {
                 window.location.href = search.redirect;
             } else {
                 router.navigate({

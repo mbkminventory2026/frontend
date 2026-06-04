@@ -1,22 +1,11 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
+import { decodeJwt } from "@/lib/auth";
 
 export interface AuthUser {
     username: string;
     role?: string;
-}
-
-function decodeJwt(token: string) {
-    try {
-        const base64Url = token.split('.')[1] || '';
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-        return JSON.parse(jsonPayload);
-    } catch (e) {
-        return null;
-    }
+    mustChangePassword?: boolean;
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -40,7 +29,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     const mitraId = computed<number | null>(() => {
         const claims = decodedClaims.value;
-        return claims ? claims.id_mitra : null;
+        return claims?.id_mitra ?? null;
     });
 
     const permissions = computed<string[]>(() => {
@@ -50,12 +39,17 @@ export const useAuthStore = defineStore('auth', () => {
 
     const roleName = computed<string | null>(() => {
         const claims = decodedClaims.value;
-        return claims ? claims.role_name : null;
+        return claims?.role_name ?? null;
     });
 
     const roleId = computed<number | null>(() => {
         const claims = decodedClaims.value;
-        return claims ? claims.id_role : null;
+        return claims?.id_role ?? null;
+    });
+
+    const mustChangePassword = computed<boolean>(() => {
+        const claims = decodedClaims.value;
+        return Boolean(claims?.must_change_password);
     });
 
     function login(newToken: string, userData: AuthUser) {
@@ -82,6 +76,7 @@ export const useAuthStore = defineStore('auth', () => {
         permissions,
         roleName,
         roleId,
+        mustChangePassword,
         login, 
         logout 
     };

@@ -11,6 +11,9 @@ import LoginForm from '@/components/auth/LoginForm.vue';
                     <p class="text-sm text-slate-500 mt-2">Silakan masuk ke akun Anda</p>
                 </div>
                 <LoginForm/>
+                <div class="mt-4 text-center text-sm">
+                    <a href="/forgot-password" class="text-indigo-600 hover:text-indigo-700">Lupa password?</a>
+                </div>
             </div>
         </div>
         <div class="bg-muted relative hidden lg:block">

@@ -8,7 +8,7 @@ export function useDashboard() {
 
     // mengambil value dari reactive variable
     const username = computed(() => authStore.user?.username ?? 'Guest');
-    const role = computed(() => authStore.user?.role ?? 'admin')
+    const role = computed(() => authStore.roleName ?? authStore.user?.role ?? 'admin')
 
     const handleLogout = () => {
         authStore.logout();

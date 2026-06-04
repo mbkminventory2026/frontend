@@ -12,6 +12,9 @@ export interface UserResponseItem {
     nama_departemen?: string;
     nama_perusahaan?: string;
     created_at: string;
+    must_change_password?: boolean;
+    password_changed_at?: string;
+    temporary_password?: string;
     hak_akses_ids?: number[];
 }
 

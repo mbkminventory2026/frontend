@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { h, ref, watch, onMounted, computed } from 'vue';
-import { useSearch } from '@tanstack/vue-router';
+import { useNavigate, useSearch } from '@tanstack/vue-router';
 import { PlusIcon, PencilIcon, CheckIcon, XIcon } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
@@ -32,6 +32,7 @@ import DeleteButton from '@/components/DeleteButton.vue';
 
 const { hasPermission } = usePermission();
 const search = useSearch({ strict: false }) as any;
+const navigate = useNavigate();
 
 const data = ref<UserResponseItem[]>([]);
 const totalCount = ref(0);
@@ -118,6 +119,9 @@ const handleReject = async (id: number) => {
 const createDialog = useDialog({
     onSubmit: async (values, isEdit) => {
         const payload = { ...values };
+        if (!payload.password) {
+            delete payload.password;
+        }
         if (payload.user_type === 'Karyawan') {
             payload.id_mitra = null;
         } else if (payload.user_type === 'Mitra') {
@@ -137,7 +141,15 @@ const createDialog = useDialog({
             return await createUser(payload);
         }
     },
-    onSuccess: () => fetchData() 
+    onSuccess: (result) => {
+        if (result?.temporary_password) {
+            toast.success('Password sementara berhasil dibuat', {
+                description: `Sampaikan password ini ke user: ${result.temporary_password}`,
+                duration: 15000,
+            });
+        }
+        fetchData();
+    } 
 });
 
 const filteredData = computed(() => {
@@ -284,8 +296,8 @@ const UserDialogSchema = computed<DialogSchemaType>(() => {
             key: "password",
             label: "Password",
             type: "password",
-            placeholder: isEdit ? "Biarkan kosong jika tidak diubah" : "Masukkan password",
-            rules: isEdit ? "" : "required",
+            placeholder: isEdit ? "Biarkan kosong jika tidak diubah" : "Kosongkan untuk generate otomatis",
+            rules: "",
             position: "right"
         },
         {
@@ -366,10 +378,19 @@ watch(() => search, () => {
                 <h1 class="text-xl font-bold text-slate-900">Manajemen Akses & Pengguna</h1>
                 <p class="text-xs text-slate-500 mt-0.5">Kelola verifikasi pendaftaran mitra eksternal dan hak akses karyawan.</p>
             </div>
-            <Button v-if="hasPermission('USER_CREATE')" @click="createDialog.openDialog()" class="bg-indigo-600 hover:bg-indigo-700">
-                <PlusIcon class="w-4 h-4 mr-2" />
-                Tambah Karyawan
-            </Button>
+            <div class="flex gap-2">
+                <Button
+                    v-if="hasPermission('PASSWORD_RESET_REQUEST_READ')"
+                    variant="outline"
+                    @click="navigate({ to: '/password-reset-requests' as any })"
+                >
+                    Permintaan Reset Password
+                </Button>
+                <Button v-if="hasPermission('USER_CREATE')" @click="createDialog.openDialog()" class="bg-indigo-600 hover:bg-indigo-700">
+                    <PlusIcon class="w-4 h-4 mr-2" />
+                    Tambah Karyawan
+                </Button>
+            </div>
         </div>
 
         <!-- Filter Status Tab Bar -->
