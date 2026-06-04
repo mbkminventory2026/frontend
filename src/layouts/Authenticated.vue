@@ -187,6 +187,11 @@ const navMainItems = computed(() => {
           permission: "WO_READ",
         },
         {
+          title: "PR Internal",
+          url: "/pr-internal",
+          permission: "PO_INTERNAL_READ",
+        },
+        {
           title: "PO Internal",
           url: "/po-internal",
           permission: "PO_INTERNAL_READ",

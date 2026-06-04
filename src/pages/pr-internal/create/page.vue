@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { onMounted, computed, ref } from 'vue';
+import { onMounted, computed } from 'vue';
 import { useRouter } from '@tanstack/vue-router';
-import { PlusIcon, Trash2Icon, ArrowLeftIcon, SaveIcon, FileTextIcon, ChevronDownIcon } from 'lucide-vue-next';
+import { PlusIcon, Trash2Icon, ArrowLeftIcon, SaveIcon, ClipboardListIcon } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
-import { createPOInternal } from '@/api/po-internals/po-internals';
-import { getApprovedPRInternals, type PRInternalListItem } from '@/api/pr-internals/pr-internals';
+import { createPRInternal } from '@/api/pr-internals/pr-internals';
 import { formatRupiah } from '@/lib/formatter';
 
 import AppForm from '@/components/form/AppForm.vue';
@@ -21,35 +20,20 @@ const router = useRouter();
 // Setup form
 const form = useForm({
     api: {
-        create: (payload) => createPOInternal(payload),
+        create: (payload) => createPRInternal(payload),
     },
     id: null,
     onSuccess: () => {
-        router.navigate({ to: '/po-internal' });
+        router.navigate({ to: '/pr-internal' });
     }
 });
 
 const { values, isLoading, isSaving } = form;
 
-// PR Internal Dropdown
-const prInternalList = ref<PRInternalListItem[]>([]);
-const isLoadingPR = ref(false);
-
-const fetchApprovedPRInternals = async () => {
-    isLoadingPR.value = true;
-    try {
-        prInternalList.value = await getApprovedPRInternals();
-    } catch (e) {
-        console.error('Gagal fetch PR Internals:', e);
-    } finally {
-        isLoadingPR.value = false;
-    }
-};
-
 // Add/Remove Item rows
 const addItem = () => {
     if (!values.value.items) values.value.items = [];
-    values.value.items.push({ item: '', description: '', qty: 1, unit: '', unitPrice: 'Rp 0' });
+    values.value.items.push({ item: '', description: '', qty: 1, unit: '', estPrice: 'Rp 0' });
 };
 
 const removeItem = (index: number) => {
@@ -67,17 +51,17 @@ const parseRupiahToNumber = (val: any): number => {
     return isNaN(num) ? 0 : num;
 };
 
-const handleUnitPriceInput = (event: Event, item: any) => {
+const handleEstPriceInput = (event: Event, item: any) => {
     const target = event.target as HTMLInputElement;
     const numeric = target.value.replace(/[^0-9]/g, '');
     if (numeric === '') {
-        item.unitPrice = '';
+        item.estPrice = '';
         target.value = '';
         return;
     }
     const num = parseInt(numeric, 10);
     const formatted = formatRupiah(num);
-    item.unitPrice = formatted;
+    item.estPrice = formatted;
     target.value = formatted;
 };
 
@@ -90,7 +74,7 @@ const totalFormQty = computed(() => {
 const grandFormTotal = computed(() => {
     if (!values.value.items) return 0;
     return values.value.items.reduce((acc: number, curr: any) => {
-        return acc + (Number(curr.qty || 0) * parseRupiahToNumber(curr.unitPrice));
+        return acc + (Number(curr.qty || 0) * parseRupiahToNumber(curr.estPrice));
     }, 0);
 });
 
@@ -98,14 +82,14 @@ const grandFormTotal = computed(() => {
 const originalSave = form.save;
 form.save = async () => {
     // Validate header
-    if (!values.value.tanggal || !values.value.namaPO || !values.value.supplierName || !values.value.currency || !values.value.shipDate || !values.value.idPrInternal) {
-        toast.error("Harap lengkapi semua field wajib (Tanggal, Nama PO, Supplier, Currency, Ship Date, dan PR Internal).");
+    if (!values.value.tanggal || !values.value.nama || !values.value.departemen || !values.value.vendorName || !values.value.projek || !values.value.idWo) {
+        toast.error("Harap lengkapi semua field wajib (Tanggal, Nama, Departemen, Vendor, Projek, dan ID Work Order).");
         return;
     }
 
     // Validate items
     if (!values.value.items || values.value.items.length === 0) {
-        toast.error("Minimal harus terdapat satu item PO.");
+        toast.error("Minimal harus terdapat satu item PR.");
         return;
     }
     for (const item of values.value.items) {
@@ -117,24 +101,19 @@ form.save = async () => {
 
     const payload = {
         tanggal: values.value.tanggal,
-        nama_po: values.value.namaPO,
-        supplier_name: values.value.supplierName,
-        supplier_addr: values.value.supplierAddr || '',
-        supplier_contact: values.value.supplierContact || '',
-        supplier_email: values.value.supplierEmail || '',
-        supplier_telp: values.value.supplierTelp || '',
-        supplier_fax: values.value.supplierFax || '',
-        currency: values.value.currency,
-        cpo: values.value.cpo || '',
-        term: values.value.term || '',
-        ship_date: values.value.shipDate,
-        id_pr_internal: Number(values.value.idPrInternal),
+        nama: values.value.nama,
+        departemen: values.value.departemen,
+        vendor_name: values.value.vendorName,
+        vendor_address: values.value.vendorAddress || '',
+        vendor_telp: values.value.vendorTelp || '',
+        projek: values.value.projek,
+        id_wo: Number(values.value.idWo),
         items: values.value.items.map((item: any) => ({
             item: item.item,
             description: item.description || '',
             qty: Number(item.qty),
             unit: item.unit,
-            unit_price: parseRupiahToNumber(item.unitPrice),
+            est_price: parseRupiahToNumber(item.estPrice),
         })),
     };
 
@@ -142,24 +121,17 @@ form.save = async () => {
 };
 
 onMounted(() => {
-    // Set initial default values
     values.value = {
         tanggal: '',
-        namaPO: '',
-        supplierName: '',
-        supplierAddr: '',
-        supplierContact: '',
-        supplierEmail: '',
-        supplierTelp: '',
-        supplierFax: '',
-        currency: 'IDR',
-        cpo: '',
-        term: '',
-        shipDate: '',
-        idPrInternal: '',
-        items: [{ item: '', description: '', qty: 1, unit: '', unitPrice: 'Rp 0' }],
+        nama: '',
+        departemen: '',
+        vendorName: '',
+        vendorAddress: '',
+        vendorTelp: '',
+        projek: '',
+        idWo: '',
+        items: [{ item: '', description: '', qty: 1, unit: '', estPrice: 'Rp 0' }],
     };
-    fetchApprovedPRInternals();
 });
 </script>
 
@@ -169,14 +141,14 @@ onMounted(() => {
         <div class="flex flex-col md:flex-row md:items-center justify-between border-b pb-5 border-neutral-100 gap-4">
             <div class="flex items-center gap-3">
                 <div class="bg-neutral-50 border border-neutral-200/80 p-2.5 rounded-xl shadow-sm">
-                    <FileTextIcon class="w-6 h-6 text-neutral-600" />
+                    <ClipboardListIcon class="w-6 h-6 text-neutral-600" />
                 </div>
                 <div>
                     <h1 class="text-2xl font-bold tracking-tight text-neutral-900">
-                        Buat PO Internal Document
+                        Buat PR Internal Document
                     </h1>
                     <p class="text-[13px] text-neutral-500 mt-1">
-                        Menerbitkan Purchase Order Internal baru berdasarkan PR yang sudah disetujui.
+                        Membuat Purchase Request Internal baru untuk pengadaan barang/jasa.
                     </p>
                 </div>
             </div>
@@ -199,61 +171,32 @@ onMounted(() => {
                 <Card class="border border-neutral-200 bg-white p-6 shadow-sm rounded-xl">
                     <h2 class="text-sm font-bold text-neutral-800 uppercase tracking-wider mb-5 flex items-center gap-2">
                         <span class="inline-block w-1.5 h-4 bg-neutral-900 rounded-full"></span>
-                        Informasi PO
+                        Informasi PR
                     </h2>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <AppFormField name="namaPO" label="Nama PO *" placeholder="Contoh: PO-INT-2026-001" />
+                        <AppFormField name="nama" label="Nama PR *" placeholder="Contoh: PR-INT-2026-001" />
                         <AppFormField name="tanggal" type="date" label="Tanggal *" />
-                        <AppFormField name="shipDate" type="date" label="Ship Date *" />
-                        <AppFormField name="currency" label="Currency *" placeholder="Contoh: IDR, USD" />
-                        <AppFormField name="cpo" label="CPO" placeholder="Opsional" />
-                        <AppFormField name="term" label="Term" placeholder="Opsional" />
-                        <!-- PR Internal Dropdown -->
-                        <div class="md:col-span-3 space-y-1.5">
-                            <label class="text-sm font-medium text-neutral-700">
-                                PR Internal <span class="text-red-500">*</span>
-                            </label>
-                            <div class="relative">
-                                <select
-                                    v-model="values.idPrInternal"
-                                    :disabled="isLoadingPR"
-                                    class="w-full h-9 rounded-md border border-neutral-200 bg-white pl-3 pr-9 py-1 text-sm shadow-xs transition-colors outline-none focus-visible:ring-2 focus-visible:ring-neutral-800 disabled:cursor-not-allowed disabled:opacity-60 appearance-none cursor-pointer"
-                                >
-                                    <option value="" disabled>
-                                        {{ isLoadingPR ? 'Memuat daftar PR Internal...' : 'Pilih PR Internal yang sudah disetujui' }}
-                                    </option>
-                                    <option
-                                        v-for="pr in prInternalList"
-                                        :key="pr.id_pr_internal"
-                                        :value="pr.id_pr_internal"
-                                    >
-                                        #{{ pr.id_pr_internal }} — {{ pr.nama }} ({{ pr.projek }})
-                                    </option>
-                                </select>
-                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5">
-                                    <ChevronDownIcon class="w-4 h-4 text-neutral-400" />
-                                </div>
-                            </div>
-                            <p v-if="prInternalList.length === 0 && !isLoadingPR" class="text-xs text-amber-600">
-                                Tidak ada PR Internal yang sudah disetujui. Pastikan ada PR yang statusnya 'Approved'.
-                            </p>
-                        </div>
+                        <AppFormField name="departemen" label="Departemen *" placeholder="Contoh: Produksi" />
+                        <AppFormField name="projek" label="Projek *" placeholder="Nama proyek terkait" />
+                        <AppFormField
+                            name="idWo"
+                            label="ID Work Order *"
+                            type="number"
+                            placeholder="Masukkan ID Work Order terkait"
+                        />
                     </div>
                 </Card>
 
-                <!-- Supplier Info Card -->
+                <!-- Vendor Info Card -->
                 <Card class="border border-neutral-200 bg-white p-6 shadow-sm rounded-xl">
                     <h2 class="text-sm font-bold text-neutral-800 uppercase tracking-wider mb-5 flex items-center gap-2">
                         <span class="inline-block w-1.5 h-4 bg-neutral-900 rounded-full"></span>
-                        Informasi Supplier
+                        Informasi Vendor
                     </h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <AppFormField name="supplierName" label="Nama Supplier *" placeholder="Contoh: PT. Bahan Garment" />
-                        <AppFormField name="supplierContact" label="Contact Person" placeholder="Nama kontak di supplier" />
-                        <AppFormField name="supplierAddr" label="Alamat Supplier" placeholder="Alamat lengkap supplier" className="md:col-span-2" />
-                        <AppFormField name="supplierEmail" type="email" label="Email Supplier" placeholder="contoh@supplier.com" />
-                        <AppFormField name="supplierTelp" label="No. Telepon" placeholder="021-xxxxxxxx" />
-                        <AppFormField name="supplierFax" label="No. Fax" placeholder="021-xxxxxxxx (Opsional)" />
+                        <AppFormField name="vendorName" label="Nama Vendor *" placeholder="Contoh: PT. Bahan Garment" />
+                        <AppFormField name="vendorTelp" label="No. Telepon Vendor" placeholder="021-xxxxxxxx" />
+                        <AppFormField name="vendorAddress" label="Alamat Vendor" placeholder="Alamat lengkap vendor" className="md:col-span-2" />
                     </div>
                 </Card>
 
@@ -263,9 +206,9 @@ onMounted(() => {
                         <div class="flex flex-col gap-1">
                             <h3 class="text-sm font-bold text-neutral-800 uppercase tracking-wider flex items-center gap-2">
                                 <span class="inline-block w-1.5 h-4 bg-neutral-900 rounded-full"></span>
-                                Daftar Item PO
+                                Daftar Item PR
                             </h3>
-                            <span class="text-xs text-neutral-500 pl-3.5">Detail item barang yang dipesan dalam Purchase Order Internal ini.</span>
+                            <span class="text-xs text-neutral-500 pl-3.5">Detail item barang yang dibutuhkan dalam Purchase Request Internal ini.</span>
                         </div>
                         <Button type="button" @click="addItem" variant="outline" size="sm" class="h-9 border-neutral-300 text-neutral-700 hover:bg-neutral-50 rounded-lg shadow-sm transition-all px-3.5">
                             <PlusIcon class="w-4 h-4 mr-1.5" /> Add Row
@@ -279,7 +222,7 @@ onMounted(() => {
                                     <th class="p-3.5 w-[22%] whitespace-nowrap text-neutral-700">Nama Item <span class="text-red-500">*</span></th>
                                     <th class="p-3.5 w-[10%] whitespace-nowrap text-neutral-700 text-center">Qty <span class="text-red-500">*</span></th>
                                     <th class="p-3.5 w-[12%] whitespace-nowrap text-neutral-700">Satuan <span class="text-red-500">*</span></th>
-                                    <th class="p-3.5 w-[22%] whitespace-nowrap text-neutral-700">Harga Satuan <span class="text-red-500">*</span></th>
+                                    <th class="p-3.5 w-[22%] whitespace-nowrap text-neutral-700">Est. Harga <span class="text-red-500">*</span></th>
                                     <th class="p-3.5 whitespace-nowrap text-neutral-700">Deskripsi</th>
                                     <th class="p-3.5 text-center w-[8%] whitespace-nowrap text-neutral-700">Aksi</th>
                                 </tr>
@@ -298,8 +241,8 @@ onMounted(() => {
                                     <td class="p-3">
                                         <input
                                             type="text"
-                                            :value="item.unitPrice"
-                                            @input="handleUnitPriceInput($event, item)"
+                                            :value="item.estPrice"
+                                            @input="handleEstPriceInput($event, item)"
                                             placeholder="Rp 0"
                                             class="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-neutral-400 outline-none focus-visible:ring-2 focus-visible:ring-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
                                         />
@@ -330,7 +273,7 @@ onMounted(() => {
 
                 <!-- Footer Buttons -->
                 <div class="border-t border-neutral-200 pt-6 flex gap-3 justify-end">
-                    <Button type="button" variant="outline" @click="router.navigate({ to: '/po-internal' })" class="h-10 px-5 text-sm font-medium text-neutral-600 hover:bg-neutral-50 rounded-lg transition-all border-neutral-300">
+                    <Button type="button" variant="outline" @click="router.navigate({ to: '/pr-internal' })" class="h-10 px-5 text-sm font-medium text-neutral-600 hover:bg-neutral-50 rounded-lg transition-all border-neutral-300">
                         Batal
                     </Button>
                     <Button type="submit" :disabled="isSaving" class="h-10 px-6 text-sm font-medium bg-neutral-900 text-white hover:bg-neutral-800 rounded-lg shadow-sm border border-neutral-800 transition-all flex items-center gap-2 active:scale-[0.98]">
@@ -338,7 +281,7 @@ onMounted(() => {
                             <Spinner class="w-4 h-4" /> Menyimpan...
                         </template>
                         <template v-else>
-                            <SaveIcon class="w-4 h-4" /> Terbitkan PO Internal
+                            <SaveIcon class="w-4 h-4" /> Terbitkan PR Internal
                         </template>
                     </Button>
                 </div>
