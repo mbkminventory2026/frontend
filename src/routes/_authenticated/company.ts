@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/vue-router'
 import CompanyPage from '@/pages/company/page.vue'
 import { createTableParamsSchema } from '@/schemas/table-params'
 import { validateTableSearchRedirect, stripTableDefaults } from '@/lib/table-utils'
+import { requirePermission } from '@/lib/requirePermission'
 
 const CompanySearchKeys = [
     'about',
@@ -22,6 +23,7 @@ export const Route = createFileRoute('/_authenticated/company')({
     return stripTableDefaults(parsed)
   },
   beforeLoad: ({ search, location }) => {
+    requirePermission('MASTER_COMPANY_READ')()
     validateTableSearchRedirect(
         '/_authenticated/company',
         location.search as Record<string, any>,

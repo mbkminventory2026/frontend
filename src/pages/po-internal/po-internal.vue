@@ -8,9 +8,11 @@ import { poInternalSchema } from '@/routes/_authenticated/po-internal.index';
 
 import DataTable from '@/components/DataTable.vue';
 import { Button } from '@/components/ui/button';
+import { usePermission } from '@/composables/usePermission';
 import { useTable } from '@/composables/useTable';
 import { formatDate } from '@/lib/formatter';
 
+const { hasPermission } = usePermission();
 const search = useSearch({ strict: false }) as any;
 const router = useRouter();
 
@@ -89,7 +91,7 @@ watch(() => search, () => {
         @clear-filter="clearFilter"
     >
         <template #actions>
-            <Button @click="router.navigate({ to: '/po-internal/create' })" variant="outline" class="shadow-sm border-neutral-300">
+            <Button v-if="hasPermission('PO_INTERNAL_CREATE')" @click="router.navigate({ to: '/po-internal/create' })" variant="outline" class="shadow-sm border-neutral-300">
                 <PlusIcon class="w-4 h-4 mr-2" />
                 Tambah PO Internal
             </Button>

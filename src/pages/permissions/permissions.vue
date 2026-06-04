@@ -115,6 +115,38 @@ const PermissionsDialogSchema = computed<DialogSchemaType>(() => [
         type: "text",
         placeholder: "Masukkan nama halaman",
         rules: "required",
+        position: "left"
+    },
+    {
+        key: "kode_permission",
+        label: "Kode Permission",
+        type: "text",
+        placeholder: "Masukkan kode permission (contoh: USER_READ)",
+        rules: "required",
+        position: "right"
+    },
+    {
+        key: "domain_permission",
+        label: "Domain",
+        type: "text",
+        placeholder: "Masukkan domain (contoh: user)",
+        rules: "required",
+        position: "left"
+    },
+    {
+        key: "aksi_permission",
+        label: "Aksi",
+        type: "text",
+        placeholder: "Masukkan aksi (contoh: read)",
+        rules: "required",
+        position: "right"
+    },
+    {
+        key: "deskripsi",
+        label: "Deskripsi",
+        type: "textarea",
+        placeholder: "Masukkan deskripsi permission",
+        rules: "",
         position: "full"
     }
 ])

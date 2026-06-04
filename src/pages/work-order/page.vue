@@ -25,11 +25,11 @@ import {
 
 import { useTable } from '@/composables/useTable';
 import { formatDate } from '@/lib/formatter';
-import { useAuthStore } from '@/store/authStore';
+import { usePermission } from '@/composables/usePermission';
 
 const router = useRouter();
 const search = useSearch({ strict: false }) as any;
-const authStore = useAuthStore();
+const { hasPermission } = usePermission();
 
 // ─── Table State ───────────────────────────────────────
 const data = ref<WorkOrderListItem[]>([]);
@@ -37,11 +37,8 @@ const totalCount = ref(0);
 const isLoading = ref(false);
 
 // ─── Permission ────────────────────────────────────────
-const canCreateOrClose = computed(() => {
-    const role = authStore.user?.role?.toLowerCase() || '';
-    const isSuperAdmin = role === 'super-admin' || role === 'super_admin' || role === 'admin';
-    return isSuperAdmin || authStore.permissions.includes('WO_CREATE') || authStore.isManager;
-});
+const canCreate = computed(() => hasPermission('WO_CREATE'));
+const canClose = computed(() => hasPermission('WO_CLOSE'));
 
 // ─── Fetch WO List ─────────────────────────────────────
 const fetchData = async () => {
@@ -415,7 +412,7 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
                         h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
                         'View'
                     ]),
-                    ...(canCreateOrClose.value && isOpen ? [
+                    ...(canClose.value && isOpen ? [
                         h(Button, {
                             variant: 'ghost',
                             size: 'sm',
@@ -454,7 +451,7 @@ watch(() => search, () => { fetchData(); }, { deep: true });
                     <p class="text-[13px] text-neutral-500 mt-1">Daftar perintah kerja produksi dan relasi detail pesanan produksi.</p>
                 </div>
             </div>
-            <div class="flex items-center gap-3" v-if="canCreateOrClose">
+            <div class="flex items-center gap-3" v-if="canCreate">
                 <Button @click="openWizard" variant="outline" class="shadow-sm border-neutral-300">
                     <PlusIcon class="w-4 h-4 mr-2" />
                     Tambah Work Order

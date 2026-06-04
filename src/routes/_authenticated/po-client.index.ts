@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/vue-router'
 import POClientPage from '@/pages/po-client/po-client.vue'
 import { createTableParamsSchema } from '@/schemas/table-params'
 import { validateTableSearchRedirect, stripTableDefaults } from '@/lib/table-utils'
+import { requirePermission } from '@/lib/requirePermission'
 
 export const poClientColumns: [string, ...string[]] = [
     'created_at',
@@ -22,6 +23,7 @@ export const Route = createFileRoute('/_authenticated/po-client/')({
     },
 
     beforeLoad: ({ search, location }) => {
+        requirePermission('PO_CLIENT_READ')()
         validateTableSearchRedirect(
             '/_authenticated/po-client',
             location.search as Record<string, any>,

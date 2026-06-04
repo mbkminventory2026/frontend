@@ -1,24 +1,44 @@
 <script setup lang="ts">
-import type { CheckboxRootEmits, CheckboxRootProps } from "reka-ui"
-import type { HTMLAttributes } from "vue"
-import { reactiveOmit } from "@vueuse/core"
+import { type HTMLAttributes } from "vue"
 import { Check } from "lucide-vue-next"
-import { CheckboxIndicator, CheckboxRoot, useForwardPropsEmits } from "reka-ui"
+import { CheckboxIndicator, CheckboxRoot } from "reka-ui"
 import { cn } from "@/lib/utils"
 
-const props = defineProps<CheckboxRootProps & { class?: HTMLAttributes["class"] }>()
-const emits = defineEmits<CheckboxRootEmits>()
+interface CheckboxProps {
+  checked?: boolean | 'indeterminate' | null
+  defaultChecked?: boolean | 'indeterminate'
+  disabled?: boolean
+  required?: boolean
+  name?: string
+  value?: string
+  id?: string
+  as?: any
+  asChild?: boolean
+  class?: HTMLAttributes["class"]
+}
 
-const delegatedProps = reactiveOmit(props, "class")
+interface CheckboxEmits {
+  (e: 'update:checked', value: any): void
+}
 
-const forwarded = useForwardPropsEmits(delegatedProps, emits)
+const props = defineProps<CheckboxProps>()
+const emits = defineEmits<CheckboxEmits>()
 </script>
 
 <template>
   <CheckboxRoot
     v-slot="slotProps"
     data-slot="checkbox"
-    v-bind="forwarded"
+    :model-value="props.checked === null ? undefined : props.checked"
+    :default-value="props.defaultChecked"
+    :disabled="props.disabled"
+    :required="props.required"
+    :name="props.name"
+    :value="props.value"
+    :id="props.id"
+    :as="props.as"
+    :as-child="props.asChild"
+    @update:model-value="(val) => emits('update:checked', val as any)"
     :class="
       cn('peer border-input data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground data-[state=checked]:border-primary focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive size-4 shrink-0 rounded-[4px] border shadow-xs transition-shadow outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50',
          props.class)"

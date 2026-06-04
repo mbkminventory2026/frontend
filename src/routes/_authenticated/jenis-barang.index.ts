@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/vue-router'
 import JenisBarangPage from '@/pages/jenis-barang/page.vue'
 import { createTableParamsSchema } from '@/schemas/table-params'
 import { validateTableSearchRedirect, stripTableDefaults } from '@/lib/table-utils'
+import { requirePermission } from '@/lib/requirePermission'
 
 export const jenisBarangColumns: [string, ...string[]] = [
     'created_at',
@@ -19,6 +20,7 @@ export const Route = createFileRoute('/_authenticated/jenis-barang/')({
     },
 
     beforeLoad: ({ search, location }) => {
+        requirePermission('MASTER_JENIS_BARANG_READ')()
         validateTableSearchRedirect(
             '/_authenticated/jenis-barang',
             location.search as Record<string, any>,

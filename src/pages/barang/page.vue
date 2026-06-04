@@ -13,6 +13,7 @@ import DataTable from '@/components/DataTable.vue';
 import AppDialog from '@/components/AppDialog.vue';
 import { Button } from '@/components/ui/button';
 
+import { usePermission } from '@/composables/usePermission';
 import { useTable } from '@/composables/useTable';
 import { useDialog } from '@/composables/useDialog';
 import { type DialogSchemaType } from '@/schemas/dialog/dialog';
@@ -20,6 +21,7 @@ import { formatDate } from '@/lib/formatter';
 import DeleteButton from '@/components/DeleteButton.vue';
 import { computed } from 'vue';
 
+const { hasPermission } = usePermission();
 const search = useSearch({ strict: false }) as any;
 const router = useRouter();
 
@@ -75,7 +77,7 @@ const fetchData = async () => {
         data.value = response.results;
         totalCount.value = response.count;
     } catch (error) {
-        console.error("Gagal fetch data:", error);
+        console.error("Gagal fetch data barang:", error);
     } finally {
         isLoading.value = false;
     }
@@ -84,15 +86,7 @@ const fetchData = async () => {
 const createDialog = useDialog({
     onSubmit: async (values, isEdit) => {
         if (isEdit) {
-            const { 
-                created_at, 
-                nama_jenis_barang, 
-                nama_perusahaan, 
-                id_barang,
-                ...payload 
-            } = values;
-            
-            return await updateBarang(id_barang, payload);
+            return await updateBarang(values.id_barang, values);
         } else {
             return await createBarang(values);
         }
@@ -105,23 +99,25 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
     rowCount: totalCount,
     columns: [
         { header: 'Created At', accessorKey: 'created_at', cell: ({ row }) => formatDate(row.getValue('created_at')) },
-        { header: 'ID Barang', accessorKey: 'id_barang' },
-        { header: 'Nama', accessorKey: 'nama_barang' },
+        { header: 'Kode Barang', accessorKey: 'kode' },
+        { header: 'Nama Barang', accessorKey: 'nama_barang' },
         { header: 'Jenis', accessorKey: 'nama_jenis_barang' },
         { header: 'Perusahaan', accessorKey: 'nama_perusahaan' },
         { header: 'Actions', id: 'actions', cell:({ row }) => {
         const id = row.getValue('id_barang') as number;
+        const buttons = [];
 
-        return h('div', { class: 'flex gap-2 justify-center items-center' }, [
-            h(Button, { 
-                variant: 'outline',
-                size: 'sm',
-                onClick: () => router.navigate({ to: '/barang/$id', params: { id: String(id) } }) 
-            }, () => [
-                h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
-                'View'
-            ]),
-            h(Button, { 
+        buttons.push(h(Button, { 
+            variant: 'outline',
+            size: 'sm',
+            onClick: () => router.navigate({ to: '/barang/$id', params: { id: String(id) } }) 
+        }, () => [
+            h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
+            'View'
+        ]));
+
+        if (hasPermission('MASTER_BARANG_UPDATE')) {
+            buttons.push(h(Button, { 
                 variant: 'ghost',
                 size: 'sm',
                 onClick: async () => {
@@ -151,16 +147,21 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
             }, () => [
                 h(PencilIcon, { class: 'w-4 h-4 mr-1' }),
                 'Edit'
-            ]),
-            h(DeleteButton, {
+            ]));
+        }
+
+        if (hasPermission('MASTER_BARANG_DELETE')) {
+            buttons.push(h(DeleteButton, {
                 onConfirm: async() => {
                     await deleteBarang(id);
                     await fetchData()
                 },
                 confirmMessage: 'Apakah Anda yakin ingin menghapus Barang ini?'
-            })
-        ]) } 
-    }
+            }));
+        }
+
+        return h('div', { class: 'flex gap-2 justify-center items-center' }, buttons);
+        } } 
     ],
     search: search,
     schema: barangSchema,
@@ -223,7 +224,7 @@ watch(() => search, () => {
         @clear-filter="clearFilter"
     >
         <template #actions>
-            <Button @click="createDialog.openDialog()" variant="outline">
+            <Button v-if="hasPermission('MASTER_BARANG_CREATE')" @click="createDialog.openDialog()" variant="outline">
                 <PlusIcon class="w-4 h-4 mr-2" />
                 Tambah Barang
             </Button>

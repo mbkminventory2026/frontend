@@ -17,11 +17,12 @@ import { getWorkOrderById, closeWorkOrder, type WorkOrderDetailResponse, type Wo
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { formatDate } from '@/lib/formatter';
-import { useAuthStore } from '@/store/authStore';
 import WOShellSizeSheet from './WOShellSizeSheet.vue';
 
+import { usePermission } from '@/composables/usePermission';
+
 const router = useRouter();
-const authStore = useAuthStore();
+const { hasPermission } = usePermission();
 const params = useParams({ from: '/_authenticated/work-order/$id' });
 const id = computed(() => params.value.id);
 
@@ -33,9 +34,7 @@ const isSheetOpen = ref(false);
 const selectedShell = ref<WorkOrderShell | null>(null);
 
 const canClose = computed(() => {
-    const role = authStore.user?.role?.toLowerCase() || '';
-    const isSuperAdmin = role === 'super-admin' || role === 'super_admin' || role === 'admin';
-    return isSuperAdmin || authStore.permissions.includes('WO_CREATE') || authStore.isManager;
+    return hasPermission('WO_CLOSE');
 });
 
 const isWOOpen = computed(() => detail.value?.status?.toLowerCase() === 'open');

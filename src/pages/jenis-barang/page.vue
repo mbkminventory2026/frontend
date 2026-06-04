@@ -16,6 +16,7 @@ import DataTable from '@/components/DataTable.vue';
 import AppDialog from '@/components/AppDialog.vue';
 import { Button } from '@/components/ui/button';
 
+import { usePermission } from '@/composables/usePermission';
 import { useTable } from '@/composables/useTable';
 import { useDialog } from '@/composables/useDialog';
 import { type DialogSchemaType } from '@/schemas/dialog/dialog';
@@ -23,6 +24,7 @@ import { formatDate } from '@/lib/formatter';
 import DeleteButton from '@/components/DeleteButton.vue';
 import { computed } from 'vue';
 
+const { hasPermission } = usePermission();
 const search = useSearch({ strict: false }) as any;
 const router = useRouter();
 
@@ -77,33 +79,40 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
         { header: 'Nama Jenis Barang', accessorKey: 'nama_jenis_barang' },
         { header: 'Actions', id: 'actions', cell:({ row }) => {
         const id = row.getValue('id_jenis_barang') as number;
+        const buttons = [];
 
-        return h('div', { class: 'flex gap-2 justify-center items-center' }, [
-            h(Button, { 
-                variant: 'outline',
-                size: 'sm',
-                onClick: () => router.navigate({ to: '/jenis-barang/$id', params: { id: String(id) } }) 
-            }, () => [
-                h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
-                'View'
-            ]),
-            h(Button, { 
+        buttons.push(h(Button, { 
+            variant: 'outline',
+            size: 'sm',
+            onClick: () => router.navigate({ to: '/jenis-barang/$id', params: { id: String(id) } }) 
+        }, () => [
+            h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
+            'View'
+        ]));
+
+        if (hasPermission('MASTER_JENIS_BARANG_UPDATE')) {
+            buttons.push(h(Button, { 
                 variant: 'ghost',
                 size: 'sm',
                 onClick: () => createDialog.openDialog(row.original) 
             }, () => [
                 h(PencilIcon, { class: 'w-4 h-4 mr-1' }),
                 'Edit'
-            ]),
-            h(DeleteButton, {
+            ]));
+        }
+
+        if (hasPermission('MASTER_JENIS_BARANG_DELETE')) {
+            buttons.push(h(DeleteButton, {
                 onConfirm: async() => {
                     await deleteJenisBarang(id);
                     await fetchData()
                 },
                 confirmMessage: 'Apakah Anda yakin ingin menghapus Jenis Barang ini?'
-            })
-        ]) } 
-    }
+            }));
+        }
+
+        return h('div', { class: 'flex gap-2 justify-center items-center' }, buttons);
+        } } 
     ],
     search: search,
     schema: jenisBarangSchema,
@@ -146,7 +155,7 @@ watch(() => search, () => {
         @clear-filter="clearFilter"
     >
         <template #actions>
-            <Button @click="createDialog.openDialog()" variant="outline">
+            <Button v-if="hasPermission('MASTER_JENIS_BARANG_CREATE')" @click="createDialog.openDialog()" variant="outline">
                 <PlusIcon class="w-4 h-4 mr-2" />
                 Tambah Jenis Barang
             </Button>

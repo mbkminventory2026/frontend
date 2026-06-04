@@ -12,19 +12,25 @@ import { Button } from '@/components/ui/button';
 import { useTable } from '@/composables/useTable';
 import { formatDate } from '@/lib/formatter';
 
+import { usePermission } from '@/composables/usePermission';
+
 const search = useSearch({ strict: false }) as any;
 const router = useRouter();
 const authStore = useAuthStore();
+const { hasPermission } = usePermission();
 
 const data = ref<POClientListItem[]>([]);
 const totalCount = ref(0);
 const isLoading = ref(false);
 
-const canCreateOrEdit = computed(() => {
+const canCreate = computed(() => {
     if (authStore.isMitra) return true;
-    const role = authStore.user?.role?.toLowerCase() || '';
-    const isSuperAdmin = role === 'super-admin' || role === 'super_admin' || role === 'admin';
-    return isSuperAdmin || authStore.permissions.includes('PO_CREATE') || authStore.isManager;
+    return hasPermission('PO_CLIENT_CREATE');
+});
+
+const canUpdate = computed(() => {
+    if (authStore.isMitra) return true;
+    return hasPermission('PO_CLIENT_UPDATE');
 });
 
 const fetchData = async () => {
@@ -66,27 +72,29 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
         { header: 'Mitra', accessorKey: 'mitra_name' },
         { header: 'Actions', id: 'actions', cell:({ row }) => {
             const id = row.getValue('id_po_client') as number;
+            const buttons = [];
 
-            return h('div', { class: 'flex gap-2 justify-center items-center' }, [
-                h(Button, { 
-                    variant: 'outline',
+            buttons.push(h(Button, { 
+                variant: 'outline',
+                size: 'sm',
+                onClick: () => router.navigate({ to: '/po-client/$id', params: { id: String(id) } }) 
+            }, () => [
+                h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
+                'View'
+            ]));
+
+            if (canUpdate.value) {
+                buttons.push(h(Button, { 
+                    variant: 'ghost',
                     size: 'sm',
-                    onClick: () => router.navigate({ to: '/po-client/$id', params: { id: String(id) } }) 
+                    onClick: () => router.navigate({ to: '/po-client/edit/$id', params: { id: String(id) } }) 
                 }, () => [
-                    h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
-                    'View'
-                ]),
-                ...(canCreateOrEdit.value ? [
-                    h(Button, { 
-                        variant: 'ghost',
-                        size: 'sm',
-                        onClick: () => router.navigate({ to: '/po-client/edit/$id', params: { id: String(id) } }) 
-                    }, () => [
-                        h(PencilIcon, { class: 'w-4 h-4 mr-1' }),
-                        'Edit'
-                    ])
-                ] : [])
-            ])
+                    h(PencilIcon, { class: 'w-4 h-4 mr-1' }),
+                    'Edit'
+                ]));
+            }
+
+            return h('div', { class: 'flex gap-2 justify-center items-center' }, buttons);
         } }
     ],
     search: search,
@@ -110,7 +118,7 @@ watch(() => search, () => {
         @search="onSearch"
         @clear-filter="clearFilter"
     >
-        <template #actions v-if="canCreateOrEdit">
+        <template #actions v-if="canCreate">
             <Button @click="router.navigate({ to: '/po-client/create' })" variant="outline" class="shadow-sm border-neutral-300">
                 <PlusIcon class="w-4 h-4 mr-2" />
                 Tambah PO Client

@@ -40,6 +40,12 @@ apiClient.interceptors.response.use(
         if (error.response) {
             const status = error.response.status;
 
+            if (status === 403) {
+                import('vue-sonner').then(({ toast }) => {
+                    toast.error('Anda tidak memiliki hak akses untuk melakukan aksi ini.')
+                })
+            }
+
             if (status === 401) {
                 console.warn('⚠️ Sesi Anda telah habis atau tidak valid.');
                 localStorage.removeItem('accessToken');

@@ -13,6 +13,7 @@ export const FieldTypeEnum = z.enum([
     "file",
     "image",
     "multi-checkbox",
+    "permissions-selector",
 ]);
 
 export const FieldPositionEnum = z.enum([
@@ -23,7 +24,7 @@ export const FieldPositionEnum = z.enum([
 
 const DependencySchema = z.object({
     parentKey: z.string(),
-    condition: z.enum(["===", "!==", ">", "<", "includes"]),
+    condition: z.enum(["===", "!==", ">", "<", "includes", "in"]),
     value: z.any(),
     action: z.enum(["show", "hide", "enable", "disable"])
 })
@@ -53,6 +54,9 @@ export const DialogFieldSchema = z.object({
         z.object({
         label: z.string(),
         value: z.union([z.string(), z.number(), z.boolean()]),
+        code: z.string().optional(),
+        domain: z.string().optional(),
+        action: z.string().optional()
         })
     ).optional(),
     dependency: DependencySchema.optional(),

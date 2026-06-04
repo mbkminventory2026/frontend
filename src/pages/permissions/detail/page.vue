@@ -89,17 +89,39 @@ const { values, isLoading, isSaving, isEditing } = form;
                         <CardContent class="pt-6">
                             <!-- VIEW MODE -->
                             <div v-if="!isEditing" class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                <div class="space-y-1">
-                                    <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Nama Halaman / Modul</p>
-                                    <p class="text-xl font-semibold">{{ values.nama_halaman }}</p>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="space-y-1">
+                                        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Nama Halaman / Modul</p>
+                                        <p class="text-lg font-semibold">{{ values.nama_halaman }}</p>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Kode Permission</p>
+                                        <p class="text-lg font-mono font-semibold text-primary">{{ values.kode_permission }}</p>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Domain Permission</p>
+                                        <p class="text-lg font-semibold">{{ values.domain_permission || '-' }}</p>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Aksi Permission</p>
+                                        <p class="text-lg font-semibold">{{ values.aksi_permission || '-' }}</p>
+                                    </div>
+                                    <div class="space-y-1 md:col-span-2">
+                                        <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">Deskripsi</p>
+                                        <p class="text-sm text-slate-600 bg-slate-50 p-3 rounded-lg border border-slate-100 min-h-[80px] whitespace-pre-wrap">{{ values.deskripsi || 'Tidak ada deskripsi.' }}</p>
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- EDIT MODE -->
                             <div v-else class="animate-in fade-in slide-in-from-top-4 duration-500">
                                 <AppForm :form="form">
-                                    <div class="space-y-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <AppFormField name="nama_halaman" label="Nama Halaman" placeholder="Masukkan nama halaman" />
+                                        <AppFormField name="kode_permission" label="Kode Permission" placeholder="Masukkan kode permission (contoh: USER_READ)" />
+                                        <AppFormField name="domain_permission" label="Domain" placeholder="Masukkan domain" />
+                                        <AppFormField name="aksi_permission" label="Aksi" placeholder="Masukkan aksi" />
+                                        <AppFormField name="deskripsi" type="textarea" label="Deskripsi" placeholder="Masukkan deskripsi permission" class="md:col-span-2" />
                                     </div>
                                     
                                     <div class="flex justify-end pt-4">

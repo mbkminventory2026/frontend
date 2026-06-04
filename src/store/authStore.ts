@@ -48,9 +48,14 @@ export const useAuthStore = defineStore('auth', () => {
         return claims && claims.permissions ? claims.permissions : [];
     });
 
-    const isManager = computed<boolean>(() => {
+    const roleName = computed<string | null>(() => {
         const claims = decodedClaims.value;
-        return claims ? !!claims.is_manager : false;
+        return claims ? claims.role_name : null;
+    });
+
+    const roleId = computed<number | null>(() => {
+        const claims = decodedClaims.value;
+        return claims ? claims.id_role : null;
     });
 
     function login(newToken: string, userData: AuthUser) {
@@ -75,7 +80,8 @@ export const useAuthStore = defineStore('auth', () => {
         isMitra,
         mitraId,
         permissions,
-        isManager,
+        roleName,
+        roleId,
         login, 
         logout 
     };

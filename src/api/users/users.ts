@@ -4,7 +4,8 @@ import { mapPayloadToSnakeCase } from "@/lib/utils";
 export interface UserResponseItem {
     id_user: number;
     username: string;
-    is_manager: boolean;
+    id_role: number;
+    nama_role: string;
     status: string;
     id_departemen?: number;
     id_mitra?: number;
@@ -71,5 +72,11 @@ export const approveUser = async (id: string | number) => {
 export const rejectUser = async (id: string | number) => {
     if (!id) throw new Error("ID is required for rejection");
     const response = await apiClient.put(`/api/v1/users/${id}/reject`);
+    return response.data;
+}
+
+export const assignUserRole = async (idUser: string | number, idRole: number) => {
+    if (!idUser) throw new Error("User ID is required");
+    const response = await apiClient.put(`/api/v1/users/${idUser}/role`, { id_role: idRole });
     return response.data;
 }

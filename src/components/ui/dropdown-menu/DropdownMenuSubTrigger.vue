@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { DropdownMenuSubTriggerProps } from "reka-ui"
-import type { HTMLAttributes } from "vue"
-import { reactiveOmit } from "@vueuse/core"
+import { type HTMLAttributes, computed } from "vue"
 import { ChevronRight } from "lucide-vue-next"
 import {
   DropdownMenuSubTrigger,
@@ -11,7 +10,10 @@ import { cn } from "@/lib/utils"
 
 const props = defineProps<DropdownMenuSubTriggerProps & { class?: HTMLAttributes["class"], inset?: boolean }>()
 
-const delegatedProps = reactiveOmit(props, "class", "inset")
+const delegatedProps = computed(() => {
+  const { class: _, inset: _1, ...delegated } = props
+  return delegated
+})
 const forwardedProps = useForwardProps(delegatedProps)
 </script>
 
