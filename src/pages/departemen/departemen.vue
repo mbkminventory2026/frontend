@@ -3,26 +3,22 @@ import { h, ref, watch, onMounted } from 'vue';
 import { useSearch, useRouter } from '@tanstack/vue-router';
 import { PlusIcon, EyeIcon, PencilIcon } from 'lucide-vue-next';
 
-import { 
-    deleteDepartemen, 
-    getDepartemen, 
-    createDepartemen, 
-    updateDepartemen 
+import {
+    deleteDepartemen,
+    getDepartemen
 } from '@/api/departemen/departemen';
 import { type DepartemenResponseItem } from '@/schemas/departemen/response';
 import { departemenSchema } from '@/routes/_authenticated/departemen.index';
 
 import DataTable from '@/components/DataTable.vue';
-import AppDialog from '@/components/AppDialog.vue';
+
 import { Button } from '@/components/ui/button';
 
 import { usePermission } from '@/composables/usePermission';
 import { useTable } from '@/composables/useTable';
-import { useDialog } from '@/composables/useDialog';
-import { type DialogSchemaType } from '@/schemas/dialog/dialog';
+
 import { formatDate } from '@/lib/formatter';
 import DeleteButton from '@/components/DeleteButton.vue';
-import { computed } from 'vue';
 
 const { hasPermission } = usePermission();
 const search = useSearch({ strict: false }) as any;
@@ -58,16 +54,7 @@ const fetchData = async () => {
     }
 }
 
-const createDialog = useDialog({
-    onSubmit: async (values, isEdit) => {
-        if (isEdit) {
-            return await updateDepartemen(values.id_departemen, values);
-        } else {
-            return await createDepartemen(values);
-        }
-    },
-    onSuccess: () => fetchData() 
-});
+// Dialog removed - using separate create/edit pages instead
 
 const { table, searchTerm, onSearch, clearFilter } = useTable({
     data: data,
@@ -80,20 +67,20 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
         const id = row.getValue('id_departemen') as number;
         const buttons = [];
 
-        buttons.push(h(Button, { 
+        buttons.push(h(Button, {
             variant: 'outline',
             size: 'sm',
-            onClick: () => router.navigate({ to: '/departemen/$id', params: { id: String(id) } }) 
+            onClick: () => router.navigate({ to: '/departemen/$id', params: { id: String(id) } })
         }, () => [
             h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
             'View'
         ]));
 
         if (hasPermission('MASTER_DEPARTEMEN_UPDATE')) {
-            buttons.push(h(Button, { 
+            buttons.push(h(Button, {
                 variant: 'ghost',
                 size: 'sm',
-                onClick: () => createDialog.openDialog(row.original) 
+                onClick: () => router.navigate({ to: '/departemen/edit/$id', params: { id: String(id) } })
             }, () => [
                 h(PencilIcon, { class: 'w-4 h-4 mr-1' }),
                 'Edit'
@@ -111,22 +98,23 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
         }
 
         return h('div', { class: 'flex gap-2 justify-center items-center' }, buttons);
-        } } 
+        } }
     ],
     search: search,
     schema: departemenSchema,
 })
 
-const DepartemenDialogSchema = computed<DialogSchemaType>(() => [
-    {
-        key: "nama_departemen",
-        label: "Nama Departemen",
-        type: "text",
-        placeholder: "Masukkan nama departemen",
-        rules: "required",
-        position: "full"
-    }
-])
+// Dialog schema removed - using separate create/edit pages
+// const DepartemenDialogSchema = computed<DialogSchemaType>(() => [
+//     {
+//         key: "nama_departemen",
+//         label: "Nama Departemen",
+//         type: "text",
+//         placeholder: "Masukkan nama departemen",
+//         rules: "required",
+//         position: "full"
+//     }
+// ])
 
 onMounted(() => {
     fetchData();
@@ -146,21 +134,10 @@ watch(() => search, () => {
         @clear-filter="clearFilter"
     >
         <template #actions>
-            <Button v-if="hasPermission('MASTER_DEPARTEMEN_CREATE')" @click="createDialog.openDialog()" variant="outline">
+            <Button v-if="hasPermission('MASTER_DEPARTEMEN_CREATE')" @click="router.navigate({ to: '/departemen/create' })" variant="outline">
                 <PlusIcon class="w-4 h-4 mr-2" />
                 Tambah Departemen
             </Button>
         </template>
     </DataTable>
-
-    <AppDialog
-        :title="createDialog.isEditMode.value ? 'Edit Departemen' : 'Tambah Departemen'"
-        :description="createDialog.isEditMode.value ? 'Perbarui informasi departemen di bawah ini.' : 'Masukkan detail departemen baru di sini.'"
-        :schema="DepartemenDialogSchema"
-        :is-open="createDialog.isOpen.value"
-        :initial-values="createDialog.initialValues.value"
-        :submit-label="createDialog.isLoading.value ? 'Sending...' : (createDialog.isEditMode.value ? 'Update' : 'Create')"
-        @update:is-open="createDialog.isOpen.value = $event"
-        @submit="createDialog.handleSubmit"
-    />
 </template>

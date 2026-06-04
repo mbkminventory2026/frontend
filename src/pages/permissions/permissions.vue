@@ -3,25 +3,19 @@ import { h, ref, watch, onMounted } from 'vue';
 import { useSearch, useRouter } from '@tanstack/vue-router';
 import { PlusIcon, EyeIcon, PencilIcon } from 'lucide-vue-next';
 
-import { 
-    deletePermissions, 
-    getPermissions, 
-    createPermissions, 
-    updatePermissions 
+import {
+    deletePermissions,
+    getPermissions
 } from '@/api/permissions/permissions';
 import { type PermissionsResponseItem } from '@/schemas/permissions/response';
 import { permissionsSchema } from '@/routes/_authenticated/permissions.index';
 
 import DataTable from '@/components/DataTable.vue';
-import AppDialog from '@/components/AppDialog.vue';
 import { Button } from '@/components/ui/button';
 
 import { useTable } from '@/composables/useTable';
-import { useDialog } from '@/composables/useDialog';
-import { type DialogSchemaType } from '@/schemas/dialog/dialog';
 import { formatDate } from '@/lib/formatter';
 import DeleteButton from '@/components/DeleteButton.vue';
-import { computed } from 'vue';
 
 const search = useSearch({ strict: false }) as any;
 const router = useRouter();
@@ -56,16 +50,7 @@ const fetchData = async () => {
     }
 }
 
-const createDialog = useDialog({
-    onSubmit: async (values, isEdit) => {
-        if (isEdit) {
-            return await updatePermissions(values.id_hak_akses, values);
-        } else {
-            return await createPermissions(values);
-        }
-    },
-    onSuccess: () => fetchData() 
-});
+
 
 const { table, searchTerm, onSearch, clearFilter } = useTable({
     data: data,
@@ -78,18 +63,18 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
         const id = row.getValue('id_hak_akses') as number;
 
         return h('div', { class: 'flex gap-2 justify-center items-center' }, [
-            h(Button, { 
+            h(Button, {
                 variant: 'outline',
                 size: 'sm',
-                onClick: () => router.navigate({ to: '/permissions/$id', params: { id: String(id) } }) 
+                onClick: () => router.navigate({ to: '/permissions/$id', params: { id: String(id) } })
             }, () => [
                 h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
                 'View'
             ]),
-            h(Button, { 
+            h(Button, {
                 variant: 'ghost',
                 size: 'sm',
-                onClick: () => createDialog.openDialog(row.original) 
+                onClick: () => router.navigate({ to: '/permissions/edit/$id', params: { id: String(id) } })
             }, () => [
                 h(PencilIcon, { class: 'w-4 h-4 mr-1' }),
                 'Edit'
@@ -101,55 +86,14 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
                 },
                 confirmMessage: 'Apakah Anda yakin ingin menghapus Permissions ini?'
             })
-        ]) } 
+        ]) }
     }
     ],
     search: search,
     schema: permissionsSchema,
 })
 
-const PermissionsDialogSchema = computed<DialogSchemaType>(() => [
-    {
-        key: "nama_halaman",
-        label: "Nama Halaman",
-        type: "text",
-        placeholder: "Masukkan nama halaman",
-        rules: "required",
-        position: "left"
-    },
-    {
-        key: "kode_permission",
-        label: "Kode Permission",
-        type: "text",
-        placeholder: "Masukkan kode permission (contoh: USER_READ)",
-        rules: "required",
-        position: "right"
-    },
-    {
-        key: "domain_permission",
-        label: "Domain",
-        type: "text",
-        placeholder: "Masukkan domain (contoh: user)",
-        rules: "required",
-        position: "left"
-    },
-    {
-        key: "aksi_permission",
-        label: "Aksi",
-        type: "text",
-        placeholder: "Masukkan aksi (contoh: read)",
-        rules: "required",
-        position: "right"
-    },
-    {
-        key: "deskripsi",
-        label: "Deskripsi",
-        type: "textarea",
-        placeholder: "Masukkan deskripsi permission",
-        rules: "",
-        position: "full"
-    }
-])
+
 
 onMounted(() => {
     fetchData();
@@ -169,21 +113,10 @@ watch(() => search, () => {
         @clear-filter="clearFilter"
     >
         <template #actions>
-            <Button @click="createDialog.openDialog()" variant="outline">
+            <Button @click="router.navigate({ to: '/permissions/create' })" variant="outline">
                 <PlusIcon class="w-4 h-4 mr-2" />
                 Tambah Permissions
             </Button>
         </template>
     </DataTable>
-
-    <AppDialog
-        :title="createDialog.isEditMode.value ? 'Edit Permissions' : 'Tambah Permissions'"
-        :description="createDialog.isEditMode.value ? 'Perbarui informasi permissions di bawah ini.' : 'Masukkan detail permissions baru di sini.'"
-        :schema="PermissionsDialogSchema"
-        :is-open="createDialog.isOpen.value"
-        :initial-values="createDialog.initialValues.value"
-        :submit-label="createDialog.isLoading.value ? 'Sending...' : (createDialog.isEditMode.value ? 'Update' : 'Create')"
-        @update:is-open="createDialog.isOpen.value = $event"
-        @submit="createDialog.handleSubmit"
-    />
 </template>

@@ -50,7 +50,7 @@ const navMainItems = computed(() => {
       }
     ]
   }
-  return [
+  const rawItems = [
     {
       title: "Dashboard",
       url: "/dashboard",
@@ -155,18 +155,29 @@ const navMainItems = computed(() => {
         },
       ],
     },
-  ].filter((item: any) => {
-    if (item.permission && !hasPermission(item.permission)) {
-      return false
-    }
-    if (item.items) {
-      item.items = item.items.filter((subItem: any) => {
-        return !subItem.permission || hasPermission(subItem.permission)
-      })
-      return item.items.length > 0
-    }
-    return true
-  })
+  ]
+
+  return rawItems
+    .map((item: any) => {
+      if (item.items) {
+        return {
+          ...item,
+          items: item.items.filter((subItem: any) => {
+            return !subItem.permission || hasPermission(subItem.permission)
+          })
+        }
+      }
+      return item
+    })
+    .filter((item: any) => {
+      if (item.permission && !hasPermission(item.permission)) {
+        return false
+      }
+      if (item.items) {
+        return item.items.length > 0
+      }
+      return true
+    })
 })
 
 const data = {

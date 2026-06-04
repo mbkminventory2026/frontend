@@ -350,14 +350,14 @@ onMounted(() => {
                                 </div>
                             </div>
                         </div>
- 
+
                         <!-- FIELD 4: Specific Actions -->
                         <div>
                             <span class="text-xs font-bold text-indigo-600 uppercase tracking-wider block mb-2">
                                 2. Opsi Aksi Khusus
                                 <span class="text-slate-400 font-normal normal-case tracking-normal ml-1">(Hanya tampil untuk Halaman yang dipilih di atas)</span>
                             </span>
- 
+
                             <div class="border rounded-lg p-3 bg-slate-50/50 max-h-[280px] overflow-y-auto space-y-3">
                                 <template v-if="selectedPagesWithActions.length > 0">
                                     <div

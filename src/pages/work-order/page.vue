@@ -230,6 +230,7 @@ const hasDuplicateTrimColor = (trimIdx: number) => {
     return trims.value.some((t, idx) => idx !== trimIdx && t.color === trim.color);
 };
 
+// @ts-ignore
 const openWizard = () => {
     // Reset all state
     wizardStep.value = 1;
@@ -452,7 +453,7 @@ watch(() => search, () => { fetchData(); }, { deep: true });
                 </div>
             </div>
             <div class="flex items-center gap-3" v-if="canCreate">
-                <Button @click="openWizard" variant="outline" class="shadow-sm border-neutral-300">
+                <Button @click="router.navigate({ to: '/work-order/create' })" variant="outline" class="shadow-sm border-neutral-300">
                     <PlusIcon class="w-4 h-4 mr-2" />
                     Tambah Work Order
                 </Button>
@@ -628,9 +629,9 @@ watch(() => search, () => { fetchData(); }, { deep: true });
                         <div class="space-y-2">
                             <div class="flex items-center justify-between">
                                 <span class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Distribusi Ukuran (Sizes) *</span>
-                                <button 
-                                    @click="addSize(si)" 
-                                    type="button" 
+                                <button
+                                    @click="addSize(si)"
+                                    type="button"
                                     :disabled="!step1.qty || getShellTotalQty(si) >= step1.qty"
                                     class="text-xs font-semibold text-neutral-600 hover:text-neutral-900 flex items-center gap-1 transition disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
