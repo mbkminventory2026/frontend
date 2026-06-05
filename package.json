@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@primeuix/themes": "^2.0.3",
     "@tailwindcss/vite": "^4.2.1",
     "@tanstack/vue-router": "^1.166.7",
     "@tanstack/vue-table": "^8.21.3",
@@ -20,6 +21,7 @@
     "clsx": "^2.1.1",
     "lucide-vue-next": "^0.577.0",
     "pinia": "^3.0.4",
+    "primevue": "^4.5.5",
     "reka-ui": "^2.9.7",
     "tailwind-merge": "^3.5.0",
     "tailwindcss": "^4.2.1",

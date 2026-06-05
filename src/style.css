@@ -40,14 +40,14 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: #10756e;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #a5cd3c;
+  --sidebar-primary-foreground: #10756e;
+  --sidebar-accent: #1a9188;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #16827a;
+  --sidebar-ring: #a5cd3c;
 }
 
 body {
@@ -129,14 +129,14 @@ body {
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar: #094945;
+  --sidebar-foreground: #e0f2f1;
+  --sidebar-primary: #a5cd3c;
+  --sidebar-primary-foreground: #094945;
+  --sidebar-accent: #10756e;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #0d5c57;
+  --sidebar-ring: #a5cd3c;
 }
 
 @layer base {
@@ -146,4 +146,36 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+  button,
+  [role="button"] {
+    cursor: pointer !important;
+  }
+  button:disabled,
+  [role="button"]:disabled {
+    cursor: not-allowed !important;
+  }
+}
+
+/* Custom sidebar collapse text transition */
+[data-sidebar="menu-button"] > span,
+[data-sidebar="menu-button"] > .grid,
+[data-sidebar="menu-button"] > svg:not(:first-child),
+[data-sidebar="menu-button"] > a > span,
+[data-sidebar="menu-button"] > a > .grid,
+[data-sidebar="menu-button"] > a > svg:not(:first-child) {
+  transition: opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
+  transform: translateX(0);
+  white-space: nowrap;
+}
+
+.group[data-state="collapsed"] [data-sidebar="menu-button"] > span,
+.group[data-state="collapsed"] [data-sidebar="menu-button"] > .grid,
+.group[data-state="collapsed"] [data-sidebar="menu-button"] > svg:not(:first-child),
+.group[data-state="collapsed"] [data-sidebar="menu-button"] > a > span,
+.group[data-state="collapsed"] [data-sidebar="menu-button"] > a > .grid,
+.group[data-state="collapsed"] [data-sidebar="menu-button"] > a > svg:not(:first-child) {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-12px);
 }

@@ -33,11 +33,16 @@ export function useTable<TData, TSchema extends ZodSchema>(
         }
     });
 
-    const searchTerm = ref(safeSearch.value.filter ?? '');
+    const searchTerm = ref('');
 
-    watch(() => safeSearch.value.filter, (newFilter) => {
-        searchTerm.value = newFilter ?? '';
-    });
+    watch(() => toValue(options.search), (newSearchVal) => {
+        try {
+            const parsed = options.schema.parse(newSearchVal);
+            searchTerm.value = parsed.filter ?? '';
+        } catch {
+            searchTerm.value = '';
+        }
+    }, { deep: true, immediate: true });
 
     const onSearch = () => {
         updateSearch({

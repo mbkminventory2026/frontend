@@ -12,7 +12,6 @@ import {
   SidebarGroup,
   SidebarGroupLabel,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -38,20 +37,21 @@ defineProps<{
   <SidebarGroup>
     <SidebarGroupLabel>Platform</SidebarGroupLabel>
     <SidebarMenu>
-      <Collapsible v-for="item in items" :key="item.title" as-child>
+      <Collapsible 
+        v-for="item in items" 
+        :key="item.title" 
+        as-child
+        :default-open="item.isActive"
+        class="group/collapsible"
+      >
         <SidebarMenuItem>
-          <SidebarMenuButton as-child :tooltip="item.title">
-            <a :href="item.url">
-              <component :is="item.icon" />
-              <span>{{ item.title }}</span>
-            </a>
-          </SidebarMenuButton>
           <template v-if="item.items?.length">
             <CollapsibleTrigger as-child>
-              <SidebarMenuAction class="data-[state=open]:rotate-90 cursor-pointer">
-                <ChevronRight />
-                <span class="sr-only">Toggle</span>
-              </SidebarMenuAction>
+              <SidebarMenuButton :tooltip="item.title" class="cursor-pointer">
+                <component :is="item.icon" />
+                <span>{{ item.title }}</span>
+                <ChevronRight class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+              </SidebarMenuButton>
             </CollapsibleTrigger>
             <CollapsibleContent>
               <SidebarMenuSub>
@@ -64,6 +64,14 @@ defineProps<{
                 </SidebarMenuSubItem>
               </SidebarMenuSub>
             </CollapsibleContent>
+          </template>
+          <template v-else>
+            <SidebarMenuButton as-child :tooltip="item.title">
+              <a :href="item.url">
+                <component :is="item.icon" />
+                <span>{{ item.title }}</span>
+              </a>
+            </SidebarMenuButton>
           </template>
         </SidebarMenuItem>
       </Collapsible>
