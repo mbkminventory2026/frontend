@@ -112,7 +112,8 @@ onMounted(() => {
                     <Button 
                         v-if="canCreateOrEdit" 
                         @click="router.navigate({ to: '/po-client/edit/$id', params: { id: String(detail.id_po_client) } })" 
-                        class="flex-1 md:flex-none bg-neutral-900 text-white hover:bg-neutral-800 border border-neutral-800 flex items-center gap-2"
+                        variant="edit"
+                        class="flex-1 md:flex-none flex items-center gap-2"
                     >
                         <PencilIcon class="w-4 h-4" /> Edit PO
                     </Button>

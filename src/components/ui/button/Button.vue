@@ -28,9 +28,19 @@ const inferredVariant = computed(() => {
   
   const scanNodes = (nodesList: any[]): string => {
     for (const node of nodesList) {
+      if (!node) continue
+
+      if (typeof node === 'string' || typeof node === 'number') {
+        const text = node.toString().toLowerCase().trim()
+        if (text.includes('edit') || text.includes('ubah') || text.includes('update') || text.includes('perbarui')) return 'edit'
+        if (text.includes('tambah') || text.includes('add') || text.includes('buat') || text.includes('create')) return 'add'
+        if (text.includes('view') || text.includes('detail') || text.includes('lihat')) return 'detail'
+        if (text.includes('delete') || text.includes('hapus')) return 'delete'
+      }
+
       if (node.type && typeof node.type === 'symbol' && node.type.description === 'Text') {
         const text = (node.children || '').toString().toLowerCase().trim()
-        if (text.includes('edit') || text.includes('ubah')) return 'edit'
+        if (text.includes('edit') || text.includes('ubah') || text.includes('update') || text.includes('perbarui')) return 'edit'
         if (text.includes('tambah') || text.includes('add') || text.includes('buat') || text.includes('create')) return 'add'
         if (text.includes('view') || text.includes('detail') || text.includes('lihat')) return 'detail'
         if (text.includes('delete') || text.includes('hapus')) return 'delete'
@@ -38,7 +48,7 @@ const inferredVariant = computed(() => {
       
       if (typeof node.children === 'string') {
         const text = node.children.toLowerCase().trim()
-        if (text.includes('edit') || text.includes('ubah')) return 'edit'
+        if (text.includes('edit') || text.includes('ubah') || text.includes('update') || text.includes('perbarui')) return 'edit'
         if (text.includes('tambah') || text.includes('add') || text.includes('buat') || text.includes('create')) return 'add'
         if (text.includes('view') || text.includes('detail') || text.includes('lihat')) return 'detail'
         if (text.includes('delete') || text.includes('hapus')) return 'delete'

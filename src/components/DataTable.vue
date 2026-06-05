@@ -10,10 +10,9 @@ import {
  } from '@/components/ui/table';
 import Button from './ui/button/Button.vue';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from './ui/select/';
-import { ArrowUp, ArrowDown, ArrowUpDown, Search, X } from 'lucide-vue-next';
+import { ArrowUp, ArrowDown, ArrowUpDown, Search } from 'lucide-vue-next';
 import Label from './ui/label/Label.vue';
 import Input from './ui/input/Input.vue';
-import { computed } from 'vue';
 import SkeletonComponent from './Skeleton.vue';
 
 const props = defineProps<{
@@ -23,10 +22,6 @@ const props = defineProps<{
 
 const searchModel = defineModel<string>('search');
 const emit = defineEmits(['search', 'clearFilter']);
-
-const activeFilter = computed(() => {
-    return props.table.getState().globalFilter as string | undefined;
-});
 </script>
 
 <template>
@@ -71,26 +66,13 @@ const activeFilter = computed(() => {
                     <slot name="actions" />
                 </div>
             </div>
-            <div v-if="activeFilter" class="flex items-center gap-1.5 mt-1">
-                <span class="text-xs text-slate-500">Hasil pencarian:</span>
-                <span class="inline-flex items-center gap-1 px-2 py-1 text-xs italic font-medium bg-gray-300 rounded-full">
-                    "{{ activeFilter }}"
-                    <button
-                        type="button"
-                        class="hover:bg-gray-200 rounded-full p-0.5 transition-colors"
-                        @click="emit('clearFilter')"
-                        title="Hapus filter"
-                    >
-                        <X class="w-3 h-3" />
-                    </button>
-                </span>
-            </div>
+
         </div>
-        <div class="bg-white border rounded-md">
+        <div class="bg-white border rounded-md overflow-hidden">
             <Table>
-                <TableHeader class="sticky top-0 z-10 bg-muted">
-                    <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id">
-                        <TableHead v-for="header in headerGroup.headers" :key="header.id" class="font-bold" :class="{
+                <TableHeader class="sticky top-0 z-10 bg-sidebar text-sidebar-foreground border-b border-sidebar-border">
+                    <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id" class="hover:bg-transparent border-b-0">
+                        <TableHead v-for="header in headerGroup.headers" :key="header.id" class="font-bold text-sidebar-foreground hover:text-sidebar-accent-foreground" :class="{
                             'cursor-pointer select-none transition-colors': header.column.getCanSort()
                         }"
                         @click="header.column.getToggleSortingHandler()?.($event)"
