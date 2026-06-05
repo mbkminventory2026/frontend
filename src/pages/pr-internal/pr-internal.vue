@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { h, ref, watch, onMounted, computed } from 'vue';
 import { useSearch, useRouter } from '@tanstack/vue-router';
-import { PlusIcon, EyeIcon, CheckCircleIcon, ClipboardListIcon } from 'lucide-vue-next';
+import { PlusIcon, EyeIcon, CheckCircleIcon, ClipboardListIcon, FileTextIcon } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
 import { getPRInternals, approvePRInternal, type PRInternalListItem } from '@/api/pr-internals/pr-internals';
@@ -130,6 +130,17 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
                         }, () => [
                             h(CheckCircleIcon, { class: 'w-4 h-4 mr-1' }),
                             'Approve'
+                        ])
+                    ] : []),
+                    ...(!isPending && canCreate.value ? [
+                        h(Button, {
+                            variant: 'outline',
+                            size: 'sm',
+                            class: 'shadow-xs border-neutral-300 text-neutral-700 hover:bg-neutral-50',
+                            onClick: () => router.navigate({ to: '/po-internal/create', search: { prId: id } })
+                        }, () => [
+                            h(FileTextIcon, { class: 'w-4 h-4 mr-1' }),
+                            'Jadikan PO'
                         ])
                     ] : [])
                 ]);

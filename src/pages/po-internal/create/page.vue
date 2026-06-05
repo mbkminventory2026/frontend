@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { onMounted, computed, ref } from 'vue';
-import { useRouter } from '@tanstack/vue-router';
+import { onMounted, computed, ref, watch } from 'vue';
+import { useRouter, useSearch } from '@tanstack/vue-router';
 import { PlusIcon, Trash2Icon, ArrowLeftIcon, SaveIcon, FileTextIcon, ChevronDownIcon } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
 import { createPOInternal } from '@/api/po-internals/po-internals';
-import { getApprovedPRInternals, type PRInternalListItem } from '@/api/pr-internals/pr-internals';
+import { getApprovedPRInternals, getPRInternalById, type PRInternalListItem } from '@/api/pr-internals/pr-internals';
 import { formatRupiah } from '@/lib/formatter';
 
 import AppForm from '@/components/form/AppForm.vue';
@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { useForm } from '@/composables/form/useForm';
 
 const router = useRouter();
+const search = useSearch({ strict: false }) as any;
 
 // Setup form
 const form = useForm({
@@ -34,11 +35,13 @@ const { values, isLoading, isSaving } = form;
 // PR Internal Dropdown
 const prInternalList = ref<PRInternalListItem[]>([]);
 const isLoadingPR = ref(false);
+const isListLoaded = ref(false);
 
 const fetchApprovedPRInternals = async () => {
     isLoadingPR.value = true;
     try {
         prInternalList.value = await getApprovedPRInternals();
+        isListLoaded.value = true;
     } catch (e) {
         console.error('Gagal fetch PR Internals:', e);
     } finally {
@@ -141,7 +144,128 @@ form.save = async () => {
     return originalSave(payload);
 };
 
-onMounted(() => {
+const currentLoadedPrId = ref<number | string | null>(null);
+
+const loadPrInternalDetails = async (prId: number | string) => {
+    if (!prId) return;
+    if (currentLoadedPrId.value === prId) return;
+    console.log('[DEBUG] loadPrInternalDetails dipanggil untuk PR ID:', prId);
+    try {
+        const pr = await getPRInternalById(prId);
+        console.log('[DEBUG] Detail PR Internal berhasil di-load:', pr);
+        console.log('[DEBUG] Items dari PR Internal:', pr.items);
+        
+        // Pre-fill header
+        values.value.supplierName = pr.vendor_name || '';
+        values.value.supplierAddr = pr.vendor_address || '';
+        values.value.supplierTelp = pr.vendor_telp || '';
+        
+        // Pre-fill items
+        if (pr.items && pr.items.length > 0) {
+            values.value.items = pr.items.map((item: any) => ({
+                item: item.item,
+                description: item.description || '',
+                qty: item.qty || 1,
+                unit: item.unit || '',
+                unitPrice: formatRupiah(item.est_price || 0)
+            }));
+        } else {
+            values.value.items = [{ item: '', description: '', qty: 1, unit: '', unitPrice: 'Rp 0' }];
+        }
+        currentLoadedPrId.value = prId;
+        console.log('[DEBUG] loadPrInternalDetails selesai. State values saat ini:', values.value);
+    } catch (e) {
+        console.error('[DEBUG] Gagal mengambil detail PR Internal:', e);
+        toast.error('Gagal memuat detail PR Internal.');
+    }
+};
+
+watch(() => values.value.idPrInternal, async (newVal, oldVal) => {
+    console.log('[DEBUG] Watch idPrInternal terpicu:', { newVal, oldVal });
+    if (newVal && newVal !== oldVal) {
+        await loadPrInternalDetails(newVal);
+    } else if (!newVal) {
+        // Clear supplier and items if selection cleared
+        values.value.supplierName = '';
+        values.value.supplierAddr = '';
+        values.value.supplierTelp = '';
+        values.value.items = [{ item: '', description: '', qty: 1, unit: '', unitPrice: 'Rp 0' }];
+        currentLoadedPrId.value = null;
+        console.log('[DEBUG] idPrInternal kosong. Membersihkan form.');
+    }
+});
+
+const computedPrId = computed(() => {
+    if (search.prId) return Number(search.prId);
+    if (typeof window !== 'undefined') {
+        const urlParams = new URLSearchParams(window.location.search);
+        const prId = urlParams.get('prId');
+        return prId ? Number(prId) : undefined;
+    }
+    return undefined;
+});
+
+watch([computedPrId, isListLoaded], async ([newPrId, listLoaded]) => {
+    console.log('[DEBUG] Watch computedPrId / isListLoaded terpicu:', { newPrId, listLoaded });
+    if (listLoaded && newPrId) {
+        const prIdNum = Number(newPrId);
+        console.log('[DEBUG] Memproses pre-fill URL prId:', prIdNum);
+        try {
+            const pr = await getPRInternalById(prIdNum);
+            console.log('[DEBUG] URL PR Detail berhasil di-load:', pr);
+            console.log('[DEBUG] URL PR Items:', pr.items);
+            
+            // Check if already in list
+            const exists = prInternalList.value.some(item => item.id_pr_internal === prIdNum);
+            if (!exists) {
+                prInternalList.value.unshift({
+                    id_pr_internal: pr.id_pr_internal,
+                    nama: pr.nama,
+                    tanggal: pr.tanggal,
+                    departemen: pr.departemen,
+                    vendor_name: pr.vendor_name,
+                    projek: pr.projek,
+                    status: pr.status,
+                    id_wo: pr.id_wo,
+                    id_user: pr.id_user,
+                    created_at: pr.created_at
+                });
+                console.log('[DEBUG] PR ditambahkan ke opsi list dropdown.');
+            }
+            
+            // Set currentLoadedPrId so watch skips loading it again
+            currentLoadedPrId.value = prIdNum;
+            
+            // Set selection and pre-fill
+            values.value.idPrInternal = prIdNum;
+            
+            // Pre-fill header
+            values.value.supplierName = pr.vendor_name || '';
+            values.value.supplierAddr = pr.vendor_address || '';
+            values.value.supplierTelp = pr.vendor_telp || '';
+            
+            // Pre-fill items
+            if (pr.items && pr.items.length > 0) {
+                values.value.items = pr.items.map((item: any) => ({
+                    item: item.item,
+                    description: item.description || '',
+                    qty: item.qty || 1,
+                    unit: item.unit || '',
+                    unitPrice: formatRupiah(item.est_price || 0)
+                }));
+            } else {
+                values.value.items = [{ item: '', description: '', qty: 1, unit: '', unitPrice: 'Rp 0' }];
+            }
+            console.log('[DEBUG] Prefill URL selesai. State values saat ini:', values.value);
+        } catch (e) {
+            console.error('[DEBUG] Gagal memuat detail PR dari URL:', e);
+            toast.error('Gagal memuat detail PR Internal.');
+        }
+    }
+}, { immediate: true });
+
+onMounted(async () => {
+    console.log('[DEBUG] onMounted dipanggil.');
     // Set initial default values
     values.value = {
         tanggal: '',
@@ -159,7 +283,8 @@ onMounted(() => {
         idPrInternal: '',
         items: [{ item: '', description: '', qty: 1, unit: '', unitPrice: 'Rp 0' }],
     };
-    fetchApprovedPRInternals();
+    await fetchApprovedPRInternals();
+    console.log('[DEBUG] fetchApprovedPRInternals selesai.');
 });
 </script>
 
@@ -202,13 +327,7 @@ onMounted(() => {
                         Informasi PO
                     </h2>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <AppFormField name="namaPO" label="Nama PO *" placeholder="Contoh: PO-INT-2026-001" />
-                        <AppFormField name="tanggal" type="date" label="Tanggal *" />
-                        <AppFormField name="shipDate" type="date" label="Ship Date *" />
-                        <AppFormField name="currency" label="Currency *" placeholder="Contoh: IDR, USD" />
-                        <AppFormField name="cpo" label="CPO" placeholder="Opsional" />
-                        <AppFormField name="term" label="Term" placeholder="Opsional" />
-                        <!-- PR Internal Dropdown -->
+                        <!-- PR Internal Dropdown (diletakkan di paling atas) -->
                         <div class="md:col-span-3 space-y-1.5">
                             <label class="text-sm font-medium text-neutral-700">
                                 PR Internal <span class="text-red-500">*</span>
@@ -216,7 +335,7 @@ onMounted(() => {
                             <div class="relative">
                                 <select
                                     v-model="values.idPrInternal"
-                                    :disabled="isLoadingPR"
+                                    :disabled="isLoadingPR || !!computedPrId"
                                     class="w-full h-9 rounded-md border border-neutral-200 bg-white pl-3 pr-9 py-1 text-sm shadow-xs transition-colors outline-none focus-visible:ring-2 focus-visible:ring-neutral-800 disabled:cursor-not-allowed disabled:opacity-60 appearance-none cursor-pointer"
                                 >
                                     <option value="" disabled>
@@ -238,6 +357,13 @@ onMounted(() => {
                                 Tidak ada PR Internal yang sudah disetujui. Pastikan ada PR yang statusnya 'Approved'.
                             </p>
                         </div>
+
+                        <AppFormField name="namaPO" label="Nama PO *" placeholder="Contoh: PO-INT-2026-001" :disabled="!values.idPrInternal" />
+                        <AppFormField name="tanggal" type="date" label="Tanggal *" :disabled="!values.idPrInternal" />
+                        <AppFormField name="shipDate" type="date" label="Ship Date *" :disabled="!values.idPrInternal" />
+                        <AppFormField name="currency" label="Currency *" placeholder="Contoh: IDR, USD" :disabled="!values.idPrInternal" />
+                        <AppFormField name="cpo" label="CPO" placeholder="Opsional" :disabled="!values.idPrInternal" />
+                        <AppFormField name="term" label="Term" placeholder="Opsional" :disabled="!values.idPrInternal" />
                     </div>
                 </Card>
 
@@ -248,12 +374,12 @@ onMounted(() => {
                         Informasi Supplier
                     </h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <AppFormField name="supplierName" label="Nama Supplier *" placeholder="Contoh: PT. Bahan Garment" />
-                        <AppFormField name="supplierContact" label="Contact Person" placeholder="Nama kontak di supplier" />
-                        <AppFormField name="supplierAddr" label="Alamat Supplier" placeholder="Alamat lengkap supplier" className="md:col-span-2" />
-                        <AppFormField name="supplierEmail" type="email" label="Email Supplier" placeholder="contoh@supplier.com" />
-                        <AppFormField name="supplierTelp" label="No. Telepon" placeholder="021-xxxxxxxx" />
-                        <AppFormField name="supplierFax" label="No. Fax" placeholder="021-xxxxxxxx (Opsional)" />
+                        <AppFormField name="supplierName" label="Nama Supplier *" placeholder="Contoh: PT. Bahan Garment" :disabled="!values.idPrInternal" />
+                        <AppFormField name="supplierContact" label="Contact Person" placeholder="Nama kontak di supplier" :disabled="!values.idPrInternal" />
+                        <AppFormField name="supplierAddr" label="Alamat Supplier" placeholder="Alamat lengkap supplier" className="md:col-span-2" :disabled="!values.idPrInternal" />
+                        <AppFormField name="supplierEmail" type="email" label="Email Supplier" placeholder="contoh@supplier.com" :disabled="!values.idPrInternal" />
+                        <AppFormField name="supplierTelp" label="No. Telepon" placeholder="021-xxxxxxxx" :disabled="!values.idPrInternal" />
+                        <AppFormField name="supplierFax" label="No. Fax" placeholder="021-xxxxxxxx (Opsional)" :disabled="!values.idPrInternal" />
                     </div>
                 </Card>
 
@@ -267,7 +393,7 @@ onMounted(() => {
                             </h3>
                             <span class="text-xs text-neutral-500 pl-3.5">Detail item barang yang dipesan dalam Purchase Order Internal ini.</span>
                         </div>
-                        <Button type="button" @click="addItem" variant="outline" size="sm" class="h-9 px-3.5">
+                        <Button type="button" @click="addItem" variant="outline" size="sm" class="h-9 px-3.5" :disabled="!values.idPrInternal">
                             <PlusIcon class="w-4 h-4 mr-1.5" /> Add Row
                         </Button>
                     </div>
@@ -287,13 +413,13 @@ onMounted(() => {
                             <tbody class="divide-y divide-neutral-100">
                                 <tr v-for="(item, idx) in values.items" :key="idx" class="hover:bg-neutral-50/40 transition-colors duration-150">
                                     <td class="p-3">
-                                        <Input v-model="item.item" placeholder="Nama barang" class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" />
+                                        <Input v-model="item.item" placeholder="Nama barang" class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" :disabled="!values.idPrInternal" />
                                     </td>
                                     <td class="p-3">
-                                        <Input v-model="item.qty" type="number" min="1" class="h-9 text-sm border-neutral-200 text-center focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" />
+                                        <Input v-model="item.qty" type="number" min="1" class="h-9 text-sm border-neutral-200 text-center focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" :disabled="!values.idPrInternal" />
                                     </td>
                                     <td class="p-3">
-                                        <Input v-model="item.unit" placeholder="PCS, Roll, Kg..." class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" />
+                                        <Input v-model="item.unit" placeholder="PCS, Roll, Kg..." class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" :disabled="!values.idPrInternal" />
                                     </td>
                                     <td class="p-3">
                                         <input
@@ -302,13 +428,14 @@ onMounted(() => {
                                             @input="handleUnitPriceInput($event, item)"
                                             placeholder="Rp 0"
                                             class="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-neutral-400 outline-none focus-visible:ring-2 focus-visible:ring-neutral-800 disabled:cursor-not-allowed disabled:opacity-50"
+                                            :disabled="!values.idPrInternal"
                                         />
                                     </td>
                                     <td class="p-3">
-                                        <Input v-model="item.description" placeholder="Keterangan tambahan" class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" />
+                                        <Input v-model="item.description" placeholder="Keterangan tambahan" class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" :disabled="!values.idPrInternal" />
                                     </td>
                                     <td class="p-3 text-center">
-                                        <Button type="button" @click="removeItem(Number(idx))" variant="ghost" size="icon" class="h-8 w-8 text-neutral-400 hover:text-red-600 hover:bg-red-50/50 transition-colors" :disabled="values.items?.length <= 1">
+                                        <Button type="button" @click="removeItem(Number(idx))" variant="ghost" size="icon" class="h-8 w-8 text-neutral-400 hover:text-red-600 hover:bg-red-50/50 transition-colors" :disabled="!values.idPrInternal || values.items?.length <= 1">
                                             <Trash2Icon class="w-4 h-4" />
                                         </Button>
                                     </td>
@@ -333,7 +460,7 @@ onMounted(() => {
                     <Button type="button" variant="outline" @click="router.navigate({ to: '/po-internal' })" class="h-10 px-5 text-sm font-medium text-neutral-600 hover:bg-neutral-50 transition-all border-neutral-300">
                         Batal
                     </Button>
-                    <Button type="submit" :disabled="isSaving" class="h-10 px-6 text-sm font-medium bg-neutral-900 text-white hover:bg-neutral-800 shadow-sm border border-neutral-800 transition-all flex items-center gap-2 active:scale-[0.98]">
+                    <Button type="submit" :disabled="isSaving || !values.idPrInternal" class="h-10 px-6 text-sm font-medium bg-neutral-900 text-white hover:bg-neutral-800 shadow-sm border border-neutral-800 transition-all flex items-center gap-2 active:scale-[0.98]">
                         <template v-if="isSaving">
                             <Spinner class="w-4 h-4" /> Menyimpan...
                         </template>

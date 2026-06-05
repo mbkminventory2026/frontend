@@ -21,10 +21,12 @@ interface Props {
   className?: string
   options?: { label: string, value: string | number }[]
   error?: boolean
+  disabled?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  type: 'text'
+  type: 'text',
+  disabled: false
 })
 
 const form = inject<any>('formContext')
@@ -46,17 +48,18 @@ const { values } = form
         v-model="values[props.name]"
         accept="image/*,application/pdf"
         :preview="true"
+        :disabled="props.disabled"
       />
     </template>
 
     <!-- Address Picker -->
     <template v-else-if="props.type === 'address'">
-      <AppAddressPicker v-model="values[props.name]" />
+      <AppAddressPicker v-model="values[props.name]" :disabled="props.disabled" />
     </template>
 
     <!-- Select -->
     <template v-else-if="props.type === 'select'">
-      <Select v-model="values[props.name]">
+      <Select v-model="values[props.name]" :disabled="props.disabled">
         <SelectTrigger :aria-invalid="props.error ? 'true' : undefined">
           <SelectValue :placeholder="props.placeholder" />
         </SelectTrigger>
@@ -76,6 +79,7 @@ const { values } = form
         :placeholder="props.placeholder"
         class="min-h-[200px] leading-relaxed"
         :aria-invalid="props.error ? 'true' : undefined"
+        :disabled="props.disabled"
       />
     </template>
 
@@ -87,6 +91,7 @@ const { values } = form
         v-model="values[props.name]" 
         :placeholder="props.placeholder" 
         :aria-invalid="props.error ? 'true' : undefined"
+        :disabled="props.disabled"
       />
     </template>
   </div>
