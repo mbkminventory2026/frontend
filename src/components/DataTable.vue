@@ -14,6 +14,7 @@ import { ArrowUp, ArrowDown, ArrowUpDown, Search, X } from 'lucide-vue-next';
 import Label from './ui/label/Label.vue';
 import Input from './ui/input/Input.vue';
 import { computed } from 'vue';
+import SkeletonComponent from './Skeleton.vue';
 
 const props = defineProps<{
     table: TableInstance<TData>,
@@ -111,11 +112,13 @@ const activeFilter = computed(() => {
                 </TableHeader>
 
                 <TableBody>
-                    <TableRow v-if="isLoading">
-                        <TableCell :colspan="table.getAllColumns().length" class="h-24 text-center text-slate-500">
-                            Sedang mengambil data...
-                        </TableCell>
-                    </TableRow>
+                    <template v-if="isLoading">
+                        <TableRow v-for="rowIndex in 20" :key="'skeleton-row-' + rowIndex">
+                            <TableCell v-for="column in table.getAllColumns()" :key="'skeleton-cell-' + column.id" class="p-4">
+                                <SkeletonComponent type="table-cell" />
+                            </TableCell>
+                        </TableRow>
+                    </template>
 
                     <template v-else-if="table.getRowModel().rows?.length">
                         <TableRow 
