@@ -182,7 +182,7 @@ onMounted(() => {
             </div>
 
             <div class="flex items-center gap-3">
-                <Button type="button" @click="router.history.back()" variant="outline" class="h-10 px-4 border-neutral-300 shadow-sm transition-all rounded-lg">
+                <Button type="button" @click="router.history.back()" variant="outline" class="h-10 px-4 border-neutral-300 shadow-sm transition-all">
                     <ArrowLeftIcon class="w-4 h-4 mr-2" /> Kembali
                 </Button>
             </div>
@@ -267,7 +267,7 @@ onMounted(() => {
                             </h3>
                             <span class="text-xs text-neutral-500 pl-3.5">Detail item barang yang dipesan dalam Purchase Order Internal ini.</span>
                         </div>
-                        <Button type="button" @click="addItem" variant="outline" size="sm" class="h-9 border-neutral-300 text-neutral-700 hover:bg-neutral-50 rounded-lg shadow-sm transition-all px-3.5">
+                        <Button type="button" @click="addItem" variant="outline" size="sm" class="h-9 px-3.5">
                             <PlusIcon class="w-4 h-4 mr-1.5" /> Add Row
                         </Button>
                     </div>
@@ -308,7 +308,7 @@ onMounted(() => {
                                         <Input v-model="item.description" placeholder="Keterangan tambahan" class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" />
                                     </td>
                                     <td class="p-3 text-center">
-                                        <Button type="button" @click="removeItem(Number(idx))" variant="ghost" size="icon" class="h-8 w-8 text-neutral-400 hover:text-red-600 rounded-lg hover:bg-red-50/50 transition-colors" :disabled="values.items?.length <= 1">
+                                        <Button type="button" @click="removeItem(Number(idx))" variant="ghost" size="icon" class="h-8 w-8 text-neutral-400 hover:text-red-600 hover:bg-red-50/50 transition-colors" :disabled="values.items?.length <= 1">
                                             <Trash2Icon class="w-4 h-4" />
                                         </Button>
                                     </td>
@@ -330,10 +330,10 @@ onMounted(() => {
 
                 <!-- Footer Buttons -->
                 <div class="border-t border-neutral-200 pt-6 flex gap-3 justify-end">
-                    <Button type="button" variant="outline" @click="router.navigate({ to: '/po-internal' })" class="h-10 px-5 text-sm font-medium text-neutral-600 hover:bg-neutral-50 rounded-lg transition-all border-neutral-300">
+                    <Button type="button" variant="outline" @click="router.navigate({ to: '/po-internal' })" class="h-10 px-5 text-sm font-medium text-neutral-600 hover:bg-neutral-50 transition-all border-neutral-300">
                         Batal
                     </Button>
-                    <Button type="submit" :disabled="isSaving" class="h-10 px-6 text-sm font-medium bg-neutral-900 text-white hover:bg-neutral-800 rounded-lg shadow-sm border border-neutral-800 transition-all flex items-center gap-2 active:scale-[0.98]">
+                    <Button type="submit" :disabled="isSaving" class="h-10 px-6 text-sm font-medium bg-neutral-900 text-white hover:bg-neutral-800 shadow-sm border border-neutral-800 transition-all flex items-center gap-2 active:scale-[0.98]">
                         <template v-if="isSaving">
                             <Spinner class="w-4 h-4" /> Menyimpan...
                         </template>

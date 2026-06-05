@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { onMounted, computed } from 'vue';
+import { ref, watch, onMounted, computed } from 'vue';
 import { useRouter } from '@tanstack/vue-router';
-import { PlusIcon, Trash2Icon, ArrowLeftIcon, SaveIcon, ClipboardListIcon } from 'lucide-vue-next';
+import { PlusIcon, Trash2Icon, ArrowLeftIcon, SaveIcon, ClipboardListIcon, RefreshCwIcon } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
 import { createPRInternal } from '@/api/pr-internals/pr-internals';
+import { getWorkOrders, getWorkOrderById, type WorkOrderListItem } from '@/api/work-orders/work-orders';
 import { formatRupiah } from '@/lib/formatter';
 
 import AppForm from '@/components/form/AppForm.vue';
@@ -30,15 +31,130 @@ const form = useForm({
 
 const { values, isLoading, isSaving } = form;
 
+// WO States
+const workOrderList = ref<WorkOrderListItem[]>([]);
+const woMaterials = ref<any[]>([]);
+const isLoadingWorkOrders = ref(false);
+const isLoadingMaterials = ref(false);
+
+const workOrderOptions = computed(() => {
+    return workOrderList.value.map((wo) => ({
+        label: `WO #${wo.id_wo} - PO ${wo.po_number} (${wo.model})`,
+        value: String(wo.id_wo),
+    }));
+});
+
+// Watch idWo to fetch material lists
+watch(() => values.value.idWo, async (newVal) => {
+    if (!newVal) {
+        woMaterials.value = [];
+        return;
+    }
+    isLoadingMaterials.value = true;
+    try {
+        const detail = await getWorkOrderById(Number(newVal));
+        woMaterials.value = detail.material_lists || [];
+
+        // If items has only one empty default row, reset it so it prompts for materials selection
+        if (values.value.items) {
+            if (values.value.items.length === 1 && !values.value.items[0].item) {
+                values.value.items[0].isCustom = false;
+                values.value.items[0].materialId = null;
+            } else {
+                // Reset to one empty row to prevent mismatched material IDs from previous WO
+                values.value.items = [{ item: '', description: '', qty: 1, unit: '', estPrice: 'Rp 0', materialId: null, isCustom: false }];
+            }
+        }
+    } catch (e) {
+        console.error('Gagal mengambil material Work Order:', e);
+        toast.error('Gagal memuat material untuk Work Order ini.');
+        woMaterials.value = [];
+    } finally {
+        isLoadingMaterials.value = false;
+    }
+});
+
 // Add/Remove Item rows
 const addItem = () => {
     if (!values.value.items) values.value.items = [];
-    values.value.items.push({ item: '', description: '', qty: 1, unit: '', estPrice: 'Rp 0' });
+    values.value.items.push({
+        item: '',
+        description: '',
+        qty: 1,
+        unit: '',
+        estPrice: 'Rp 0',
+        materialId: null,
+        isCustom: !values.value.idWo
+    });
 };
 
 const removeItem = (index: number) => {
     if (values.value.items && values.value.items.length > 1) {
         values.value.items.splice(index, 1);
+    }
+};
+
+const resetRowSelection = (rowItem: any) => {
+    rowItem.item = '';
+    rowItem.description = '';
+    rowItem.qty = 1;
+    rowItem.unit = '';
+    rowItem.estPrice = 'Rp 0';
+    rowItem.materialId = null;
+    rowItem.isCustom = false;
+};
+
+// Check if material is already selected in other rows
+const selectedMaterialIds = computed(() => {
+    if (!values.value.items) return [];
+    return values.value.items
+        .map((i: any) => i.materialId)
+        .filter((id: any) => id !== null);
+});
+
+const filteredWoMaterials = (rowItem: any) => {
+    const others = selectedMaterialIds.value.filter((id: any) => id !== rowItem.materialId);
+    return woMaterials.value.filter((mat) => !others.includes(mat.id_material_list));
+};
+
+const onMaterialSelect = (event: Event, rowItem: any) => {
+    const target = event.target as HTMLSelectElement;
+    const val = target.value;
+    if (val === 'custom') {
+        rowItem.isCustom = true;
+        rowItem.materialId = null;
+        rowItem.item = '';
+        rowItem.description = '';
+        rowItem.unit = '';
+        rowItem.qty = 1;
+        rowItem.estPrice = 'Rp 0';
+    } else if (val) {
+        const matId = Number(val);
+        const mat = woMaterials.value.find((m) => m.id_material_list === matId);
+        if (mat) {
+            rowItem.materialId = mat.id_material_list;
+            rowItem.isCustom = false;
+            rowItem.item = mat.description;
+            rowItem.unit = mat.uom;
+            rowItem.qty = 1;
+            rowItem.estPrice = 'Rp 0';
+            rowItem.description = [mat.size, mat.color].filter(Boolean).join(' - ');
+        }
+    } else {
+        resetRowSelection(rowItem);
+    }
+};
+
+const fetchWorkOrdersData = async () => {
+    isLoadingWorkOrders.value = true;
+    try {
+        const res = await getWorkOrders({ limit: 1000 });
+        workOrderList.value = res.results || [];
+    } catch (e) {
+        console.error('Gagal mengambil daftar Work Order:', e);
+        toast.error('Gagal mengambil daftar Work Order.');
+    } finally {
+        isLoadingWorkOrders.value = false;
     }
 };
 
@@ -121,6 +237,7 @@ form.save = async () => {
 };
 
 onMounted(() => {
+    fetchWorkOrdersData();
     values.value = {
         tanggal: '',
         nama: '',
@@ -130,7 +247,7 @@ onMounted(() => {
         vendorTelp: '',
         projek: '',
         idWo: '',
-        items: [{ item: '', description: '', qty: 1, unit: '', estPrice: 'Rp 0' }],
+        items: [{ item: '', description: '', qty: 1, unit: '', estPrice: 'Rp 0', materialId: null, isCustom: true }],
     };
 });
 </script>
@@ -154,7 +271,7 @@ onMounted(() => {
             </div>
 
             <div class="flex items-center gap-3">
-                <Button type="button" @click="router.history.back()" variant="outline" class="h-10 px-4 border-neutral-300 shadow-sm transition-all rounded-lg">
+                <Button type="button" @click="router.history.back()" variant="outline" class="h-10 px-4 border-neutral-300 shadow-sm transition-all">
                     <ArrowLeftIcon class="w-4 h-4 mr-2" /> Kembali
                 </Button>
             </div>
@@ -180,9 +297,10 @@ onMounted(() => {
                         <AppFormField name="projek" label="Projek *" placeholder="Nama proyek terkait" />
                         <AppFormField
                             name="idWo"
-                            label="ID Work Order *"
-                            type="number"
-                            placeholder="Masukkan ID Work Order terkait"
+                            label="Work Order *"
+                            type="select"
+                            placeholder="Pilih Work Order..."
+                            :options="workOrderOptions"
                         />
                     </div>
                 </Card>
@@ -210,7 +328,7 @@ onMounted(() => {
                             </h3>
                             <span class="text-xs text-neutral-500 pl-3.5">Detail item barang yang dibutuhkan dalam Purchase Request Internal ini.</span>
                         </div>
-                        <Button type="button" @click="addItem" variant="outline" size="sm" class="h-9 border-neutral-300 text-neutral-700 hover:bg-neutral-50 rounded-lg shadow-sm transition-all px-3.5">
+                        <Button type="button" @click="addItem" variant="outline" size="sm" class="h-9 px-3.5">
                             <PlusIcon class="w-4 h-4 mr-1.5" /> Add Row
                         </Button>
                     </div>
@@ -230,7 +348,52 @@ onMounted(() => {
                             <tbody class="divide-y divide-neutral-100">
                                 <tr v-for="(item, idx) in values.items" :key="idx" class="hover:bg-neutral-50/40 transition-colors duration-150">
                                     <td class="p-3">
-                                        <Input v-model="item.item" placeholder="Nama barang" class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" />
+                                        <template v-if="values.idWo">
+                                            <!-- WO Material selected (read-only) -->
+                                            <div v-if="item.materialId" class="flex items-center gap-2 w-full">
+                                                <Input
+                                                    v-model="item.item"
+                                                    readonly
+                                                    class="h-9 text-sm border-neutral-200 bg-neutral-50/50 text-neutral-600 cursor-not-allowed flex-1 select-none"
+                                                    title="Material Work Order (Nama tidak dapat diubah)"
+                                                />
+                                                <Button type="button" variant="ghost" size="icon" @click="resetRowSelection(item)" class="h-8 w-8 text-neutral-400 hover:text-neutral-600 flex-shrink-0" title="Ubah Pilihan">
+                                                    <RefreshCwIcon class="w-3.5 h-3.5" />
+                                                </Button>
+                                            </div>
+
+                                            <!-- Custom Item selected -->
+                                            <div v-else-if="item.isCustom" class="flex items-center gap-2">
+                                                <Input v-model="item.item" placeholder="Nama barang (Custom)" class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white flex-1" />
+                                                <Button type="button" variant="ghost" size="icon" @click="resetRowSelection(item)" class="h-8 w-8 text-neutral-400 hover:text-neutral-600" title="Ubah Pilihan">
+                                                    <RefreshCwIcon class="w-3.5 h-3.5" />
+                                                </Button>
+                                            </div>
+
+                                            <!-- Not selected yet (Dropdown option) -->
+                                            <div v-else class="w-full">
+                                                <select
+                                                    :value="item.materialId ?? ''"
+                                                    :disabled="isLoadingMaterials"
+                                                    @change="onMaterialSelect($event, item)"
+                                                    class="h-9 w-full rounded-md border border-neutral-200 bg-white px-3 py-1 text-sm shadow-xs transition-colors focus:outline-none focus:ring-2 focus:ring-neutral-900/20 disabled:cursor-not-allowed disabled:opacity-50"
+                                                >
+                                                    <option value="">{{ isLoadingMaterials ? 'Memuat material WO...' : 'Pilih Material / Custom...' }}</option>
+                                                    <option value="custom">-- Custom Item --</option>
+                                                    <option
+                                                        v-for="mat in filteredWoMaterials(item)"
+                                                        :key="mat.id_material_list"
+                                                        :value="mat.id_material_list"
+                                                    >
+                                                        {{ mat.description }} ({{ [mat.size, mat.color, mat.uom].filter(Boolean).join(' / ') }})
+                                                    </option>
+                                                </select>
+                                            </div>
+                                        </template>
+
+                                        <template v-else>
+                                            <Input v-model="item.item" placeholder="Nama barang" class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" />
+                                        </template>
                                     </td>
                                     <td class="p-3">
                                         <Input v-model="item.qty" type="number" min="1" class="h-9 text-sm border-neutral-200 text-center focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" />
@@ -251,7 +414,7 @@ onMounted(() => {
                                         <Input v-model="item.description" placeholder="Keterangan tambahan" class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" />
                                     </td>
                                     <td class="p-3 text-center">
-                                        <Button type="button" @click="removeItem(Number(idx))" variant="ghost" size="icon" class="h-8 w-8 text-neutral-400 hover:text-red-600 rounded-lg hover:bg-red-50/50 transition-colors" :disabled="values.items?.length <= 1">
+                                        <Button type="button" @click="removeItem(Number(idx))" variant="ghost" size="icon" class="h-8 w-8 text-neutral-400 hover:text-red-600 hover:bg-red-50/50 transition-colors" :disabled="values.items?.length <= 1">
                                             <Trash2Icon class="w-4 h-4" />
                                         </Button>
                                     </td>
@@ -273,10 +436,10 @@ onMounted(() => {
 
                 <!-- Footer Buttons -->
                 <div class="border-t border-neutral-200 pt-6 flex gap-3 justify-end">
-                    <Button type="button" variant="outline" @click="router.navigate({ to: '/pr-internal' })" class="h-10 px-5 text-sm font-medium text-neutral-600 hover:bg-neutral-50 rounded-lg transition-all border-neutral-300">
+                    <Button type="button" variant="outline" @click="router.navigate({ to: '/pr-internal' })" class="h-10 px-5 text-sm font-medium text-neutral-600 hover:bg-neutral-50 transition-all border-neutral-300">
                         Batal
                     </Button>
-                    <Button type="submit" :disabled="isSaving" class="h-10 px-6 text-sm font-medium bg-neutral-900 text-white hover:bg-neutral-800 rounded-lg shadow-sm border border-neutral-800 transition-all flex items-center gap-2 active:scale-[0.98]">
+                    <Button type="submit" :disabled="isSaving" class="h-10 px-6 text-sm font-medium bg-neutral-900 text-white hover:bg-neutral-800 shadow-sm border border-neutral-800 transition-all flex items-center gap-2 active:scale-[0.98]">
                         <template v-if="isSaving">
                             <Spinner class="w-4 h-4" /> Menyimpan...
                         </template>

@@ -20,7 +20,7 @@ const props = withDefaults(defineProps<Props>(), {
 const slots = useSlots()
 
 const inferredVariant = computed(() => {
-  if (props.variant === 'add' || props.variant === 'edit' || props.variant === 'detail' || props.variant === 'delete') {
+  if (props.variant && props.variant !== 'default') {
     return props.variant
   }
 
