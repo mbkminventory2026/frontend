@@ -14,6 +14,7 @@ import { ArrowUp, ArrowDown, ArrowUpDown, Search } from 'lucide-vue-next';
 import Label from './ui/label/Label.vue';
 import Input from './ui/input/Input.vue';
 import SkeletonComponent from './Skeleton.vue';
+import { computed } from 'vue';
 
 const props = defineProps<{
     table: TableInstance<TData>,
@@ -22,6 +23,15 @@ const props = defineProps<{
 
 const searchModel = defineModel<string>('search');
 const emit = defineEmits(['search', 'clearFilter']);
+
+const skeletonRowCount = computed(() => {
+    const pageSize = props.table.getState().pagination.pageSize || 20;
+    const totalCount = props.table.getRowCount();
+    if (totalCount > 0 && totalCount < pageSize) {
+        return totalCount;
+    }
+    return pageSize;
+});
 </script>
 
 <template>
@@ -95,7 +105,7 @@ const emit = defineEmits(['search', 'clearFilter']);
 
                 <TableBody>
                     <template v-if="isLoading">
-                        <TableRow v-for="rowIndex in 20" :key="'skeleton-row-' + rowIndex">
+                        <TableRow v-for="rowIndex in skeletonRowCount" :key="'skeleton-row-' + rowIndex">
                             <TableCell v-for="column in table.getAllColumns()" :key="'skeleton-cell-' + column.id" class="p-4">
                                 <SkeletonComponent type="table-cell" />
                             </TableCell>
