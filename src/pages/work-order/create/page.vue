@@ -14,6 +14,7 @@ import { toast } from 'vue-sonner';
 import { createWorkOrder } from '@/api/work-orders/work-orders';
 import { getPOClients, getPOClientById, type POClientListItem, type POClientItemResponse } from '@/api/po-clients/po-clients';
 import { usePermission } from '@/composables/usePermission';
+import { getWarna } from '@/api/warna/warna';
 
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,7 @@ onMounted(() => {
     return;
   }
   fetchPOList();
+  fetchColorOptions();
 });
 
 // ─── Wizard State ──────────────────────────────────────
@@ -52,6 +54,16 @@ const poItemOptions = ref<(POClientItemResponse & { id_po_client_item: number })
 const isLoadingPOItems = ref(false);
 const maxQty = ref<number | null>(null);
 const poDeliveryDate = ref('');
+const colorOptions = ref<any[]>([]);
+
+const fetchColorOptions = async () => {
+  try {
+    const res = await getWarna({ limit: 1000, offset: 0 });
+    colorOptions.value = res.results || [];
+  } catch (e) {
+    console.error('Gagal fetch data warna:', e);
+  }
+};
 
 const parseNumber = (val: any): number => {
   if (val === undefined || val === null || val === '') return 0;
@@ -171,13 +183,6 @@ const addMaterial = () => {
 };
 const removeMaterial = (i: number) => materials.value.splice(i, 1);
 
-// Unique colors from shell inputs (local state)
-const shellColors = computed(() => {
-  const colors = shells.value
-    .map(s => s.color?.trim())
-    .filter(Boolean);
-  return [...new Set(colors)];
-});
 
 // Check if trim color has already been chosen in other trim rows
 const hasDuplicateTrimColor = (trimIdx: number) => {
@@ -449,8 +454,14 @@ const handleSubmit = async () => {
                 </div>
                 <div class="space-y-1">
                   <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Color *</label>
-                  <input v-model="shell.color" type="text" placeholder="cth: Navy Blue"
-                    class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition" />
+                  <select v-model="shell.color"
+                    class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition"
+                  >
+                    <option value="">Pilih Warna...</option>
+                    <option v-for="color in colorOptions" :key="color.id_warna" :value="color.nama_warna">
+                      {{ color.nama_warna }}
+                    </option>
+                  </select>
                 </div>
                 <div class="space-y-1">
                   <label class="text-[10px] font-bold text-neutral-500 uppercase">Cons (yd) *</label>
@@ -579,10 +590,11 @@ const handleSubmit = async () => {
                   <div class="space-y-1">
                     <label class="text-[10px] font-bold text-neutral-500 uppercase">Color</label>
                     <select v-model="trim.color"
-                      class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition">
+                      class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition"
+                    >
                       <option value="">Pilih Warna...</option>
-                      <option v-for="color in shellColors" :key="color" :value="color">
-                        {{ color }}
+                      <option v-for="color in colorOptions" :key="color.id_warna" :value="color.nama_warna">
+                        {{ color.nama_warna }}
                       </option>
                     </select>
                     <p v-if="trim.color && hasDuplicateTrimColor(ti)" class="text-[9px] text-amber-600 font-semibold mt-0.5 leading-none">
@@ -656,8 +668,14 @@ const handleSubmit = async () => {
                   </div>
                   <div class="space-y-1">
                     <label class="text-[10px] font-bold text-neutral-500 uppercase">Color</label>
-                    <input v-model="mat.color" type="text" placeholder="cth: Navy"
-                      class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition" />
+                    <select v-model="mat.color"
+                      class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition"
+                    >
+                      <option value="">Pilih Warna...</option>
+                      <option v-for="color in colorOptions" :key="color.id_warna" :value="color.nama_warna">
+                        {{ color.nama_warna }}
+                      </option>
+                    </select>
                   </div>
                   <div class="space-y-1">
                     <label class="text-[10px] font-bold text-neutral-500 uppercase">UOM</label>
