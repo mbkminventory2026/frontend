@@ -264,8 +264,8 @@ const data = {
           :nav-secondary="data.navSecondary"
           :projects="data.projects"
         />
-        <SidebarInset>
-          <div class="flex flex-1 flex-col gap-4 p-4">
+        <SidebarInset class="min-w-0">
+          <div class="flex flex-1 flex-col gap-4 p-4 min-w-0">
             <!-- Breadcrumbs placed above the content section -->
             <Breadcrumb class="hidden sm:block">
               <BreadcrumbList>

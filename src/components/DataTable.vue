@@ -35,7 +35,7 @@ const skeletonRowCount = computed(() => {
 </script>
 
 <template>
-    <div class="flex flex-col p-4">
+    <div class="flex flex-col p-4 w-full min-w-0">
         <div class="flex flex-col gap-4 mb-4">
             <div class="flex items-center justify-between gap-4">
                 <div class="flex gap-4">
@@ -78,11 +78,11 @@ const skeletonRowCount = computed(() => {
             </div>
 
         </div>
-        <div class="bg-white border rounded-md overflow-hidden">
+        <div class="bg-white border rounded-md overflow-hidden w-full min-w-0">
             <Table>
                 <TableHeader class="sticky top-0 z-10 bg-sidebar text-sidebar-foreground border-b border-sidebar-border">
                     <TableRow v-for="headerGroup in table.getHeaderGroups()" :key="headerGroup.id" class="hover:bg-transparent border-b-0">
-                        <TableHead v-for="header in headerGroup.headers" :key="header.id" class="font-bold text-sidebar-foreground hover:text-sidebar-accent-foreground" :class="{
+                        <TableHead v-for="header in headerGroup.headers" :key="header.id" class="font-bold text-sidebar-foreground hover:text-sidebar-accent-foreground border-r border-sidebar-border last:border-r-0" :class="{
                             'cursor-pointer select-none transition-colors': header.column.getCanSort()
                         }"
                         @click="header.column.getToggleSortingHandler()?.($event)"
@@ -106,7 +106,7 @@ const skeletonRowCount = computed(() => {
                 <TableBody>
                     <template v-if="isLoading">
                         <TableRow v-for="rowIndex in skeletonRowCount" :key="'skeleton-row-' + rowIndex">
-                            <TableCell v-for="column in table.getAllColumns()" :key="'skeleton-cell-' + column.id" class="p-4">
+                            <TableCell v-for="column in table.getAllColumns()" :key="'skeleton-cell-' + column.id" class="p-4 border-r border-neutral-200 last:border-r-0">
                                 <SkeletonComponent type="table-cell" />
                             </TableCell>
                         </TableRow>
@@ -119,7 +119,7 @@ const skeletonRowCount = computed(() => {
                         :data-state="row.getIsSelected() && 'selected'"
                         class="text-center"
                         >
-                            <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id">
+                            <TableCell v-for="cell in row.getVisibleCells()" :key="cell.id" class="border-r border-neutral-200 last:border-r-0">
                                 <FlexRender 
                                 :render="cell.column.columnDef.cell" 
                                 :props="cell.getContext()"

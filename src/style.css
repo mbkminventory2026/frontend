@@ -155,3 +155,27 @@ body {
     cursor: not-allowed !important;
   }
 }
+
+/* Custom sidebar collapse text transition */
+[data-sidebar="menu-button"] > span,
+[data-sidebar="menu-button"] > .grid,
+[data-sidebar="menu-button"] > svg:not(:first-child),
+[data-sidebar="menu-button"] > a > span,
+[data-sidebar="menu-button"] > a > .grid,
+[data-sidebar="menu-button"] > a > svg:not(:first-child) {
+  transition: opacity 0.15s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
+  transform: translateX(0);
+  white-space: nowrap;
+}
+
+.group[data-state="collapsed"] [data-sidebar="menu-button"] > span,
+.group[data-state="collapsed"] [data-sidebar="menu-button"] > .grid,
+.group[data-state="collapsed"] [data-sidebar="menu-button"] > svg:not(:first-child),
+.group[data-state="collapsed"] [data-sidebar="menu-button"] > a > span,
+.group[data-state="collapsed"] [data-sidebar="menu-button"] > a > .grid,
+.group[data-state="collapsed"] [data-sidebar="menu-button"] > a > svg:not(:first-child) {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-12px);
+}

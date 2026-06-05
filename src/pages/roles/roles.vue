@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { h, ref, watch, onMounted, computed } from 'vue';
 import { useSearch, useRouter } from '@tanstack/vue-router';
-import { PlusIcon, PencilIcon } from 'lucide-vue-next';
+import { PlusIcon, PencilIcon, EyeIcon } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
 import {
@@ -98,6 +98,16 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
         { header: 'Actions', id: 'actions', cell: ({ row }) => {
             const item = row.original;
             const buttons = [];
+
+            // Details button
+            buttons.push(h(Button, {
+                variant: 'outline',
+                size: 'sm',
+                onClick: () => router.navigate({ to: '/roles/$id', params: { id: String(item.id_role) } } as any)
+            }, () => [
+                h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
+                'View'
+            ]));
 
             if (hasPermission('ROLE_UPDATE')) {
                 buttons.push(h(Button, {
@@ -206,7 +216,6 @@ watch(() => search, () => {
             <Button
                 v-if="hasPermission('ROLE_CREATE')"
                 @click="router.navigate({ to: '/roles/create' })"
-                class="bg-indigo-600 hover:bg-indigo-700"
             >
                 <PlusIcon class="w-4 h-4 mr-2" />
                 Tambah Role

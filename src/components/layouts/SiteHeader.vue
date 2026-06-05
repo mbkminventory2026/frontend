@@ -19,7 +19,7 @@ import { useAuthStore } from "@/store/authStore"
 import { useRouter } from "@tanstack/vue-router"
 import { computed } from "vue"
 
-const { toggleSidebar } = useSidebar()
+const { toggleSidebar, state } = useSidebar()
 const authStore = useAuthStore()
 const router = useRouter()
 
@@ -34,7 +34,10 @@ const handleLogout = () => {
 
 <template>
   <header class="bg-background sticky top-0 z-50 flex w-full items-center border-b">
-    <div class="flex h-(--header-height) w-full items-center justify-between px-4">
+    <div 
+      class="flex h-(--header-height) w-full items-center justify-between pr-4 transition-[padding] duration-200 ease-linear"
+      :class="state === 'collapsed' ? 'pl-2' : 'pl-4'"
+    >
       <div class="flex items-center">
         <Button
           class="h-8 w-8"
