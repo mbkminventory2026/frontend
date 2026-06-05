@@ -1,5 +1,27 @@
 import * as z from 'zod'
 
+// ─── Division Config (Single Source of Truth) ──────────────────────────────
+export const VALID_DIVISIONS = ['cutting', 'sewing', 'qc-finish', 'packing', 'pengiriman'] as const
+export type DivisionSlug = typeof VALID_DIVISIONS[number]
+
+export interface DivisionMeta {
+  slug: DivisionSlug
+  label: string
+  /** The production stats field from the *previous* stage used to cap max QTY.
+   *  'target_qty' means this is the first stage (Cutting), capped by the WO target.
+   */
+  prevField: 'target_qty' | 'cutting' | 'sewing' | 'qc_pass' | 'packing'
+}
+
+export const DIVISION_META: DivisionMeta[] = [
+  { slug: 'cutting',    label: 'Cutting',     prevField: 'target_qty' },
+  { slug: 'sewing',     label: 'Sewing',      prevField: 'cutting'    },
+  { slug: 'qc-finish',  label: 'QC Finish',   prevField: 'sewing'     },
+  { slug: 'packing',    label: 'Packing',     prevField: 'qc_pass'    },
+  { slug: 'pengiriman', label: 'Pengiriman',  prevField: 'packing'    },
+]
+
+// ─── Production Stats ───────────────────────────────────────────────────────
 export interface ProductionStats {
   cutting: number
   sewing: number

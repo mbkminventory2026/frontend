@@ -22,6 +22,7 @@ import {
   Sparkles,
   Shield,
   Factory,
+  ClipboardList,
 } from "lucide-vue-next"
 import { useAuthStore } from "@/store/authStore"
 import { usePermission } from '@/composables/usePermission'
@@ -210,6 +211,38 @@ const navMainItems = computed(() => {
           title: "Production Summary",
           url: "/production-summary",
           permission: "PRODUCTION_SUMMARY_READ",
+        },
+      ],
+    },
+    {
+      title: "Laporan Pabrik",
+      url: "#",
+      icon: ClipboardList,
+      items: [
+        {
+          title: "Cutting",
+          url: "/reports/cutting/create",
+          permission: "PRODUCTION_REPORT_CREATE",
+        },
+        {
+          title: "Sewing",
+          url: "/reports/sewing/create",
+          permission: "PRODUCTION_REPORT_CREATE",
+        },
+        {
+          title: "QC Finish",
+          url: "/reports/qc-finish/create",
+          permission: "PRODUCTION_REPORT_CREATE",
+        },
+        {
+          title: "Packing",
+          url: "/reports/packing/create",
+          permission: "PRODUCTION_REPORT_CREATE",
+        },
+        {
+          title: "Pengiriman",
+          url: "/reports/pengiriman/create",
+          permission: "PRODUCTION_REPORT_CREATE",
         },
       ],
     },
