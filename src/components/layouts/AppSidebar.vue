@@ -2,18 +2,16 @@
 import type { SidebarProps } from "@/components/ui/sidebar"
 
 import {
-  Command,
+  Factory,
   type LucideIcon,
 } from "lucide-vue-next"
 
 import NavMain from "@/components/layouts/NavMain.vue"
 import NavProjects from "@/components/layouts/NavProjects.vue"
 import NavSecondary from "@/components/layouts/NavSecondary.vue"
-import NavUser from "@/components/layouts/NavUser.vue"
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -37,14 +35,7 @@ export interface ProjectItem {
   icon: LucideIcon
 }
 
-export interface UserData {
-  name: string
-  email: string
-  avatar: string
-}
-
 interface Props extends SidebarProps {
-  user: UserData
   navMain: NavItem[]
   navSecondary: NavItem[]
   projects: ProjectItem[]
@@ -65,11 +56,11 @@ const props = defineProps<Props>()
           <SidebarMenuButton size="lg" as-child>
             <a href="#">
               <div class="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                <Command class="size-4" />
+                <Factory class="size-4" />
               </div>
               <div class="grid flex-1 text-left text-sm leading-tight">
-                <span class="truncate font-medium">Acme Inc</span>
-                <span class="truncate text-xs">Enterprise</span>
+                <span class="truncate font-semibold text-sidebar-primary">Permatatex</span>
+                <span class="truncate text-xs opacity-80">Garment Industry</span>
               </div>
             </a>
           </SidebarMenuButton>
@@ -81,8 +72,5 @@ const props = defineProps<Props>()
       <NavProjects :projects="props.projects" />
       <NavSecondary :items="props.navSecondary" class="mt-auto" />
     </SidebarContent>
-    <SidebarFooter>
-      <NavUser :user="props.user" />
-    </SidebarFooter>
   </Sidebar>
 </template>

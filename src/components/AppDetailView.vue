@@ -66,11 +66,11 @@ const getGridSpan = (span?: string) => {
       
       <div class="flex gap-2" v-if="!isLoading">
         <slot name="header-actions"></slot>
-        <Button v-if="showEdit" variant="outline" size="sm" @click="emit('edit')">
+        <Button v-if="showEdit" variant="edit" size="sm" @click="emit('edit')">
           <Pencil class="w-4 h-4 mr-2" />
           Edit
         </Button>
-        <Button v-if="showDelete" variant="destructive" size="sm" @click="emit('delete')">
+        <Button v-if="showDelete" variant="delete" size="sm" @click="emit('delete')">
           <Trash2 class="w-4 h-4 mr-2" />
           Delete
         </Button>

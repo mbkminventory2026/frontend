@@ -40,9 +40,8 @@ const handleClick = () => {
 
 <template>
     <Button
-        variant="ghost"
+        variant="delete"
         size="sm"
-        class="text-red-500 hover:text-red-700 hover:bg-red-50"
         :disabled="isLoading"
         @click.stop="handleClick"
     >

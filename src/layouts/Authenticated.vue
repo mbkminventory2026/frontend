@@ -11,7 +11,7 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 import { useBreadcrumbs } from "@/composables/useBreadcrumbs"
-import { Outlet } from "@tanstack/vue-router"
+import { Outlet, Link } from "@tanstack/vue-router"
 import {
   LayoutDashboard,
   Boxes,
@@ -26,6 +26,14 @@ import {
 import { useAuthStore } from "@/store/authStore"
 import { usePermission } from '@/composables/usePermission'
 import { computed } from "vue"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
 
 const { breadcrumbs } = useBreadcrumbs()
 const authStore = useAuthStore()
@@ -45,16 +53,6 @@ type NavSection = {
   permission?: string
   items?: NavLeaf[]
 }
-
-const currentUser = computed(() => {
-  const name = authStore.user?.username || "User"
-  const typeLabel = authStore.isMitra ? "Mitra Partner" : "Karyawan Internal"
-  return {
-    name: name,
-    email: typeLabel,
-    avatar: "/avatars/admin.jpg",
-  }
-})
 
 const navMainItems = computed(() => {
   if (authStore.isMitra) {
@@ -259,16 +257,30 @@ const data = {
 
 <template>
     <SidebarProvider class="flex flex-col [--header-height:calc(--spacing(14))]">
-      <SiteHeader :breadcrumbs="breadcrumbs"/>
+      <SiteHeader />
       <div class="flex flex-1">
         <AppSidebar 
-          :user="currentUser"
           :nav-main="navMainItems"
           :nav-secondary="data.navSecondary"
           :projects="data.projects"
         />
         <SidebarInset>
           <div class="flex flex-1 flex-col gap-4 p-4">
+            <!-- Breadcrumbs placed above the content section -->
+            <Breadcrumb class="hidden sm:block">
+              <BreadcrumbList>
+                <template v-for="(item, index) in breadcrumbs" :key="item.href">
+                  <BreadcrumbItem>
+                    <BreadcrumbLink v-if="!item.active" :href="item.href">
+                      <Link :to="item.href">{{ item.label }}</Link>
+                    </BreadcrumbLink>
+                    <BreadcrumbPage v-else>{{ item.label }}</BreadcrumbPage>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator v-if="index < breadcrumbs.length - 1"/>
+                </template>
+              </BreadcrumbList>
+            </Breadcrumb>
+            
             <Outlet/>
           </div>
         </SidebarInset>
