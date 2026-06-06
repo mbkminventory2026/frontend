@@ -17,8 +17,8 @@ export interface OperatorDashboardMetrics {
 }
 
 export const getOperatorMetrics = async () => {
-  const response = await apiClient.get<{ data: OperatorDashboardMetrics }>(
+  const response = await apiClient.get<OperatorDashboardMetrics>(
     "/api/v1/dashboard/operator"
   );
-  return response.data.data;
+  return response.data;
 };
