@@ -92,12 +92,16 @@ const onPOSelect = async (poId: number) => {
   poItemOptions.value = [];
   poDeliveryDate.value = '';
   maxQty.value = null;
-  if (!poId) return;
+  if (!poId) {
+    step1.buyer = '';
+    return;
+  }
 
   isLoadingPOItems.value = true;
   try {
     const detail = await getPOClientById(poId);
     poDeliveryDate.value = detail.delivery ? detail.delivery.split('T')[0] : '';
+    step1.buyer = detail.mitra_name || '';
     poItemOptions.value = (detail.items || []).map((item: any) => ({
       ...item,
       id_po_client_item: item.id_po_client_item,
@@ -197,7 +201,6 @@ const step1Valid = computed(() =>
   step1.buyer.trim() &&
   step1.model.trim() &&
   step1.qty && step1.qty > 0 &&
-  (!maxQty.value || step1.qty <= maxQty.value) &&
   step1.delivery
 );
 
@@ -395,8 +398,7 @@ const handleSubmit = async () => {
                 <label class="text-xs font-semibold text-neutral-700">Qty <span class="text-red-500">*</span></label>
                 <input v-model.number="step1.qty" type="number" min="1" placeholder="cth: 1000"
                   class="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition" />
-                <p v-if="maxQty" class="text-[10px] text-neutral-500 mt-0.5">Maks. Qty PO Item: {{ maxQty }} pcs</p>
-                <p v-if="step1.qty && maxQty && step1.qty > maxQty" class="text-[10px] text-red-500 font-semibold mt-0.5">Qty tidak boleh melebihi {{ maxQty }} pcs!</p>
+                <p v-if="maxQty" class="text-[10px] text-neutral-500 mt-0.5">Qty PO Item: {{ maxQty }} pcs</p>
               </div>
               <div class="space-y-1.5">
                 <label class="text-xs font-semibold text-neutral-700">Delivery Date <span class="text-red-500">*</span></label>

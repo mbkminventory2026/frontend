@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Layers2Icon } from 'lucide-vue-next';
+import { ref, computed } from 'vue';
+import { Layers2Icon, ClipboardListIcon } from 'lucide-vue-next';
 import {
     Sheet,
     SheetContent,
@@ -7,19 +8,131 @@ import {
     SheetTitle,
     SheetDescription,
 } from '@/components/ui/sheet';
-import type { WorkOrderShell } from '@/api/work-orders/work-orders';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { toast } from 'vue-sonner';
+
+import type { WorkOrderShell, WorkOrderShellSize } from '@/api/work-orders/work-orders';
+import { createFactoryReport } from '@/api/production/production';
+import type { ProductionAggregateResponse } from '@/schemas/production/production';
 
 const props = defineProps<{
     isOpen: boolean;
     shell: WorkOrderShell | null;
+    productionSummary: ProductionAggregateResponse[];
 }>();
 
 const emit = defineEmits<{
     (e: 'update:isOpen', value: boolean): void;
+    (e: 'report-submitted'): void;
 }>();
 
 const totalQty = (shell: WorkOrderShell) =>
     shell.sizes.reduce((acc, s) => acc + s.qty, 0);
+
+// Report state
+const isReportDialogOpen = ref(false);
+const selectedSize = ref<WorkOrderShellSize | null>(null);
+const reportDate = ref('');
+const reportQty = ref<number | ''>('');
+const reportDivision = ref('cutting');
+const isSubmittingReport = ref(false);
+
+const selectedProductionItem = computed(() => {
+    if (!props.productionSummary || !selectedSize.value) return null;
+    return props.productionSummary.find(
+        (item) => item.id_wo_shell_size === selectedSize.value?.id_wo_shell_size
+    ) || null;
+});
+
+const maxQty = computed(() => {
+    const item = selectedProductionItem.value;
+    if (!item) return null;
+    
+    switch (reportDivision.value) {
+        case 'cutting':
+            return item.target_qty;
+        case 'sewing':
+            return item.production?.cutting ?? 0;
+        case 'qc-finish':
+            return item.production?.sewing ?? 0;
+        case 'packing':
+            return item.production?.qc_pass ?? 0;
+        case 'pengiriman':
+            return item.production?.packing ?? 0;
+        default:
+            return null;
+    }
+});
+
+const prevDivisionLabel = computed(() => {
+    switch (reportDivision.value) {
+        case 'cutting':
+            return 'Target Work Order';
+        case 'sewing':
+            return 'Output Cutting';
+        case 'qc-finish':
+            return 'Output Sewing';
+        case 'packing':
+            return 'Output QC Finish';
+        case 'pengiriman':
+            return 'Output Packing';
+        default:
+            return '';
+    }
+});
+
+const openReportDialog = (size: WorkOrderShellSize) => {
+    selectedSize.value = size;
+    reportQty.value = '';
+    reportDate.value = new Date().toISOString().split('T')[0] || '';
+    reportDivision.value = 'cutting';
+    isReportDialogOpen.value = true;
+};
+
+const submitReport = async () => {
+    if (!selectedSize.value) return;
+    if (!reportDate.value) {
+        toast.error('Harap isi Tanggal laporan.');
+        return;
+    }
+    if (reportQty.value === '' || Number(reportQty.value) <= 0) {
+        toast.error('Jumlah QTY harus lebih dari 0.');
+        return;
+    }
+
+    if (maxQty.value !== null && Number(reportQty.value) > maxQty.value) {
+        toast.error(
+            `QTY tidak boleh melebihi output ${prevDivisionLabel.value}: ${maxQty.value.toLocaleString('id-ID')} pcs.`
+        );
+        return;
+    }
+
+    isSubmittingReport.value = true;
+    try {
+        await createFactoryReport(reportDivision.value, {
+            id_wo_shell_size: selectedSize.value.id_wo_shell_size,
+            qty: Number(reportQty.value),
+            tanggal: reportDate.value,
+        });
+        toast.success('Laporan produksi berhasil ditambahkan!');
+        isReportDialogOpen.value = false;
+        emit('report-submitted');
+    } catch (error: any) {
+        const msg = error?.response?.data?.message || 'Gagal menambahkan laporan produksi.';
+        toast.error(msg);
+    } finally {
+        isSubmittingReport.value = false;
+    }
+};
 </script>
 
 <template>
@@ -80,6 +193,7 @@ const totalQty = (shell: WorkOrderShell) =>
                                 <th class="px-4 py-2.5 text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Size</th>
                                 <th class="px-4 py-2.5 text-[11px] font-bold text-neutral-500 uppercase tracking-wider text-right">Qty (pcs)</th>
                                 <th class="px-4 py-2.5 text-[11px] font-bold text-neutral-500 uppercase tracking-wider text-right">Ratio</th>
+                                <th class="px-4 py-2.5 text-[11px] font-bold text-neutral-500 uppercase tracking-wider text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-neutral-100">
@@ -99,6 +213,17 @@ const totalQty = (shell: WorkOrderShell) =>
                                 <td class="px-4 py-3 font-mono text-neutral-500 text-right">
                                     {{ size.ratio }}
                                 </td>
+                                <td class="px-4 py-3 text-center">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        class="h-7 px-2.5 text-[10px] font-semibold text-[#10756e] border-[#10756e] hover:bg-[#10756e]/10 transition-colors rounded"
+                                        @click="openReportDialog(size)"
+                                    >
+                                        + Lapor
+                                    </Button>
+                                </td>
                             </tr>
                         </tbody>
                         <!-- Footer Total -->
@@ -111,6 +236,9 @@ const totalQty = (shell: WorkOrderShell) =>
                                 <td class="px-4 py-2.5 font-mono text-neutral-400 text-right text-xs">
                                     —
                                 </td>
+                                <td class="px-4 py-2.5 text-center text-xs font-mono text-neutral-400">
+                                    —
+                                </td>
                             </tr>
                         </tfoot>
                     </table>
@@ -118,4 +246,87 @@ const totalQty = (shell: WorkOrderShell) =>
             </div>
         </SheetContent>
     </Sheet>
+
+    <!-- Dialog for Adding Production Report -->
+    <Dialog :open="isReportDialogOpen" @update:open="isReportDialogOpen = $event">
+        <DialogContent class="sm:max-w-md bg-white border border-neutral-200 shadow-xl rounded-xl p-6">
+            <DialogHeader class="space-y-1.5">
+                <DialogTitle class="text-lg font-bold text-neutral-900 flex items-center gap-2">
+                    <ClipboardListIcon class="w-5 h-5 text-[#10756e]" />
+                    Tambah Laporan Produksi
+                </DialogTitle>
+                <DialogDescription class="text-xs text-neutral-500">
+                    Input hasil produksi harian untuk ukuran <strong class="text-neutral-700">{{ selectedSize?.size }}</strong>.
+                </DialogDescription>
+            </DialogHeader>
+
+            <div class="mt-4 space-y-4">
+                <!-- Division Select -->
+                <div class="space-y-1.5">
+                    <Label class="text-xs font-semibold text-neutral-700">Divisi Pengerjaan <span class="text-red-500">*</span></Label>
+                    <select
+                        v-model="reportDivision"
+                        class="w-full h-9 rounded-md border border-neutral-200 bg-white pl-3 pr-9 py-1 text-sm shadow-xs transition-colors outline-none focus-visible:ring-2 focus-visible:ring-neutral-800 appearance-none cursor-pointer"
+                    >
+                        <option value="cutting">Cutting (Potong Kain)</option>
+                        <option value="sewing">Sewing (Jahit)</option>
+                        <option value="qc-finish">QC Finish (Cek Kualitas)</option>
+                        <option value="packing">Packing (Kemas)</option>
+                        <option value="pengiriman">Pengiriman (Kirim)</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- Date Input -->
+                    <div class="space-y-1.5">
+                        <Label class="text-xs font-semibold text-neutral-700">Tanggal Laporan <span class="text-red-500">*</span></Label>
+                        <Input
+                            v-model="reportDate"
+                            type="date"
+                            class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white"
+                        />
+                    </div>
+
+                    <!-- Qty Input -->
+                    <div class="space-y-1.5">
+                        <Label class="text-xs font-semibold text-neutral-700">Jumlah Qty (pcs) <span class="text-red-500">*</span></Label>
+                        <Input
+                            v-model="reportQty"
+                            type="number"
+                            min="1"
+                            placeholder="Qty pcs"
+                            class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white animate-none"
+                        />
+                    </div>
+                </div>
+
+                <!-- Max Qty Helper -->
+                <div v-if="maxQty !== null" class="bg-neutral-50 border border-neutral-200 rounded-lg p-3 text-xs text-neutral-600">
+                    Batas Maksimal QTY: <strong class="text-[#10756e] font-mono text-sm">{{ maxQty.toLocaleString('id-ID') }}</strong> pcs
+                    <span class="block text-[10px] text-neutral-400 mt-0.5">Berdasarkan {{ prevDivisionLabel }}.</span>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end gap-3 border-t border-neutral-100 pt-4">
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    class="h-9 text-xs border-neutral-300 text-neutral-600 hover:bg-neutral-50"
+                    @click="isReportDialogOpen = false"
+                >
+                    Batal
+                </Button>
+                <Button
+                    type="button"
+                    size="sm"
+                    class="h-9 text-xs bg-[#10756e] text-white hover:bg-[#1a9188] border border-[#10756e]"
+                    :disabled="isSubmittingReport"
+                    @click="submitReport"
+                >
+                    {{ isSubmittingReport ? 'Menyimpan...' : 'Kirim Laporan' }}
+                </Button>
+            </div>
+        </DialogContent>
+    </Dialog>
 </template>

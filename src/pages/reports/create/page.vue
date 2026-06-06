@@ -129,21 +129,12 @@ const handleSubmit = async () => {
     return;
   }
 
-  // Convert date to ISO string (backend expects ISO string)
-  let tanggalIso = tanggal.value;
-  if (tanggalIso && !tanggalIso.includes('T')) {
-    const parts = tanggalIso.split('-');
-    if (parts.length === 3) {
-      tanggalIso = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])).toISOString();
-    }
-  }
-
   isSaving.value = true;
   try {
     await createFactoryReport(divisiSlug.value, {
       id_wo_shell_size: Number(selectedIdWoShellSize.value),
       qty: Number(qty.value),
-      tanggal: tanggalIso,
+      tanggal: tanggal.value,
     });
     toast.success(`Laporan divisi ${divisionMeta.value?.label ?? divisiSlug.value} berhasil disimpan!`);
     router.navigate({ to: '/production-summary' });

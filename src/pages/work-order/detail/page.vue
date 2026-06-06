@@ -14,8 +14,11 @@ import {
 import { toast } from 'vue-sonner';
 
 import { getWorkOrderById, closeWorkOrder, type WorkOrderDetailResponse, type WorkOrderShell } from '@/api/work-orders/work-orders';
+import { getProductionSummary } from '@/api/production/production';
+import type { ProductionAggregateResponse } from '@/schemas/production/production';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress';
 import { formatDate } from '@/lib/formatter';
 import WOShellSizeSheet from './WOShellSizeSheet.vue';
 
@@ -28,6 +31,7 @@ const id = computed(() => params.value.id);
 
 const detail = ref<WorkOrderDetailResponse | null>(null);
 const isLoading = ref(true);
+const productionSummary = ref<ProductionAggregateResponse[]>([]);
 
 // Sheet state untuk sizes
 const isSheetOpen = ref(false);
@@ -39,10 +43,50 @@ const canClose = computed(() => {
 
 const isWOOpen = computed(() => detail.value?.status?.toLowerCase() === 'open');
 
+const totals = computed(() => {
+    const res = {
+        target_qty: 0,
+        cutting: 0,
+        sewing: 0,
+        qc_pass: 0,
+        packing: 0,
+        shipped: 0,
+    };
+    if (productionSummary.value && productionSummary.value.length > 0) {
+        productionSummary.value.forEach(item => {
+            res.target_qty += item.target_qty || 0;
+            if (item.production) {
+                res.cutting += item.production.cutting || 0;
+                res.sewing += item.production.sewing || 0;
+                res.qc_pass += item.production.qc_pass || 0;
+                res.packing += item.production.packing || 0;
+                res.shipped += item.production.shipped || 0;
+            }
+        });
+    } else if (detail.value) {
+        res.target_qty = detail.value.qty || 0;
+    }
+    return res;
+});
+
+const progressPercentages = computed(() => {
+    const t = totals.value;
+    const target = t.target_qty || 1;
+    return {
+        cutting: Math.min(100, Math.round((t.cutting / target) * 100)),
+        sewing: Math.min(100, Math.round((t.sewing / target) * 100)),
+        qc_pass: Math.min(100, Math.round((t.qc_pass / target) * 100)),
+        packing: Math.min(100, Math.round((t.packing / target) * 100)),
+        shipped: Math.min(100, Math.round((t.shipped / target) * 100)),
+    };
+});
+
 const fetchDetail = async () => {
     isLoading.value = true;
     try {
         detail.value = await getWorkOrderById(id.value);
+        const prodSummaryRes = await getProductionSummary({ id_wo: Number(id.value) });
+        productionSummary.value = prodSummaryRes?.items || [];
     } catch (e) {
         console.error('Gagal fetch Work Order detail:', e);
         toast.error('Gagal memuat data Work Order.');
@@ -125,6 +169,148 @@ onMounted(fetchDetail);
                         <CheckCircleIcon class="w-4 h-4 mr-2" />
                         Selesaikan WO
                     </Button>
+                </div>
+            </div>
+
+            <!-- Production Progress Card -->
+            <div class="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden mb-6 p-5">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                    <div>
+                        <h2 class="text-xs font-bold text-neutral-700 uppercase tracking-wider flex items-center gap-2">
+                            <span class="inline-block w-1.5 h-4 bg-emerald-600 rounded-full"></span>
+                            Progres Produksi Work Order
+                        </h2>
+                        <p class="text-xs text-neutral-500 mt-1">Status pengerjaan berdasarkan input laporan harian pabrik.</p>
+                    </div>
+                    <div class="flex items-center gap-4 text-xs font-semibold text-neutral-600">
+                        <div>Target: <span class="font-mono text-neutral-900">{{ totals.target_qty.toLocaleString('id-ID') }}</span> pcs</div>
+                        <div class="h-3 w-px bg-neutral-200"></div>
+                        <div>Terkirim: <span class="font-mono text-emerald-600">{{ totals.shipped.toLocaleString('id-ID') }}</span> pcs</div>
+                    </div>
+                </div>
+                
+                <!-- Main overall progress bar -->
+                <div class="space-y-2 mb-6">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="font-medium text-neutral-700">Persentase Pengiriman Selesai</span>
+                        <span class="font-bold text-emerald-600 font-mono">{{ progressPercentages.shipped }}%</span>
+                    </div>
+                    <Progress :value="progressPercentages.shipped" class="h-2.5 bg-neutral-100" indicator-class="bg-emerald-600" />
+                </div>
+                
+                <!-- Five stages grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-5 gap-4 pt-4 border-t border-neutral-100">
+                    <!-- Stage 1: Cutting -->
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between text-[11px] font-medium text-neutral-500">
+                            <span>Cutting</span>
+                            <span class="font-mono text-neutral-700">{{ progressPercentages.cutting }}%</span>
+                        </div>
+                        <Progress :value="progressPercentages.cutting" class="h-1.5 bg-neutral-100" indicator-class="bg-blue-500" />
+                        <p class="text-[10px] text-neutral-400 font-mono">{{ totals.cutting.toLocaleString('id-ID') }} pcs</p>
+                    </div>
+                    <!-- Stage 2: Sewing -->
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between text-[11px] font-medium text-neutral-500">
+                            <span>Sewing</span>
+                            <span class="font-mono text-neutral-700">{{ progressPercentages.sewing }}%</span>
+                        </div>
+                        <Progress :value="progressPercentages.sewing" class="h-1.5 bg-neutral-100" indicator-class="bg-indigo-500" />
+                        <p class="text-[10px] text-neutral-400 font-mono">{{ totals.sewing.toLocaleString('id-ID') }} pcs</p>
+                    </div>
+                    <!-- Stage 3: QC Finish -->
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between text-[11px] font-medium text-neutral-500">
+                            <span>QC Finish</span>
+                            <span class="font-mono text-neutral-700">{{ progressPercentages.qc_pass }}%</span>
+                        </div>
+                        <Progress :value="progressPercentages.qc_pass" class="h-1.5 bg-neutral-100" indicator-class="bg-amber-500" />
+                        <p class="text-[10px] text-neutral-400 font-mono">{{ totals.qc_pass.toLocaleString('id-ID') }} pcs</p>
+                    </div>
+                    <!-- Stage 4: Packing -->
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between text-[11px] font-medium text-neutral-500">
+                            <span>Packing</span>
+                            <span class="font-mono text-neutral-700">{{ progressPercentages.packing }}%</span>
+                        </div>
+                        <Progress :value="progressPercentages.packing" class="h-1.5 bg-neutral-100" indicator-class="bg-purple-500" />
+                        <p class="text-[10px] text-neutral-400 font-mono">{{ totals.packing.toLocaleString('id-ID') }} pcs</p>
+                    </div>
+                    <!-- Stage 5: Pengiriman -->
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between text-[11px] font-medium text-neutral-500">
+                            <span>Pengiriman</span>
+                            <span class="font-mono text-neutral-700">{{ progressPercentages.shipped }}%</span>
+                        </div>
+                        <Progress :value="progressPercentages.shipped" class="h-1.5 bg-neutral-100" indicator-class="bg-rose-500" />
+                        <p class="text-[10px] text-neutral-400 font-mono">{{ totals.shipped.toLocaleString('id-ID') }} pcs</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WO Shells Table (Full Width) -->
+            <div class="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden mb-6">
+                <div class="bg-neutral-50 border-b border-neutral-200 px-5 py-3.5 flex items-center justify-between">
+                    <h2 class="text-xs font-bold text-neutral-700 uppercase tracking-wider flex items-center gap-2">
+                        <Layers2Icon class="w-3.5 h-3.5 text-neutral-500" />
+                        WO Shells — Kain Utama ({{ detail.shells?.length || 0 }})
+                    </h2>
+                    <span class="text-[10px] font-semibold text-neutral-400">Klik baris untuk melihat Sizes</span>
+                </div>
+
+                <div v-if="!detail.shells || detail.shells.length === 0" class="text-center py-10 text-neutral-400 text-sm">
+                    Tidak ada data shell kain.
+                </div>
+                <div v-else class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead class="bg-neutral-50/50 border-b border-neutral-200">
+                            <tr>
+                                <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Fabric</th>
+                                <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Color</th>
+                                <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider text-right">Cons (yd)</th>
+                                <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider text-right">Allow</th>
+                                <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider text-right">Berat/yd</th>
+                                <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider text-center">Sizes</th>
+                                <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-neutral-100">
+                            <tr
+                                v-for="shell in detail.shells"
+                                :key="shell.id_wo_shell"
+                                class="hover:bg-neutral-50 cursor-pointer transition-colors group"
+                                @click="openShellSizes(shell)"
+                            >
+                                <td class="px-4 py-3.5 font-semibold text-neutral-800">{{ shell.fabric }}</td>
+                                <td class="px-4 py-3.5">
+                                    <span class="inline-flex items-center gap-1.5 font-medium text-neutral-700">
+                                        <span
+                                            class="w-2.5 h-2.5 rounded-full border border-neutral-300 flex-shrink-0"
+                                            :style="{ backgroundColor: shell.color.toLowerCase() === 'white' ? '#f5f5f5' : shell.color.toLowerCase() === 'black' ? '#1c1c1e' : shell.color.toLowerCase() }"
+                                        />
+                                        {{ shell.color }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3.5 font-mono text-neutral-700 text-right">{{ shell.cons }}</td>
+                                <td class="px-4 py-3.5 font-mono text-neutral-700 text-right">{{ shell.allow }}%</td>
+                                <td class="px-4 py-3.5 font-mono text-neutral-700 text-right">{{ shell.berat_1_yd }} kg</td>
+                                <td class="px-4 py-3.5 text-center">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 text-[10px] font-bold">
+                                        {{ shell.sizes?.length || 0 }} ukuran
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3.5 text-center">
+                                    <button
+                                        type="button"
+                                        @click.stop="openShellSizes(shell)"
+                                        class="text-[10px] font-semibold text-neutral-500 group-hover:text-neutral-800 underline underline-offset-2 transition-colors"
+                                    >
+                                        Lihat Sizes →
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -212,72 +398,6 @@ onMounted(fetchDetail);
 
                 <!-- RIGHT — Main Content -->
                 <div class="md:col-span-2 space-y-6">
-
-                    <!-- WO Shells Table -->
-                    <div class="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
-                        <div class="bg-neutral-50 border-b border-neutral-200 px-5 py-3.5 flex items-center justify-between">
-                            <h2 class="text-xs font-bold text-neutral-700 uppercase tracking-wider flex items-center gap-2">
-                                <Layers2Icon class="w-3.5 h-3.5 text-neutral-500" />
-                                WO Shells — Kain Utama ({{ detail.shells?.length || 0 }})
-                            </h2>
-                            <span class="text-[10px] font-semibold text-neutral-400">Klik baris untuk melihat Sizes</span>
-                        </div>
-
-                        <div v-if="!detail.shells || detail.shells.length === 0" class="text-center py-10 text-neutral-400 text-sm">
-                            Tidak ada data shell kain.
-                        </div>
-                        <div v-else class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse text-xs">
-                                <thead class="bg-neutral-50/50 border-b border-neutral-200">
-                                    <tr>
-                                        <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Fabric</th>
-                                        <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Color</th>
-                                        <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider text-right">Cons (yd)</th>
-                                        <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider text-right">Allow</th>
-                                        <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider text-right">Berat/yd</th>
-                                        <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider text-center">Sizes</th>
-                                        <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider text-center">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-neutral-100">
-                                    <tr
-                                        v-for="shell in detail.shells"
-                                        :key="shell.id_wo_shell"
-                                        class="hover:bg-neutral-50 cursor-pointer transition-colors group"
-                                        @click="openShellSizes(shell)"
-                                    >
-                                        <td class="px-4 py-3.5 font-semibold text-neutral-800">{{ shell.fabric }}</td>
-                                        <td class="px-4 py-3.5">
-                                            <span class="inline-flex items-center gap-1.5 font-medium text-neutral-700">
-                                                <span
-                                                    class="w-2.5 h-2.5 rounded-full border border-neutral-300 flex-shrink-0"
-                                                    :style="{ backgroundColor: shell.color.toLowerCase() === 'white' ? '#f5f5f5' : shell.color.toLowerCase() === 'black' ? '#1c1c1e' : shell.color.toLowerCase() }"
-                                                />
-                                                {{ shell.color }}
-                                            </span>
-                                        </td>
-                                        <td class="px-4 py-3.5 font-mono text-neutral-700 text-right">{{ shell.cons }}</td>
-                                        <td class="px-4 py-3.5 font-mono text-neutral-700 text-right">{{ shell.allow }}%</td>
-                                        <td class="px-4 py-3.5 font-mono text-neutral-700 text-right">{{ shell.berat_1_yd }} kg</td>
-                                        <td class="px-4 py-3.5 text-center">
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-neutral-100 text-neutral-600 text-[10px] font-bold">
-                                                {{ shell.sizes?.length || 0 }} ukuran
-                                            </span>
-                                        </td>
-                                        <td class="px-4 py-3.5 text-center">
-                                            <button
-                                                type="button"
-                                                @click.stop="openShellSizes(shell)"
-                                                class="text-[10px] font-semibold text-neutral-500 group-hover:text-neutral-800 underline underline-offset-2 transition-colors"
-                                            >
-                                                Lihat Sizes →
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
 
                     <!-- Trims Table -->
                     <div class="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
@@ -370,7 +490,9 @@ onMounted(fetchDetail);
         <WOShellSizeSheet
             :is-open="isSheetOpen"
             :shell="selectedShell"
+            :production-summary="productionSummary"
             @update:is-open="isSheetOpen = $event"
+            @report-submitted="fetchDetail"
         />
     </div>
 </template>

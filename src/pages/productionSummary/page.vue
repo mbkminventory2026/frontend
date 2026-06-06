@@ -136,12 +136,6 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
 const operatorReportDialog = useDialog({
   onSubmit: async (values) => {
     const { division, ...payload } = values
-    if (payload.tanggal && !payload.tanggal.includes('T')) {
-      const parts = payload.tanggal.split('-')
-      if (parts.length === 3) {
-        payload.tanggal = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])).toISOString()
-      }
-    }
     return await createFactoryReport(division, payload)
   },
   onSuccess: () => {
