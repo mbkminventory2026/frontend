@@ -652,7 +652,7 @@ onMounted(() => {
           <thead class="bg-neutral-50 border-b border-neutral-200 text-xs font-semibold text-neutral-600">
             <!-- Row 1: Stage Groups -->
             <tr>
-              <th rowspan="2" class="px-4 py-3 text-left border-r border-neutral-200 min-w-[120px] sticky left-0 bg-neutral-50 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
+              <th rowspan="2" class="px-4 py-3 text-left border-r border-neutral-200 min-w-[120px] sticky left-0 bg-neutral-100 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
                 Color
               </th>
               <th :colspan="uniqueSizes.length + 1" class="px-4 py-3 text-center border-r border-neutral-200 bg-indigo-50/50 text-indigo-900">
@@ -721,7 +721,7 @@ onMounted(() => {
           <tbody class="divide-y divide-neutral-200 text-xs font-mono text-neutral-800 bg-white">
             <tr v-for="row in tableData" :key="row.color" class="hover:bg-neutral-50/50 transition-colors group">
               <!-- Color -->
-              <td class="px-4 py-3 font-semibold font-sans text-neutral-900 border-r border-neutral-200 sticky left-0 bg-white group-hover:bg-neutral-50 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
+              <td class="px-4 py-3 font-semibold font-sans text-neutral-900 border-r border-neutral-200 sticky left-0 bg-neutral-50 group-hover:bg-neutral-100 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
                 {{ row.color }}
               </td>
 
@@ -798,7 +798,7 @@ onMounted(() => {
           <thead class="bg-neutral-50 border-b border-neutral-200 text-xs font-semibold text-neutral-600">
             <!-- Row 1: Stage Groups -->
             <tr>
-              <th rowspan="2" class="px-4 py-3 text-left border-r border-neutral-200 min-w-[120px] sticky left-0 bg-neutral-50 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
+              <th rowspan="2" class="px-4 py-3 text-left border-r border-neutral-200 min-w-[120px] sticky left-0 bg-neutral-100 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
                 {{ selectedColor }}
               </th>
               <th :colspan="selectedColorSizeNames.length + 1" class="px-4 py-3 text-center border-r border-neutral-200 bg-indigo-50/50 text-indigo-900">
@@ -882,7 +882,7 @@ onMounted(() => {
           <tbody class="divide-y divide-neutral-200 text-xs font-mono text-neutral-800 bg-white">
             <tr v-for="(row, idx) in parallelDailyRows" :key="idx" class="hover:bg-neutral-50/50 transition-colors group">
               <!-- Selected Color Column (sticky left, rowspan spans all rows, empty inside) -->
-              <td v-if="idx === 0" :rowspan="parallelDailyRows.length" class="px-4 py-3 border-r border-neutral-200 sticky left-0 bg-white group-hover:bg-neutral-50 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
+              <td v-if="idx === 0" :rowspan="parallelDailyRows.length" class="px-4 py-3 border-r border-neutral-200 sticky left-0 bg-neutral-50 group-hover:bg-neutral-100 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
                 <!-- empty as the header already shows the color name -->
               </td>
 
@@ -954,7 +954,7 @@ onMounted(() => {
 
             <!-- Footer Row 1: TOTAL (Sum of values above) -->
             <tr class="bg-neutral-50 font-bold border-t-2 border-neutral-300">
-              <td class="px-4 py-3 text-left border-r border-neutral-200 sticky left-0 bg-neutral-50 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
+              <td class="px-4 py-3 text-left border-r border-neutral-200 sticky left-0 bg-neutral-200 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
                 Total
               </td>
               <!-- QTY Order totals -->
@@ -1028,7 +1028,7 @@ onMounted(() => {
 
             <!-- Footer Row 2: BALANCE (QTY Order - Total) -->
             <tr class="bg-neutral-50 font-bold">
-              <td class="px-4 py-3 text-left border-r border-neutral-200 text-amber-800 bg-amber-50/10 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
+              <td class="px-4 py-3 text-left border-r border-neutral-200 text-amber-800 bg-amber-100 sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
                 Balance
               </td>
               <!-- QTY Order balance (0) -->
