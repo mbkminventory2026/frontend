@@ -161,7 +161,7 @@ watch(selectedWoId, async (newWoId) => {
 watch(availableSizes, (newSizes) => {
   sizeQuantities.value = {};
   newSizes.forEach((sz) => {
-    sizeQuantities.value[sz.id_wo_shell_size] = '0';
+    sizeQuantities.value[sz.id_wo_shell_size] = '';
   });
 }, { immediate: true });
 
@@ -189,6 +189,45 @@ const handleSubmitReport = async () => {
     return;
   }
 
+  // ─── Check Balance Warning ───────────────────────────────────────────────
+  const divisionKeyMap: Record<string, keyof ProductionStats> = {
+    'cutting': 'cutting',
+    'sewing': 'sewing',
+    'qc-finish': 'qc_pass',
+    'packing': 'packing',
+    'pengiriman': 'shipped'
+  };
+  const divKey = divisionKeyMap[selectedReportType.value];
+  const negativeBalanceWarnings: string[] = [];
+
+  if (divKey) {
+    updates.forEach((up) => {
+      const sz = availableSizes.value.find((s) => s.id_wo_shell_size === up.id_wo_shell_size);
+      if (!sz) return;
+
+      const summaryItem = summaryItems.value.find((item) => item.id_wo_shell_size === up.id_wo_shell_size);
+      const currentReported = summaryItem?.production[divKey] ?? 0;
+      const currentBalance = sz.qty - currentReported;
+
+      if (up.qty > currentBalance) {
+        negativeBalanceWarnings.push(
+          `Size ${sz.size}: input QTY ${up.qty} melebihi sisa balance ${currentBalance} (minus ${up.qty - currentBalance})`
+        );
+      }
+    });
+  }
+
+  if (negativeBalanceWarnings.length > 0) {
+    const confirmMessage =
+      `Peringatan: Laporan ini akan menyebabkan balance menjadi minus untuk:\n` +
+      negativeBalanceWarnings.map((w) => `• ${w}`).join('\n') +
+      `\n\nApakah Anda yakin ingin tetap menyimpan laporan ini?`;
+
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+  }
+
   isSaving.value = true;
   try {
     await Promise.all(
@@ -202,9 +241,9 @@ const handleSubmitReport = async () => {
     );
     toast.success(`Berhasil menyimpan laporan untuk ${updates.length} ukuran!`);
 
-    // Reset all inputs to 0
+    // Reset all inputs to empty string
     availableSizes.value.forEach((sz) => {
-      sizeQuantities.value[sz.id_wo_shell_size] = '0';
+      sizeQuantities.value[sz.id_wo_shell_size] = '';
     });
 
     // Re-fetch data to update bottom table
