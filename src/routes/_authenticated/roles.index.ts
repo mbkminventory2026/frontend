@@ -1,16 +1,9 @@
+import { rolesSchema } from '@/pages/roles/schema';
 import { createFileRoute } from '@tanstack/vue-router'
 import RolesPage from '@/pages/roles/roles.vue'
-import { createTableParamsSchema } from '@/schemas/table-params'
+
 import { validateTableSearchRedirect, stripTableDefaults } from '@/lib/table-utils'
 import { requirePermission } from '@/lib/requirePermission'
-
-export const rolesColumns: [string, ...string[]] = [
-    'created_at',
-    'id_role',
-    'nama_role'
-]
-
-export const rolesSchema = createTableParamsSchema(rolesColumns)
 
 export const Route = createFileRoute('/_authenticated/roles/')({
     validateSearch: (search: Record<string, unknown>) => {

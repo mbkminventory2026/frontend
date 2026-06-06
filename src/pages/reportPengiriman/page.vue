@@ -8,7 +8,7 @@ import {
     getReportPengiriman
 } from '@/api/reportPengiriman/reportPengiriman';
 import { type ReportPengirimanItem } from '@/schemas/reportPengiriman/reportPengiriman';
-import { reportPengirimanSchema } from '@/routes/_authenticated/report-pengiriman.index';
+import { reportPengirimanSchema } from '@/pages/reportPengiriman/schema';
 
 import DataTable from '@/components/DataTable.vue';
 import { Button } from '@/components/ui/button';

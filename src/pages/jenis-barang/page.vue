@@ -8,7 +8,7 @@ import {
     getJenisBarang
 } from '@/api/jenis-barang/jenis-barang';
 import { type JenisBarangResponseItem } from '@/schemas/jenis-barang/response';
-import { jenisBarangSchema } from '@/routes/_authenticated/jenis-barang.index';
+import { jenisBarangSchema } from '@/pages/jenis-barang/schema';
 
 import DataTable from '@/components/DataTable.vue';
 import { Button } from '@/components/ui/button';

@@ -8,7 +8,7 @@ import {
   MoreHorizontalIcon,
 } from 'lucide-vue-next'
 
-import { productionSearchSchema } from '@/routes/_authenticated/production-summary'
+import { productionSearchSchema } from '@/pages/productionSummary/schema'
 
 import DataTable from '@/components/DataTable.vue'
 import AppDialog from '@/components/AppDialog.vue'

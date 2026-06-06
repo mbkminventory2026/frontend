@@ -1,11 +1,9 @@
+import { pokemonSearchSchema } from '@/pages/pokemon/list/schema';
 import { createFileRoute } from '@tanstack/vue-router'
 import PokemonPage from '@/pages/pokemon/list/page.vue'
-import { createTableParamsSchema } from '@/schemas/table-params'
+
 import { validateTableSearchRedirect, stripTableDefaults } from '@/lib/table-utils';
 import { requirePermission } from '@/lib/requirePermission'
-
-export const pokemonColumns: [string, ...string[]] = ['albumId', 'id', 'title', 'url', 'thumbnailUrl'];
-export const pokemonSearchSchema = createTableParamsSchema(pokemonColumns)
 
 export const Route = createFileRoute('/_authenticated/pokemon')({
   // validateSearch hanya untuk parsing — TIDAK boleh throw redirect di sini

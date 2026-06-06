@@ -8,7 +8,7 @@ import {
     getDepartemen
 } from '@/api/departemen/departemen';
 import { type DepartemenResponseItem } from '@/schemas/departemen/response';
-import { departemenSchema } from '@/routes/_authenticated/departemen.index';
+import { departemenSchema } from '@/pages/departemen/schema';
 
 import DataTable from '@/components/DataTable.vue';
 

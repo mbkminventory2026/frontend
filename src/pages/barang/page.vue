@@ -5,7 +5,7 @@ import { PlusIcon, EyeIcon, PencilIcon } from 'lucide-vue-next';
 
 import { deleteBarang, getBarang } from '@/api/barang/barang';
 import { type BarangResponseItem } from '@/schemas/barang/response';
-import { barangSchema } from '@/routes/_authenticated/barang.index';
+import { barangSchema } from '@/pages/barang/schema';
 
 import DataTable from '@/components/DataTable.vue';
 import { Button } from '@/components/ui/button';

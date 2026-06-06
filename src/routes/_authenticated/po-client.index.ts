@@ -1,20 +1,9 @@
+import { poClientSchema } from '@/pages/po-client/schema';
 import { createFileRoute } from '@tanstack/vue-router'
 import POClientPage from '@/pages/po-client/po-client.vue'
-import { createTableParamsSchema } from '@/schemas/table-params'
+
 import { validateTableSearchRedirect, stripTableDefaults } from '@/lib/table-utils'
 import { requirePermission } from '@/lib/requirePermission'
-
-export const poClientColumns: [string, ...string[]] = [
-    'created_at',
-    'id_po_client',
-    'po_number',
-    'tanggal',
-    'season',
-    'delivery',
-    'mitra_name'
-]
-
-export const poClientSchema = createTableParamsSchema(poClientColumns)
 
 export const Route = createFileRoute('/_authenticated/po-client/')({
     validateSearch: (search: Record<string, unknown>) => {

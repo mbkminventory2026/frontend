@@ -1,19 +1,9 @@
+import { mitraSchema } from '@/pages/mitra/schema';
 import { createFileRoute } from '@tanstack/vue-router'
 import MitraPage from '@/pages/mitra/mitra.vue'
-import { createTableParamsSchema } from '@/schemas/table-params'
+
 import { validateTableSearchRedirect, stripTableDefaults } from '@/lib/table-utils'
 import { requirePermission } from '@/lib/requirePermission'
-
-export const mitraColumns: [string, ...string[]] = [
-    'created_at',
-    'id_mitra',
-    'nama_perusahaan',
-    'email',
-    'no_telp',
-    'tipe_perusahaan'
-]
-
-export const mitraSchema = createTableParamsSchema(mitraColumns)
 
 export const Route = createFileRoute('/_authenticated/mitra/')({
     validateSearch: (search: Record<string, unknown>) => {

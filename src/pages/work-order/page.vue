@@ -9,7 +9,7 @@ import {
     closeWorkOrder,
     type WorkOrderListItem,
 } from '@/api/work-orders/work-orders';
-import { workOrderSchema } from '@/routes/_authenticated/work-order.index';
+import { workOrderSchema } from '@/pages/work-order/schema';
 
 import DataTable from '@/components/DataTable.vue';
 import { Button } from '@/components/ui/button';
