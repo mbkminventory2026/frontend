@@ -14,7 +14,7 @@ import { toast } from 'vue-sonner';
 import { getProductionSummary, createFactoryReport } from '@/api/production/production';
 import type { ProductionAggregateResponse, DivisionSlug } from '@/schemas/production/production';
 import { DIVISION_META } from '@/schemas/production/production';
-
+import { parseToInt } from '@/lib/number';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Card } from '@/components/ui/card';
@@ -79,7 +79,7 @@ const fetchSummaryData = async () => {
 // ─── Form State ──────────────────────────────────────────────────────────────
 const selectedIdWoShellSize = ref<number | ''>('');
 const tanggal = ref('');
-const qty = ref<number | ''>('');
+const qty = ref<string>('');
 const isSaving = ref(false);
 
 // ─── Selected Item & Max QTY Logic ───────────────────────────────────────────
@@ -97,7 +97,7 @@ const maxQty = computed(() => {
 
 const isQtyExceeding = computed(() => {
   if (maxQty.value === null || qty.value === '') return false;
-  return Number(qty.value) > maxQty.value;
+  return parseToInt(qty.value) > maxQty.value;
 });
 
 // Reset qty when item changes to avoid stale exceeding state
@@ -116,13 +116,14 @@ const handleSubmit = async () => {
     toast.error('Harap isi Tanggal laporan.');
     return;
   }
-  if (qty.value === '' || Number(qty.value) <= 0) {
+  const qtyVal = parseToInt(qty.value);
+  if (qty.value === '' || qtyVal <= 0) {
     toast.error('Jumlah QTY harus lebih dari 0.');
     return;
   }
 
   // Estafet validation
-  if (maxQty.value !== null && Number(qty.value) > maxQty.value) {
+  if (maxQty.value !== null && qtyVal > maxQty.value) {
     toast.error(
       `QTY tidak boleh melebihi output ${prevDivisionLabel.value}: ${maxQty.value.toLocaleString('id-ID')} pcs.`
     );
@@ -133,7 +134,7 @@ const handleSubmit = async () => {
   try {
     await createFactoryReport(divisiSlug.value, {
       id_wo_shell_size: Number(selectedIdWoShellSize.value),
-      qty: Number(qty.value),
+      qty: qtyVal,
       tanggal: tanggal.value,
     });
     toast.success(`Laporan divisi ${divisionMeta.value?.label ?? divisiSlug.value} berhasil disimpan!`);
@@ -266,7 +267,7 @@ onMounted(() => {
                 <div class="relative">
                   <Input
                     v-model="qty"
-                    type="number"
+                    type="text"
                     min="1"
                     :max="maxQty ?? undefined"
                     placeholder="Masukkan qty hasil produksi"

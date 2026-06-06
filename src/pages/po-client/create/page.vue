@@ -9,6 +9,7 @@ import { getPOClientById, createPOClient, updatePOClient } from '@/api/po-client
 import { getMitra } from '@/api/mitra/mitra';
 import { useForm } from '@/composables/form/useForm';
 import { formatRupiah } from '@/lib/formatter';
+import { parseToInt } from '@/lib/number';
 
 import AppForm from '@/components/form/AppForm.vue';
 import AppFormField from '@/components/form/AppFormField.vue';
@@ -110,7 +111,8 @@ form.save = async () => {
     }
     for (const item of values.value.items) {
         const priceNum = parseRupiahToNumber(item.price);
-        if (!item.style || !item.colour || item.qty <= 0 || priceNum < 0) {
+        const qtyNum = parseToInt(item.qty);
+        if (!item.style || !item.colour || qtyNum <= 0 || priceNum < 0) {
             toast.error("Harap lengkapi semua baris item (Style, Colour, Qty > 0, Price >= 0).");
             return;
         }
@@ -140,7 +142,7 @@ form.save = async () => {
         items: values.value.items.map((item: any) => ({
             style: item.style,
             colour: item.colour,
-            qty: Number(item.qty),
+            qty: parseToInt(item.qty),
             price: parseRupiahToNumber(item.price),
             description: item.description || ''
         })),
@@ -234,14 +236,14 @@ const handlePriceInput = (event: Event, item: any) => {
 // Computed values for real-time form totals
 const totalFormQty = computed(() => {
     if (!values.value.items) return 0;
-    return values.value.items.reduce((acc: number, curr: any) => acc + Number(curr.qty || 0), 0);
+    return values.value.items.reduce((acc: number, curr: any) => acc + parseToInt(curr.qty || 0), 0);
 });
 
 const grandFormTotal = computed(() => {
     if (!values.value.items) return 0;
     return values.value.items.reduce((acc: number, curr: any) => {
         const priceNum = parseRupiahToNumber(curr.price);
-        return acc + (Number(curr.qty || 0) * priceNum);
+        return acc + (parseToInt(curr.qty || 0) * priceNum);
     }, 0);
 });
 </script>
@@ -344,7 +346,7 @@ const grandFormTotal = computed(() => {
                                         <Input v-model="item.colour" placeholder="Colour" class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" :aria-invalid="hasSubmitted && !item.colour ? 'true' : undefined" />
                                     </td>
                                     <td class="p-3">
-                                        <Input v-model="item.qty" type="number" min="1" class="h-9 text-sm border-neutral-200 text-center focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" :aria-invalid="hasSubmitted && (!item.qty || item.qty <= 0) ? 'true' : undefined" />
+                                        <Input v-model="item.qty" type="text" class="h-9 text-sm border-neutral-200 text-center focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" :aria-invalid="hasSubmitted && (!item.qty || parseToInt(item.qty) <= 0) ? 'true' : undefined" />
                                     </td>
                                     <td class="p-3">
                                         <input 

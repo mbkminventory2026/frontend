@@ -7,6 +7,7 @@ import { toast } from 'vue-sonner';
 import { createPOInternal } from '@/api/po-internals/po-internals';
 import { getApprovedPRInternals, getPRInternalById, type PRInternalListItem } from '@/api/pr-internals/pr-internals';
 import { formatRupiah } from '@/lib/formatter';
+import { parseToInt } from '@/lib/number';
 
 import AppForm from '@/components/form/AppForm.vue';
 import AppFormField from '@/components/form/AppFormField.vue';
@@ -87,13 +88,13 @@ const handleUnitPriceInput = (event: Event, item: any) => {
 // Computed totals
 const totalFormQty = computed(() => {
     if (!values.value.items) return 0;
-    return values.value.items.reduce((acc: number, curr: any) => acc + Number(curr.qty || 0), 0);
+    return values.value.items.reduce((acc: number, curr: any) => acc + parseToInt(curr.qty || 0), 0);
 });
 
 const grandFormTotal = computed(() => {
     if (!values.value.items) return 0;
     return values.value.items.reduce((acc: number, curr: any) => {
-        return acc + (Number(curr.qty || 0) * parseRupiahToNumber(curr.unitPrice));
+        return acc + (parseToInt(curr.qty || 0) * parseRupiahToNumber(curr.unitPrice));
     }, 0);
 });
 
@@ -112,7 +113,7 @@ form.save = async () => {
         return;
     }
     for (const item of values.value.items) {
-        if (!item.item || !item.unit || item.qty <= 0) {
+        if (!item.item || !item.unit || parseToInt(item.qty) <= 0) {
             toast.error("Harap lengkapi semua baris item (Nama Item, Satuan, dan Qty > 0).");
             return;
         }
@@ -135,7 +136,7 @@ form.save = async () => {
         items: values.value.items.map((item: any) => ({
             item: item.item,
             description: item.description || '',
-            qty: Number(item.qty),
+            qty: parseToInt(item.qty),
             unit: item.unit,
             unit_price: parseRupiahToNumber(item.unitPrice),
         })),
@@ -416,7 +417,7 @@ onMounted(async () => {
                                         <Input v-model="item.item" placeholder="Nama barang" class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" :disabled="!values.idPrInternal" />
                                     </td>
                                     <td class="p-3">
-                                        <Input v-model="item.qty" type="number" min="1" class="h-9 text-sm border-neutral-200 text-center focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" :disabled="!values.idPrInternal" />
+                                        <Input v-model="item.qty" type="text" class="h-9 text-sm border-neutral-200 text-center focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" :disabled="!values.idPrInternal" />
                                     </td>
                                     <td class="p-3">
                                         <Input v-model="item.unit" placeholder="PCS, Roll, Kg..." class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" :disabled="!values.idPrInternal" />

@@ -16,6 +16,8 @@ import { getPOClients, getPOClientById, type POClientListItem, type POClientItem
 import { usePermission } from '@/composables/usePermission';
 import { getWarna } from '@/api/warna/warna';
 
+import { parseToFloat, parseToInt } from '@/lib/number';
+
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -43,7 +45,7 @@ const step1 = reactive({
   id_po_client_item: null as number | null,
   buyer: '',
   model: '',
-  qty: null as number | null,
+  qty: null as any,
   delivery: '',
   fob_cmt: 'false' as 'true' | 'false',
 });
@@ -65,17 +67,8 @@ const fetchColorOptions = async () => {
   }
 };
 
-const parseNumber = (val: any): number => {
-  if (val === undefined || val === null || val === '') return 0;
-  if (typeof val === 'number') return val;
-  const str = String(val).replace(/,/g, '.').trim();
-  const num = parseFloat(str);
-  return isNaN(num) ? 0 : num;
-};
-
-const parseInteger = (val: any): number => {
-  return Math.round(parseNumber(val));
-};
+const parseNumber = parseToFloat;
+const parseInteger = parseToInt;
 
 const fetchPOList = async () => {
   try {
@@ -117,12 +110,17 @@ const onPOSelect = async (poId: number) => {
 watch(() => step1.id_po_client_item, (newVal) => {
   if (!newVal) {
     maxQty.value = null;
+    step1.qty = null;
     return;
   }
   const selectedItem = poItemOptions.value.find(item => item.id_po_client_item === Number(newVal));
   if (selectedItem) {
-    step1.qty = selectedItem.qty;
     maxQty.value = selectedItem.qty;
+    if (calculatedTotalQty.value > 0) {
+      step1.qty = calculatedTotalQty.value;
+    } else {
+      step1.qty = selectedItem.qty;
+    }
     if (poDeliveryDate.value) {
       step1.delivery = poDeliveryDate.value;
     }
@@ -154,20 +152,28 @@ const removeSize = (shellIdx: number, sizeIdx: number) => {
   }
 };
 
-// Dropdown options for Sizes
-const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '38', '39', '40'];
 
-const isSizeDisabled = (shellIdx: number, sizeIdx: number, sizeOption: string) => {
-  const shell = shells.value[shellIdx];
-  if (!shell) return false;
-  return shell.sizes.some((sz, idx) => idx !== sizeIdx && sz.size === sizeOption);
-};
 
 const getShellTotalQty = (shellIdx: number) => {
   const shell = shells.value[shellIdx];
   if (!shell || !shell.sizes) return 0;
-  return shell.sizes.reduce((acc, curr) => acc + (Number(curr.qty) || 0), 0);
+  return shell.sizes.reduce((acc, curr) => acc + (parseInteger(curr.qty) || 0), 0);
 };
+
+// Sync step1.qty with the sum of all shell sizes' quantity
+const calculatedTotalQty = computed(() => {
+  return shells.value.reduce((acc, _, si) => acc + getShellTotalQty(si), 0);
+});
+
+watch(calculatedTotalQty, (newVal) => {
+  if (newVal > 0) {
+    step1.qty = newVal;
+  } else if (maxQty.value) {
+    step1.qty = maxQty.value;
+  } else {
+    step1.qty = null;
+  }
+}, { immediate: true });
 
 // Step 3: Trims & Materials
 interface Trim { item: string; description: string; color: string; code: string; cons: number; qty: number; uom: string; position: string; allow: number; }
@@ -200,21 +206,20 @@ const step1Valid = computed(() =>
   step1.id_po_client_item &&
   step1.buyer.trim() &&
   step1.model.trim() &&
-  step1.qty && step1.qty > 0 &&
+  step1.qty && parseInteger(step1.qty) > 0 &&
   step1.delivery
 );
 
 const step2Valid = computed(() =>
   shells.value.length > 0 &&
-  shells.value.every((s, si) =>
+  shells.value.every((s) =>
     s.fabric.trim() &&
     s.color.trim() &&
-    s.cons > 0 &&
-    s.allow >= 1 &&
-    s.berat_1_yd > 0 &&
+    parseNumber(s.cons) > 0 &&
+    parseInteger(s.allow) >= 1 &&
+    parseNumber(s.berat_1_yd) > 0 &&
     s.sizes.length > 0 &&
-    s.sizes.every(sz => sz.size.trim() && sz.qty > 0 && sz.ratio >= 1) &&
-    getShellTotalQty(si) <= (step1.qty || 0)
+    s.sizes.every(sz => sz.size.trim() && parseInteger(sz.qty) > 0 && parseInteger(sz.ratio) >= 1)
   )
 );
 
@@ -224,10 +229,10 @@ const step3Valid = computed(() =>
     t.item.trim() &&
     t.color.trim() &&
     t.code.trim() &&
-    t.cons > 0 &&
-    t.qty > 0 &&
+    parseNumber(t.cons) > 0 &&
+    parseInteger(t.qty) > 0 &&
     t.uom.trim() &&
-    t.allow >= 1
+    parseInteger(t.allow) >= 1
   ) &&
   // materials are optional (omitempty) but if added, must have size, color, uom
   materials.value.every(m => m.size.trim() && m.color.trim() && m.uom.trim())
@@ -396,9 +401,16 @@ const handleSubmit = async () => {
               </div>
               <div class="space-y-1.5">
                 <label class="text-xs font-semibold text-neutral-700">Qty <span class="text-red-500">*</span></label>
-                <input v-model.number="step1.qty" type="number" min="1" placeholder="cth: 1000"
-                  class="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition" />
-                <p v-if="maxQty" class="text-[10px] text-neutral-500 mt-0.5">Qty PO Item: {{ maxQty }} pcs</p>
+                <input
+                  v-model="step1.qty"
+                  type="text"
+                  readonly
+                  class="w-full rounded-lg border border-neutral-200 bg-neutral-50 cursor-not-allowed text-neutral-500 px-3 py-2 text-sm focus:outline-none"
+                />
+                <p class="text-[10px] text-neutral-500 mt-0.5">
+                  Otomatis terisi dari jumlah size shells di Langkah 2.
+                  <span v-if="maxQty">(Qty PO Item: {{ maxQty }} pcs)</span>
+                </p>
               </div>
               <div class="space-y-1.5">
                 <label class="text-xs font-semibold text-neutral-700">Delivery Date <span class="text-red-500">*</span></label>
@@ -467,17 +479,17 @@ const handleSubmit = async () => {
                 </div>
                 <div class="space-y-1">
                   <label class="text-[10px] font-bold text-neutral-500 uppercase">Cons (yd) *</label>
-                  <input v-model.number="shell.cons" type="number" step="0.001" min="0.001" placeholder="1.5"
+                  <input v-model="shell.cons" type="text" placeholder="1.5"
                     class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition" />
                 </div>
                 <div class="space-y-1">
                   <label class="text-[10px] font-bold text-neutral-500 uppercase">Allow (%) *</label>
-                  <input v-model.number="shell.allow" type="number" min="1" placeholder="3"
+                  <input v-model="shell.allow" type="text" placeholder="3"
                     class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition" />
                 </div>
                 <div class="space-y-1">
                   <label class="text-[10px] font-bold text-neutral-500 uppercase">Berat/yd (kg) *</label>
-                  <input v-model.number="shell.berat_1_yd" type="number" step="0.001" min="0.001" placeholder="0.8"
+                  <input v-model="shell.berat_1_yd" type="text" placeholder="0.8"
                     class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition" />
                 </div>
               </div>
@@ -489,8 +501,7 @@ const handleSubmit = async () => {
                   <button
                     @click="addSize(si)"
                     type="button"
-                    :disabled="!step1.qty || getShellTotalQty(si) >= step1.qty"
-                    class="text-xs font-semibold text-neutral-600 hover:text-neutral-900 flex items-center gap-1 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="text-xs font-semibold text-neutral-600 hover:text-neutral-900 flex items-center gap-1 transition"
                   >
                     <PlusCircleIcon class="w-3.5 h-3.5" /> Tambah Ukuran
                   </button>
@@ -514,20 +525,15 @@ const handleSubmit = async () => {
                       <tbody class="divide-y divide-neutral-100">
                         <tr v-for="(size, zi) in shell.sizes" :key="zi" class="bg-white">
                           <td class="px-3 py-2">
-                            <select v-model="size.size"
-                              class="w-full rounded border border-neutral-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-neutral-400 bg-white">
-                              <option value="">Pilih Ukuran...</option>
-                              <option v-for="opt in SIZE_OPTIONS" :key="opt" :value="opt" :disabled="isSizeDisabled(si, zi, opt)">
-                                {{ opt }}
-                              </option>
-                            </select>
+                            <input v-model="size.size" type="text" placeholder="cth: L / XL / 32"
+                              class="w-full rounded border border-neutral-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-neutral-400 bg-white" />
                           </td>
                           <td class="px-3 py-2">
-                            <input v-model.number="size.qty" type="number" min="0" placeholder="200"
+                            <input v-model="size.qty" type="text" placeholder="200"
                               class="w-full rounded border border-neutral-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-neutral-400" />
                           </td>
                           <td class="px-3 py-2">
-                            <input v-model.number="size.ratio" type="number" min="1" placeholder="2"
+                            <input v-model="size.ratio" type="text" placeholder="2"
                               class="w-full rounded border border-neutral-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-neutral-400" />
                           </td>
                           <td class="px-3 py-2">
@@ -541,13 +547,10 @@ const handleSubmit = async () => {
                   </div>
                   <div class="flex justify-between items-center bg-neutral-100/70 px-3 py-2 rounded-lg text-xs font-semibold">
                     <span class="text-neutral-600">Total Qty Sizes:</span>
-                    <span :class="getShellTotalQty(si) > (step1.qty || 0) ? 'text-red-600 font-bold' : 'text-neutral-800'">
-                      {{ getShellTotalQty(si) }} / {{ step1.qty || 0 }} pcs
+                    <span class="text-neutral-800">
+                      {{ getShellTotalQty(si) }} pcs
                     </span>
                   </div>
-                  <p v-if="getShellTotalQty(si) > (step1.qty || 0)" class="text-[10px] text-red-500 font-semibold mt-1">
-                    Total qty sizes ({{ getShellTotalQty(si) }} pcs) tidak boleh melebihi Qty WO ({{ step1.qty }} pcs)!
-                  </p>
                 </div>
               </div>
             </div>
@@ -605,12 +608,12 @@ const handleSubmit = async () => {
                   </div>
                   <div class="space-y-1">
                     <label class="text-[10px] font-bold text-neutral-500 uppercase">Cons</label>
-                    <input v-model.number="trim.cons" type="number" step="0.001" min="0" placeholder="1.0"
+                    <input v-model="trim.cons" type="text" placeholder="1.0"
                       class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition" />
                   </div>
                   <div class="space-y-1">
                     <label class="text-[10px] font-bold text-neutral-500 uppercase">Qty</label>
-                    <input v-model.number="trim.qty" type="number" min="0" placeholder="100"
+                    <input v-model="trim.qty" type="text" placeholder="100"
                       class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition" />
                   </div>
                   <div class="space-y-1">
@@ -625,7 +628,7 @@ const handleSubmit = async () => {
                   </div>
                   <div class="space-y-1">
                     <label class="text-[10px] font-bold text-neutral-500 uppercase">Allow (%) *</label>
-                    <input v-model.number="trim.allow" type="number" min="1" placeholder="3"
+                    <input v-model="trim.allow" type="text" placeholder="3"
                       class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition" />
                   </div>
                   <div class="space-y-1">

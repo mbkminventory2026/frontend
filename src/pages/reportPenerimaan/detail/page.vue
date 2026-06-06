@@ -16,6 +16,7 @@ import {
 
 import { getReportPenerimaanById, updateReportPenerimaan } from '@/api/reportPenerimaan/reportPenerimaan';
 import { useForm } from '@/composables/form/useForm';
+import { parseToInt } from '@/lib/number';
 
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -34,6 +35,8 @@ const form = useForm({
         get: () => getReportPenerimaanById(id.value),
         update: (_id, payload) => {
             const { created_at, id_received, ...data } = payload;
+            if (data.qty !== undefined) data.qty = parseToInt(data.qty);
+            if (data.id_material_list !== undefined) data.id_material_list = parseToInt(data.id_material_list);
             return updateReportPenerimaan(id_received || id, data);
         }
     },

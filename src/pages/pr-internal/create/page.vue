@@ -7,6 +7,7 @@ import { toast } from 'vue-sonner';
 import { createPRInternal } from '@/api/pr-internals/pr-internals';
 import { getWorkOrders, getWorkOrderById, type WorkOrderListItem } from '@/api/work-orders/work-orders';
 import { formatRupiah } from '@/lib/formatter';
+import { parseToInt } from '@/lib/number';
 
 import AppForm from '@/components/form/AppForm.vue';
 import AppFormField from '@/components/form/AppFormField.vue';
@@ -184,13 +185,13 @@ const handleEstPriceInput = (event: Event, item: any) => {
 // Computed totals
 const totalFormQty = computed(() => {
     if (!values.value.items) return 0;
-    return values.value.items.reduce((acc: number, curr: any) => acc + Number(curr.qty || 0), 0);
+    return values.value.items.reduce((acc: number, curr: any) => acc + parseToInt(curr.qty || 0), 0);
 });
 
 const grandFormTotal = computed(() => {
     if (!values.value.items) return 0;
     return values.value.items.reduce((acc: number, curr: any) => {
-        return acc + (Number(curr.qty || 0) * parseRupiahToNumber(curr.estPrice));
+        return acc + (parseToInt(curr.qty || 0) * parseRupiahToNumber(curr.estPrice));
     }, 0);
 });
 
@@ -209,7 +210,7 @@ form.save = async () => {
         return;
     }
     for (const item of values.value.items) {
-        if (!item.item || !item.unit || item.qty <= 0) {
+        if (!item.item || !item.unit || parseToInt(item.qty) <= 0) {
             toast.error("Harap lengkapi semua baris item (Nama Item, Satuan, dan Qty > 0).");
             return;
         }
@@ -227,7 +228,7 @@ form.save = async () => {
         items: values.value.items.map((item: any) => ({
             item: item.item,
             description: item.description || '',
-            qty: Number(item.qty),
+            qty: parseToInt(item.qty),
             unit: item.unit,
             est_price: parseRupiahToNumber(item.estPrice),
         })),
@@ -396,7 +397,7 @@ onMounted(() => {
                                         </template>
                                     </td>
                                     <td class="p-3">
-                                        <Input v-model="item.qty" type="number" min="1" class="h-9 text-sm border-neutral-200 text-center focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" />
+                                        <Input v-model="item.qty" type="text" class="h-9 text-sm border-neutral-200 text-center focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" />
                                     </td>
                                     <td class="p-3">
                                         <Input v-model="item.unit" placeholder="PCS, Roll, Kg..." class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" />

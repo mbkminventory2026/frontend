@@ -18,6 +18,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { parseToInt } from '@/lib/number';
 import { toast } from 'vue-sonner';
 
 import type { WorkOrderShell, WorkOrderShellSize } from '@/api/work-orders/work-orders';
@@ -42,7 +43,7 @@ const totalQty = (shell: WorkOrderShell) =>
 const isReportDialogOpen = ref(false);
 const selectedSize = ref<WorkOrderShellSize | null>(null);
 const reportDate = ref('');
-const reportQty = ref<number | ''>('');
+const reportQty = ref<string>('');
 const reportDivision = ref('cutting');
 const isSubmittingReport = ref(false);
 
@@ -104,12 +105,13 @@ const submitReport = async () => {
         toast.error('Harap isi Tanggal laporan.');
         return;
     }
-    if (reportQty.value === '' || Number(reportQty.value) <= 0) {
+    const qtyVal = parseToInt(reportQty.value);
+    if (reportQty.value === '' || qtyVal <= 0) {
         toast.error('Jumlah QTY harus lebih dari 0.');
         return;
     }
 
-    if (maxQty.value !== null && Number(reportQty.value) > maxQty.value) {
+    if (maxQty.value !== null && qtyVal > maxQty.value) {
         toast.error(
             `QTY tidak boleh melebihi output ${prevDivisionLabel.value}: ${maxQty.value.toLocaleString('id-ID')} pcs.`
         );
@@ -120,7 +122,7 @@ const submitReport = async () => {
     try {
         await createFactoryReport(reportDivision.value, {
             id_wo_shell_size: selectedSize.value.id_wo_shell_size,
-            qty: Number(reportQty.value),
+            qty: qtyVal,
             tanggal: reportDate.value,
         });
         toast.success('Laporan produksi berhasil ditambahkan!');
@@ -292,8 +294,7 @@ const submitReport = async () => {
                         <Label class="text-xs font-semibold text-neutral-700">Jumlah Qty (pcs) <span class="text-red-500">*</span></Label>
                         <Input
                             v-model="reportQty"
-                            type="number"
-                            min="1"
+                            type="text"
                             placeholder="Qty pcs"
                             class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white animate-none"
                         />

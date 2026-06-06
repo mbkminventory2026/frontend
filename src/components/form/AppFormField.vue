@@ -36,6 +36,25 @@ if (!form) {
 }
 
 const { values } = form
+
+const onNumberInput = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  let raw = target.value;
+  
+  // Filter input to allow only digits, commas, and dots
+  let cleaned = raw.replace(/[^0-9,.]/g, '');
+  
+  // Ensure at most one decimal separator (comma or dot)
+  const firstSepIdx = cleaned.search(/[,.]/);
+  if (firstSepIdx !== -1) {
+    const before = cleaned.slice(0, firstSepIdx + 1);
+    const after = cleaned.slice(firstSepIdx + 1).replace(/[,.]/g, '');
+    cleaned = before + after;
+  }
+
+  target.value = cleaned;
+  values[props.name] = cleaned;
+};
 </script>
 
 <template>
@@ -78,6 +97,19 @@ const { values } = form
         v-model="values[props.name]" 
         :placeholder="props.placeholder"
         class="min-h-[200px] leading-relaxed"
+        :aria-invalid="props.error ? 'true' : undefined"
+        :disabled="props.disabled"
+      />
+    </template>
+
+    <!-- Number Input (custom wrapper to allow comma/dot) -->
+    <template v-else-if="props.type === 'number'">
+      <Input
+        :id="props.name"
+        type="text"
+        :value="values[props.name]"
+        @input="onNumberInput($event)"
+        :placeholder="props.placeholder"
         :aria-invalid="props.error ? 'true' : undefined"
         :disabled="props.disabled"
       />

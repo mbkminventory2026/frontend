@@ -6,6 +6,7 @@ import { toast } from 'vue-sonner';
 
 import { useForm } from '@/composables/form/useForm';
 import { usePermission } from '@/composables/usePermission';
+import { parseToFloat } from '@/lib/number';
 
 import AppForm from '@/components/form/AppForm.vue';
 import AppFormField from '@/components/form/AppFormField.vue';
@@ -132,18 +133,31 @@ watch(() => id.value, (newId) => {
   formId.value = newId;
 });
 
+const parseSchemaNumbers = (payload: any) => {
+  if (!payload) return payload;
+  const copy = { ...payload };
+  props.formSchema.forEach((field) => {
+    if (field.type === 'number' && copy[field.name] !== undefined) {
+      copy[field.name] = parseToFloat(copy[field.name]);
+    }
+  });
+  return copy;
+};
+
 const form = useForm({
   api: {
     get: (formId.value && props.getApi) ? () => props.getApi!(formId.value!) : undefined,
     update: formId.value
       ? (_id, payload) => {
-          const processed = props.payloadProcessor ? props.payloadProcessor(payload) : payload;
-          const resourceId = props.idExtractor ? props.idExtractor(payload) : payload.id;
+          const parsed = parseSchemaNumbers(payload);
+          const processed = props.payloadProcessor ? props.payloadProcessor(parsed) : parsed;
+          const resourceId = props.idExtractor ? props.idExtractor(parsed) : parsed.id;
           return props.updateApi(resourceId, processed);
         }
       : undefined,
     create: (payload) => {
-      const processed = props.payloadProcessor ? props.payloadProcessor(payload) : payload;
+      const parsed = parseSchemaNumbers(payload);
+      const processed = props.payloadProcessor ? props.payloadProcessor(parsed) : parsed;
       return props.createApi(processed);
     },
   },

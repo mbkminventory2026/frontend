@@ -75,9 +75,8 @@ const {
                   <Label for="qty_s" class="text-[10px] font-bold text-slate-600 block text-center">S</Label>
                   <Input
                     id="qty_s"
-                    type="number"
-                    v-model.number="form.qty_s"
-                    min="0"
+                    type="text"
+                    v-model="form.qty_s"
                     placeholder="0"
                     class="h-8 text-center text-xs font-medium border-slate-200"
                   />
@@ -86,9 +85,8 @@ const {
                   <Label for="qty_m" class="text-[10px] font-bold text-slate-600 block text-center">M</Label>
                   <Input
                     id="qty_m"
-                    type="number"
-                    v-model.number="form.qty_m"
-                    min="0"
+                    type="text"
+                    v-model="form.qty_m"
                     placeholder="0"
                     class="h-8 text-center text-xs font-medium border-slate-200"
                   />
@@ -97,9 +95,8 @@ const {
                   <Label for="qty_l" class="text-[10px] font-bold text-slate-600 block text-center">L</Label>
                   <Input
                     id="qty_l"
-                    type="number"
-                    v-model.number="form.qty_l"
-                    min="0"
+                    type="text"
+                    v-model="form.qty_l"
                     placeholder="0"
                     class="h-8 text-center text-xs font-medium border-slate-200"
                   />
@@ -108,9 +105,8 @@ const {
                   <Label for="qty_xl" class="text-[10px] font-bold text-slate-600 block text-center">XL</Label>
                   <Input
                     id="qty_xl"
-                    type="number"
-                    v-model.number="form.qty_xl"
-                    min="0"
+                    type="text"
+                    v-model="form.qty_xl"
                     placeholder="0"
                     class="h-8 text-center text-xs font-medium border-slate-200"
                   />
@@ -119,9 +115,8 @@ const {
                   <Label for="qty_xxl" class="text-[10px] font-bold text-slate-600 block text-center">XXL</Label>
                   <Input
                     id="qty_xxl"
-                    type="number"
-                    v-model.number="form.qty_xxl"
-                    min="0"
+                    type="text"
+                    v-model="form.qty_xxl"
                     placeholder="0"
                     class="h-8 text-center text-xs font-medium border-slate-200"
                   />
@@ -248,10 +243,8 @@ const {
                   <Label for="konsumsi_kain_per_pcs" class="text-xs font-semibold text-slate-700">Konsumsi Kain (meter/pcs)</Label>
                   <Input
                     id="konsumsi_kain_per_pcs"
-                    type="number"
-                    step="0.01"
-                    v-model.number="form.konsumsi_kain_per_pcs"
-                    min="0.01"
+                    type="text"
+                    v-model="form.konsumsi_kain_per_pcs"
                     placeholder="Contoh: 1.25"
                     class="h-9 border-slate-200 text-xs"
                   />
