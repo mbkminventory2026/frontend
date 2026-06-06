@@ -21,6 +21,46 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { formatDate } from '@/lib/formatter';
 
+// Helper to sort sizes from smallest to largest
+const standardSizeOrder = [
+  'os', 'onesize', 'one size',
+  '3xs', 'xxxs',
+  '2xs', 'xxs',
+  'xs',
+  's',
+  'm',
+  'l',
+  'xl',
+  '2xl', 'xxl',
+  '3xl', 'xxxl',
+  '4xl', 'xxxxl',
+  '5xl', 'xxxxxl'
+];
+
+const getSizeWeight = (sizeStr: string): number => {
+  const clean = sizeStr.trim().toLowerCase();
+  const num = parseFloat(clean);
+  if (!isNaN(num)) {
+    return num;
+  }
+  const idx = standardSizeOrder.indexOf(clean);
+  if (idx !== -1) {
+    return idx - 100;
+  }
+  return 999;
+};
+
+const sortSizes = <T extends { size: string } | string>(items: T[]): T[] => {
+  return [...items].sort((a, b) => {
+    const sizeA = typeof a === 'string' ? a : a.size;
+    const sizeB = typeof b === 'string' ? b : b.size;
+    const wA = getSizeWeight(sizeA);
+    const wB = getSizeWeight(sizeB);
+    if (wA !== wB) return wA - wB;
+    return sizeA.localeCompare(sizeB, undefined, { numeric: true, sensitivity: 'base' });
+  });
+};
+
 // ─── API Lists ────────────────────────────────────────────────────────────────
 const poList = ref<POClientListItem[]>([]);
 const woList = ref<WorkOrderListItem[]>([]);
@@ -31,10 +71,9 @@ const isLoadingWO = ref(false);
 const selectedPoId = ref<number | ''>('');
 const selectedWoId = ref<number | ''>('');
 const selectedColor = ref<string>('');
-const selectedSizeId = ref<number | ''>('');
 const selectedReportType = ref<string>('');
 const tanggal = ref('');
-const qty = ref<string>('');
+const sizeQuantities = ref<Record<number, string>>({});
 
 const isSaving = ref(false);
 const isLoadingWoDetail = ref(false);
@@ -81,14 +120,13 @@ const uniqueColors = computed(() => {
 const availableSizes = computed(() => {
   if (!selectedColor.value || !woDetail.value?.shells) return [];
   const shell = woDetail.value.shells.find((s) => s.color === selectedColor.value);
-  return shell?.sizes ?? [];
+  return sortSizes(shell?.sizes ?? []);
 });
 
 // Reset logic on cascades
 watch(selectedPoId, () => {
   selectedWoId.value = '';
   selectedColor.value = '';
-  selectedSizeId.value = '';
   woDetail.value = null;
   summaryItems.value = [];
   dailyReports.value = [];
@@ -96,7 +134,6 @@ watch(selectedPoId, () => {
 
 watch(selectedWoId, async (newWoId) => {
   selectedColor.value = '';
-  selectedSizeId.value = '';
   woDetail.value = null;
   summaryItems.value = [];
   dailyReports.value = [];
@@ -121,16 +158,15 @@ watch(selectedWoId, async (newWoId) => {
   }
 });
 
-watch(selectedColor, () => {
-  selectedSizeId.value = '';
-});
+watch(availableSizes, (newSizes) => {
+  sizeQuantities.value = {};
+  newSizes.forEach((sz) => {
+    sizeQuantities.value[sz.id_wo_shell_size] = '0';
+  });
+}, { immediate: true });
 
 // ─── Submitting Daily Output ───────────────────────────────────────────────
 const handleSubmitReport = async () => {
-  if (!selectedSizeId.value) {
-    toast.error('Harap pilih Size/Ukuran terlebih dahulu.');
-    return;
-  }
   if (!selectedReportType.value) {
     toast.error('Harap pilih Bentuk Report terlebih dahulu.');
     return;
@@ -139,21 +175,37 @@ const handleSubmitReport = async () => {
     toast.error('Harap isi Tanggal laporan.');
     return;
   }
-  const qtyVal = parseInt(qty.value) || 0;
-  if (qtyVal <= 0) {
-    toast.error('QTY Output harus lebih dari 0.');
+
+  const updates = availableSizes.value.map((sz) => {
+    const qtyVal = parseInt(sizeQuantities.value[sz.id_wo_shell_size] || '0') || 0;
+    return {
+      id_wo_shell_size: sz.id_wo_shell_size,
+      qty: qtyVal
+    };
+  }).filter((up) => up.qty > 0);
+
+  if (updates.length === 0) {
+    toast.error('Harap isi minimal salah satu QTY ukuran dengan angka lebih dari 0.');
     return;
   }
 
   isSaving.value = true;
   try {
-    await createFactoryReport(selectedReportType.value, {
-      id_wo_shell_size: Number(selectedSizeId.value),
-      tanggal: tanggal.value,
-      qty: qtyVal
+    await Promise.all(
+      updates.map((up) =>
+        createFactoryReport(selectedReportType.value, {
+          id_wo_shell_size: up.id_wo_shell_size,
+          tanggal: tanggal.value,
+          qty: up.qty
+        })
+      )
+    );
+    toast.success(`Berhasil menyimpan laporan untuk ${updates.length} ukuran!`);
+
+    // Reset all inputs to 0
+    availableSizes.value.forEach((sz) => {
+      sizeQuantities.value[sz.id_wo_shell_size] = '0';
     });
-    toast.success('Laporan output produksi berhasil disimpan!');
-    qty.value = '';
 
     // Re-fetch data to update bottom table
     if (selectedWoId.value) {
@@ -181,7 +233,7 @@ const uniqueSizes = computed(() => {
       shell.sizes.forEach((s) => sizes.add(s.size));
     }
   });
-  return Array.from(sizes);
+  return sortSizes(Array.from(sizes));
 });
 
 interface SizeData {
@@ -272,11 +324,7 @@ const tableData = computed<ColorRow[]>(() => {
 });
 
 // ─── BOTTOM SECTION: SINGLE-COLOR DAILY HISTORY TABLE DATA ───────────────────────────────
-const selectedColorSizes = computed(() => {
-  if (!selectedColor.value || !woDetail.value?.shells) return [];
-  const shell = woDetail.value.shells.find((s) => s.color === selectedColor.value);
-  return shell?.sizes ?? [];
-});
+const selectedColorSizes = computed(() => availableSizes.value);
 
 const selectedColorSizeNames = computed(() =>
   selectedColorSizes.value.map((s) => s.size)
@@ -536,7 +584,7 @@ onMounted(() => {
           </div>
         </div>
 
-        <!-- Row 2: Color, Size & Report Type -->
+        <!-- Row 2: Color, Report Type, Date -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
           <div class="space-y-1.5">
             <Label class="text-xs font-semibold text-neutral-700">Warna (Rujukan) <span class="text-red-500">*</span></Label>
@@ -549,25 +597,6 @@ onMounted(() => {
                 <option value="">Pilih Warna</option>
                 <option v-for="color in uniqueColors" :key="color" :value="color">
                   {{ color }}
-                </option>
-              </select>
-              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5">
-                <ChevronDownIcon class="w-4 h-4 text-neutral-400" />
-              </div>
-            </div>
-          </div>
-
-          <div class="space-y-1.5">
-            <Label class="text-xs font-semibold text-neutral-700">Size / Ukuran (Rujukan) <span class="text-red-500">*</span></Label>
-            <div class="relative">
-              <select
-                v-model="selectedSizeId"
-                :disabled="!selectedColor"
-                class="w-full h-9 rounded-md border border-neutral-200 bg-white pl-3 pr-9 py-1 text-sm shadow-xs transition-colors outline-none focus-visible:ring-2 focus-visible:ring-neutral-800 disabled:cursor-not-allowed disabled:opacity-60 appearance-none cursor-pointer"
-              >
-                <option value="" disabled>Pilih Ukuran</option>
-                <option v-for="sizeOpt in availableSizes" :key="sizeOpt.id_wo_shell_size" :value="sizeOpt.id_wo_shell_size">
-                  Size {{ sizeOpt.size }} [Qty Order: {{ sizeOpt.qty }}]
                 </option>
               </select>
               <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5">
@@ -595,18 +624,37 @@ onMounted(() => {
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Row 3: Date & Qty -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div class="space-y-1.5">
             <Label class="text-xs font-semibold text-neutral-700">Tanggal Laporan <span class="text-red-500">*</span></Label>
             <Input id="tanggal" v-model="tanggal" type="date" class="h-9 text-xs border-neutral-200" required />
           </div>
+        </div>
 
-          <div class="space-y-1.5">
-            <Label class="text-xs font-semibold text-neutral-700">QTY Output <span class="text-red-500">*</span></Label>
-            <Input id="qty" v-model="qty" type="number" min="1" placeholder="Masukkan QTY Output Produksi" class="h-9 text-xs border-neutral-200" required />
+        <!-- Sizes QTY Inputs Grid -->
+        <div v-if="selectedColor && availableSizes.length > 0" class="border-t border-neutral-100 pt-5 mt-4 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold text-neutral-800 uppercase tracking-wider flex items-center gap-2">
+              <span class="inline-block w-1.5 h-4 bg-neutral-900 rounded-full"></span>
+              Input QTY Output per Ukuran (Warna: {{ selectedColor }}) <span class="text-red-500">*</span>
+            </h3>
+            <span class="text-[11px] text-neutral-500">Isi 0 jika tidak ada update (wajib diisi)</span>
+          </div>
+          
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div v-for="sz in availableSizes" :key="sz.id_wo_shell_size" class="bg-neutral-50/50 border border-neutral-200/80 p-3 rounded-lg flex flex-col gap-1.5 shadow-sm">
+              <div class="flex items-center justify-between text-xs font-semibold text-neutral-700">
+                <span>Size {{ sz.size }}</span>
+                <span class="text-[10px] text-neutral-400 font-normal">[Order: {{ sz.qty }}]</span>
+              </div>
+              <Input
+                type="number"
+                min="0"
+                v-model="sizeQuantities[sz.id_wo_shell_size]"
+                class="h-8 text-xs border-neutral-200 bg-white text-right font-mono"
+                required
+              />
+            </div>
           </div>
         </div>
 
@@ -614,7 +662,7 @@ onMounted(() => {
         <div class="flex justify-end pt-3">
           <Button
             type="submit"
-            :disabled="isSaving || !selectedSizeId || !selectedReportType"
+            :disabled="isSaving || !selectedColor || !selectedReportType"
             class="bg-neutral-900 hover:bg-neutral-800 text-white shadow-sm font-medium transition-all"
           >
             <SaveIcon class="w-4 h-4 mr-2" />
