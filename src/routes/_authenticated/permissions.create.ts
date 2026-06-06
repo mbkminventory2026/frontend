@@ -1,10 +1,9 @@
-import { createFileRoute } from '@tanstack/vue-router'
+import { createFileRoute, redirect } from '@tanstack/vue-router'
 import PermissionsCreatePage from '@/pages/permissions/create/page.vue'
-import { requirePermission } from '@/lib/requirePermission'
 
 export const Route = createFileRoute('/_authenticated/permissions/create')({
     beforeLoad: () => {
-        requirePermission('PERMISSION_CREATE')()
+        throw redirect({ to: '/forbidden' })
     },
     component: PermissionsCreatePage,
     staticData: {
