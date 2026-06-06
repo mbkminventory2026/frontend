@@ -4,7 +4,7 @@ import { useSearch, useRouter } from '@tanstack/vue-router';
 import { PlusIcon, EyeIcon, PencilIcon } from 'lucide-vue-next';
 
 import { getPOClients, type POClientListItem } from '@/api/po-clients/po-clients';
-import { poClientSchema } from '@/routes/_authenticated/po-client.index';
+import { poClientSchema } from '@/pages/po-client/schema';
 
 import DataTable from '@/components/DataTable.vue';
 import { Button } from '@/components/ui/button';

@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/vue-router'
 import CompanyPage from '@/pages/company/page.vue'
+
 import { createTableParamsSchema } from '@/schemas/table-params'
 import { validateTableSearchRedirect, stripTableDefaults } from '@/lib/table-utils'
 import { requirePermission } from '@/lib/requirePermission'

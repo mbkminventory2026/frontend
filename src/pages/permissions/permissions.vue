@@ -8,7 +8,7 @@ import {
     getPermissions
 } from '@/api/permissions/permissions';
 import { type PermissionsResponseItem } from '@/schemas/permissions/response';
-import { permissionsSchema } from '@/routes/_authenticated/permissions.index';
+import { permissionsSchema } from '@/pages/permissions/schema';
 
 import DataTable from '@/components/DataTable.vue';
 import { Button } from '@/components/ui/button';

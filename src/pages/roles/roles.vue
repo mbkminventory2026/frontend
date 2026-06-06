@@ -11,7 +11,7 @@ import {
     deleteRole,
 } from '@/api/roles/roles';
 import { getPermissions } from '@/api/permissions/permissions';
-import { rolesSchema } from '@/routes/_authenticated/roles.index';
+import { rolesSchema } from '@/pages/roles/schema';
 
 import DataTable from '@/components/DataTable.vue';
 import AppDialog from '@/components/AppDialog.vue';

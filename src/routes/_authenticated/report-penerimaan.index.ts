@@ -1,13 +1,9 @@
+import { reportPenerimaanSchema } from '@/pages/reportPenerimaan/schema';
 import { createFileRoute } from '@tanstack/vue-router'
 import ReportPenerimaanPage from '@/pages/reportPenerimaan/page.vue'
-import { createTableParamsSchema } from '@/schemas/table-params'
+
 import { validateTableSearchRedirect, stripTableDefaults } from '@/lib/table-utils'
 import { requirePermission } from '@/lib/requirePermission'
-
-export const reportPenerimaanColumns: [string, ...string[]] = [
-    'created_at', 'tanggal', 'id_received', 'id_material_list', 'qty', 'keterangan'
-];
-export const reportPenerimaanSchema = createTableParamsSchema(reportPenerimaanColumns)
 
 export const Route = createFileRoute('/_authenticated/report-penerimaan/')({
   validateSearch: (search: Record<string, unknown>) => {

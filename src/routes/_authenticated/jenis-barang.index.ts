@@ -1,17 +1,9 @@
+import { jenisBarangSchema } from '@/pages/jenis-barang/schema';
 import { createFileRoute } from '@tanstack/vue-router'
 import JenisBarangPage from '@/pages/jenis-barang/page.vue'
-import { createTableParamsSchema } from '@/schemas/table-params'
+
 import { validateTableSearchRedirect, stripTableDefaults } from '@/lib/table-utils'
 import { requirePermission } from '@/lib/requirePermission'
-
-export const jenisBarangColumns: [string, ...string[]] = [
-    'created_at',
-    'id_jenis_barang',
-    'kode',
-    'nama_jenis_barang'
-]
-
-export const jenisBarangSchema = createTableParamsSchema(jenisBarangColumns)
 
 export const Route = createFileRoute('/_authenticated/jenis-barang/')({
     validateSearch: (search: Record<string, unknown>) => {
