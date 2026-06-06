@@ -24,7 +24,7 @@ import {
 import { getDepartemen } from '@/api/departemen/departemen';
 import { getMitra, getMitraById } from '@/api/mitra/mitra';
 import { getRoles } from '@/api/roles/roles';
-import { usersSchema } from '@/routes/_authenticated/users.index';
+import { usersSchema } from '@/pages/users/schema';
 
 import DataTable from '@/components/DataTable.vue';
 import AppDialog from '@/components/AppDialog.vue';

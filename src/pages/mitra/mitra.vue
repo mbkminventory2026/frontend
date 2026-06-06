@@ -8,7 +8,7 @@ import {
     getMitra
 } from '@/api/mitra/mitra';
 import { type MitraResponseItem } from '@/schemas/mitra/response';
-import { mitraSchema } from '@/routes/_authenticated/mitra.index';
+import { mitraSchema } from '@/pages/mitra/schema';
 
 import DataTable from '@/components/DataTable.vue';
 import { Button } from '@/components/ui/button';

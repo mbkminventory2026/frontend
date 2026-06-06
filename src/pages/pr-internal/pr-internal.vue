@@ -5,7 +5,7 @@ import { PlusIcon, EyeIcon, CheckCircleIcon, ClipboardListIcon, FileTextIcon } f
 import { toast } from 'vue-sonner';
 
 import { getPRInternals, approvePRInternal, type PRInternalListItem } from '@/api/pr-internals/pr-internals';
-import { prInternalSchema } from '@/routes/_authenticated/pr-internal.index';
+import { prInternalSchema } from '@/pages/pr-internal/schema';
 
 import DataTable from '@/components/DataTable.vue';
 import { Button } from '@/components/ui/button';

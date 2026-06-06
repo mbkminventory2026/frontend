@@ -5,7 +5,7 @@ import { PlusIcon, EyeIcon, PencilIcon } from 'lucide-vue-next';
 
 import { deleteWarna, getWarna } from '@/api/warna/warna';
 import { type WarnaResponseItem } from '@/schemas/warna/response';
-import { warnaSchema } from '@/routes/_authenticated/warna.index';
+import { warnaSchema } from '@/pages/warna/schema';
 
 import DataTable from '@/components/DataTable.vue';
 import { Button } from '@/components/ui/button';

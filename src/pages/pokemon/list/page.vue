@@ -6,7 +6,7 @@ import { Plus, Pencil } from 'lucide-vue-next';
 // API & Types
 import { getCoba, createCoba, updateCoba } from '@/api/coba/coba';
 import { type CobaListItem } from '@/schemas/coba/coba';
-import { pokemonSearchSchema } from '@/routes/_authenticated/pokemon';
+import { pokemonSearchSchema } from '@/pages/pokemon/list/schema';
 
 // Components
 import DataTable from '@/components/DataTable.vue';

@@ -1,17 +1,9 @@
+import { warnaSchema } from '@/pages/warna/schema';
 import { createFileRoute } from '@tanstack/vue-router'
 import WarnaPage from '@/pages/warna/page.vue'
-import { createTableParamsSchema } from '@/schemas/table-params'
+
 import { validateTableSearchRedirect, stripTableDefaults } from '@/lib/table-utils'
 import { requirePermission } from '@/lib/requirePermission'
-
-export const warnaColumns: [string, ...string[]] = [
-    'created_at',
-    'id_warna',
-    'nama_warna',
-    'kode_hex'
-]
-
-export const warnaSchema = createTableParamsSchema(warnaColumns)
 
 export const Route = createFileRoute('/_authenticated/warna/')({
     validateSearch: (search: Record<string, unknown>) => {
