@@ -632,7 +632,7 @@ onMounted(() => {
         </div>
 
         <!-- Sizes QTY Inputs Grid -->
-        <div v-if="selectedColor && availableSizes.length > 0" class="border-t border-neutral-100 pt-5 mt-4 space-y-4">
+        <div v-if="selectedColor && selectedReportType && availableSizes.length > 0" class="border-t border-neutral-100 pt-5 mt-4 space-y-4">
           <div class="flex items-center justify-between">
             <h3 class="text-xs font-bold text-neutral-800 uppercase tracking-wider flex items-center gap-2">
               <span class="inline-block w-1.5 h-4 bg-neutral-900 rounded-full"></span>
