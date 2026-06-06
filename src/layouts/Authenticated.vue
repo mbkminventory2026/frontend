@@ -213,10 +213,14 @@ const navMainItems = computed(() => {
       ],
     },
     {
-      title: "Laporan Pabrik",
+      title: "Laporan Produksi",
       url: "#",
       icon: ClipboardList,
       items: [
+        {
+          title: "Ringkasan Laporan",
+          url: "/reports",
+        },
         {
           title: "Cutting",
           url: "/reports/cutting/create",
