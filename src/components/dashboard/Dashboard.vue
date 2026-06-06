@@ -21,7 +21,7 @@ const emit = defineEmits<{
     <!-- Welcome Header Card -->
     <div class="bg-white p-6 rounded-xl shadow-sm border relative overflow-hidden flex flex-col md:flex-row items-center justify-between">
       <!-- Decorative top border -->
-      <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-indigo-500 via-blue-500 to-sky-400"></div>
+      <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-sidebar via-sidebar-accent to-sidebar-primary"></div>
       
       <div class="text-center md:text-left">
         <h1 class="text-2xl font-bold mb-1 text-slate-800">Dashboard Sistem</h1>
