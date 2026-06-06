@@ -95,10 +95,26 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
             accessorKey: 'status',
             cell: ({ row }) => {
                 const status = (row.getValue('status') as string || '').toLowerCase();
-                const isClosed = status === 'closed';
+                let badgeClass = 'bg-neutral-100 text-neutral-800 border border-neutral-200';
+                let label = status.toUpperCase();
+
+                if (status === 'closed') {
+                    badgeClass = 'bg-neutral-100 text-neutral-800 border border-neutral-200';
+                    label = 'Closed';
+                } else if (status === 'client_closed') {
+                    badgeClass = 'bg-amber-100 text-amber-800 border border-amber-200';
+                    label = 'Closed by Client';
+                } else if (status === 'open') {
+                    badgeClass = 'bg-emerald-100 text-emerald-800 border border-emerald-200';
+                    label = 'Open';
+                } else if (status === 'pending') {
+                    badgeClass = 'bg-blue-100 text-blue-800 border border-blue-200';
+                    label = 'Pending';
+                }
+
                 return h('span', {
-                    class: `inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${isClosed ? 'bg-neutral-100 text-neutral-800' : 'bg-emerald-100 text-emerald-800'}`
-                }, isClosed ? 'Closed' : 'Open');
+                    class: `inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${badgeClass}`
+                }, label);
             }
         },
         {
@@ -107,7 +123,7 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
             cell: ({ row }) => {
                 const id = row.getValue('id_wo') as number;
                 const status = (row.getValue('status') as string || '').toLowerCase();
-                const isOpen = status === 'open';
+                const isClientClosed = status === 'client_closed';
 
                 return h('div', { class: 'flex gap-2 justify-center items-center' }, [
                     h(Button, {
@@ -119,7 +135,7 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
                         h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
                         'View'
                     ]),
-                    ...(canClose.value && isOpen ? [
+                    ...(canClose.value && isClientClosed ? [
                         h(Button, {
                             variant: 'ghost',
                             size: 'sm',

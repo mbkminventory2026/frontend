@@ -59,6 +59,14 @@ export interface MaterialList {
   created_at: string;
 }
 
+export interface ReturClientResponse {
+  id_retur_client: number;
+  id_wo: number;
+  file: string;
+  deskripsi: string;
+  created_at: string;
+}
+
 export interface WorkOrderDetailResponse {
   id_wo: number;
   buyer: string;
@@ -76,6 +84,7 @@ export interface WorkOrderDetailResponse {
   shells: WorkOrderShell[];
   trims: WorkOrderTrim[];
   material_lists: MaterialList[];
+  retur?: ReturClientResponse;
 }
 
 export const getWorkOrders = async (params: {
@@ -138,4 +147,18 @@ export const updateWorkOrder = async (id: string | number, data: any) => {
 export const closeWorkOrder = async (id: string | number) => {
   if (!id) throw new Error("ID is required");
   return await apiClient.patch(`/api/v1/work-orders/${id}/close`);
+};
+
+export const submitWorkOrderReturn = async (id: string | number, formData: FormData) => {
+  if (!id) throw new Error("ID is required");
+  return await apiClient.post(`/api/v1/work-orders/${id}/retur`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
+
+export const clientCloseWorkOrder = async (id: string | number) => {
+  if (!id) throw new Error("ID is required");
+  return await apiClient.patch(`/api/v1/work-orders/${id}/client-close`);
 };

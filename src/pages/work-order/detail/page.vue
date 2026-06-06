@@ -10,19 +10,41 @@ import {
     CheckCircleIcon,
     CalendarIcon,
     HashIcon,
+    UndoIcon,
+    ArrowUpRightIcon,
 } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
-import { getWorkOrderById, closeWorkOrder, type WorkOrderDetailResponse, type WorkOrderShell } from '@/api/work-orders/work-orders';
+import {
+    getWorkOrderById,
+    closeWorkOrder,
+    clientCloseWorkOrder,
+    submitWorkOrderReturn,
+    type WorkOrderDetailResponse,
+    type WorkOrderShell
+} from '@/api/work-orders/work-orders';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { formatDate } from '@/lib/formatter';
 import WOShellSizeSheet from './WOShellSizeSheet.vue';
 
 import { usePermission } from '@/composables/usePermission';
+import { useAuthStore } from '@/store/authStore';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 
 const router = useRouter();
 const { hasPermission } = usePermission();
+const authStore = useAuthStore();
 const params = useParams({ from: '/_authenticated/work-order/$id' });
 const id = computed(() => params.value.id);
 
@@ -33,11 +55,19 @@ const isLoading = ref(true);
 const isSheetOpen = ref(false);
 const selectedShell = ref<WorkOrderShell | null>(null);
 
+// Dialog state untuk retur
+const isReturDialogOpen = ref(false);
+const returFile = ref<File | null>(null);
+const returDeskripsi = ref('');
+const isSubmittingRetur = ref(false);
+
+const isClient = computed(() => authStore.isMitra);
 const canClose = computed(() => {
     return hasPermission('WO_CLOSE');
 });
 
 const isWOOpen = computed(() => detail.value?.status?.toLowerCase() === 'open');
+const isClientClosed = computed(() => detail.value?.status?.toLowerCase() === 'client_closed');
 
 const fetchDetail = async () => {
     isLoading.value = true;
@@ -59,6 +89,48 @@ const handleCloseWO = async () => {
         await fetchDetail();
     } catch (error: any) {
         toast.error(error.response?.data?.message || 'Gagal menutup Work Order.');
+    }
+};
+
+const handleClientCloseWO = async () => {
+    if (!confirm('Apakah Anda yakin ingin menandai Work Order ini selesai? Setelah ditandai selesai, Anda tidak dapat mengajukan retur lagi.')) return;
+    try {
+        await clientCloseWorkOrder(id.value);
+        toast.success('Work Order berhasil ditandai selesai.');
+        await fetchDetail();
+    } catch (error: any) {
+        toast.error(error.response?.data?.message || 'Gagal menandai selesai.');
+    }
+};
+
+const handleFileChange = (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    if (target.files && target.files.length > 0) {
+        returFile.value = target.files[0] || null;
+    }
+};
+
+const handleSubmitRetur = async () => {
+    if (!returFile.value) {
+        toast.error('Surat jalan (file) wajib diunggah.');
+        return;
+    }
+    isSubmittingRetur.value = true;
+    try {
+        const formData = new FormData();
+        formData.append('file', returFile.value);
+        formData.append('deskripsi', returDeskripsi.value);
+
+        await submitWorkOrderReturn(id.value, formData);
+        toast.success('Retur berhasil diajukan.');
+        isReturDialogOpen.value = false;
+        returFile.value = null;
+        returDeskripsi.value = '';
+        await fetchDetail();
+    } catch (error: any) {
+        toast.error(error.response?.data?.message || 'Gagal mengajukan retur.');
+    } finally {
+        isSubmittingRetur.value = false;
     }
 };
 
@@ -96,10 +168,12 @@ onMounted(fetchDetail);
                                     'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold',
                                     isWOOpen
                                         ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
-                                        : 'bg-neutral-100 text-neutral-600 border border-neutral-200'
+                                        : isClientClosed
+                                            ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                                            : 'bg-neutral-100 text-neutral-600 border border-neutral-200'
                                 ]"
                             >
-                                {{ detail.status }}
+                                {{ detail.status === 'client_closed' ? 'Closed by Client' : detail.status }}
                             </span>
                         </div>
                         <p class="text-sm text-neutral-500 mt-0.5">
@@ -118,7 +192,24 @@ onMounted(fetchDetail);
                         Kembali
                     </Button>
                     <Button
-                        v-if="canClose && isWOOpen"
+                        v-if="isClient && isWOOpen && !detail.retur"
+                        @click="isReturDialogOpen = true"
+                        variant="outline"
+                        class="flex-1 md:flex-none border-amber-300 hover:bg-amber-50 text-amber-700 shadow-xs"
+                    >
+                        <UndoIcon class="w-4 h-4 mr-2" />
+                        Ajukan Retur
+                    </Button>
+                    <Button
+                        v-if="isClient && isWOOpen"
+                        @click="handleClientCloseWO"
+                        class="flex-1 md:flex-none bg-amber-600 hover:bg-amber-700 text-white border border-amber-700 shadow-xs"
+                    >
+                        <CheckCircleIcon class="w-4 h-4 mr-2" />
+                        Tandai Selesai
+                    </Button>
+                    <Button
+                        v-if="canClose && isClientClosed"
                         @click="handleCloseWO"
                         class="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-700 text-white border border-emerald-700 shadow-xs"
                     >
@@ -212,6 +303,42 @@ onMounted(fetchDetail);
 
                 <!-- RIGHT — Main Content -->
                 <div class="md:col-span-2 space-y-6">
+
+                    <!-- Client Return Card -->
+                    <div v-if="detail.retur" class="bg-amber-50/50 rounded-xl border border-amber-200 shadow-sm overflow-hidden mb-6">
+                        <div class="bg-amber-50 border-b border-amber-200 px-5 py-3.5 flex items-center justify-between">
+                            <h2 class="text-xs font-bold text-amber-800 uppercase tracking-wider flex items-center gap-2">
+                                <UndoIcon class="w-3.5 h-3.5 text-amber-700" />
+                                Informasi Pengajuan Retur
+                            </h2>
+                            <span class="text-[10px] font-semibold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">
+                                Diajukan pada {{ formatDate(detail.retur.created_at) }}
+                            </span>
+                        </div>
+                        <div class="p-5 space-y-4">
+                            <div class="space-y-1">
+                                <p class="text-[10px] font-bold text-amber-600/80 uppercase tracking-wider">Deskripsi Retur</p>
+                                <p class="text-sm text-neutral-700 leading-relaxed">
+                                    {{ detail.retur.deskripsi || 'Tidak ada deskripsi yang disertakan.' }}
+                                </p>
+                            </div>
+                            <Separator class="bg-amber-200/50" />
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <FileTextIcon class="w-4 h-4 text-amber-700" />
+                                    <span class="text-xs text-neutral-600 font-medium">Dokumen Surat Jalan</span>
+                                </div>
+                                <a
+                                    :href="'http://localhost:8080/' + detail.retur.file"
+                                    target="_blank"
+                                    class="inline-flex items-center gap-1 text-xs font-semibold text-amber-700 hover:text-amber-800 hover:underline cursor-pointer"
+                                >
+                                    Lihat / Unduh Dokumen
+                                    <ArrowUpRightIcon class="w-3.5 h-3.5" />
+                                </a>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- WO Shells Table -->
                     <div class="bg-white rounded-xl border border-neutral-200 shadow-sm overflow-hidden">
@@ -372,5 +499,67 @@ onMounted(fetchDetail);
             :shell="selectedShell"
             @update:is-open="isSheetOpen = $event"
         />
+
+        <!-- Dialog Ajukan Retur -->
+        <Dialog :open="isReturDialogOpen" @update:open="isReturDialogOpen = $event">
+            <DialogContent class="sm:max-w-md bg-white border border-neutral-200 shadow-xl rounded-xl p-6">
+                <DialogHeader class="space-y-2">
+                    <DialogTitle class="text-xl font-bold text-neutral-900 flex items-center gap-2">
+                        <UndoIcon class="w-5 h-5 text-amber-600" />
+                        Ajukan Retur Client
+                    </DialogTitle>
+                    <DialogDescription class="text-xs text-neutral-500">
+                        Unggah dokumen surat jalan dan berikan deskripsi/alasan mengajukan retur untuk Work Order ini.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <form @submit.prevent="handleSubmitRetur" class="space-y-4 mt-4">
+                    <div class="space-y-1.5">
+                        <Label for="file" class="text-xs font-bold text-neutral-700 uppercase tracking-wider">
+                            Surat Jalan (File) <span class="text-red-500">*</span>
+                        </Label>
+                        <Input
+                            id="file"
+                            type="file"
+                            accept="image/*,application/pdf"
+                            required
+                            @change="handleFileChange"
+                            class="text-xs file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-neutral-100 file:text-neutral-700 hover:file:bg-neutral-200 border-neutral-300"
+                        />
+                        <p class="text-[10px] text-neutral-400">Pilih berkas PDF atau gambar (JPEG, PNG, dsb.). Max 10MB.</p>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <Label for="deskripsi" class="text-xs font-bold text-neutral-700 uppercase tracking-wider">
+                            Deskripsi / Alasan Retur
+                        </Label>
+                        <Textarea
+                            id="deskripsi"
+                            v-model="returDeskripsi"
+                            placeholder="Tuliskan alasan pengembalian/retur secara detail..."
+                            class="min-h-[100px] text-xs border-neutral-300"
+                        />
+                    </div>
+
+                    <DialogFooter class="flex gap-2 sm:gap-0 mt-6 pt-4 border-t border-neutral-100">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            @click="isReturDialogOpen = false"
+                            class="border-neutral-300 text-neutral-700"
+                        >
+                            Batal
+                        </Button>
+                        <Button
+                            type="submit"
+                            :disabled="isSubmittingRetur"
+                            class="bg-neutral-900 hover:bg-neutral-800 text-white"
+                        >
+                            {{ isSubmittingRetur ? 'Mengirim...' : 'Kirim Pengajuan' }}
+                        </Button>
+                    </DialogFooter>
+                </form>
+            </DialogContent>
+        </Dialog>
     </div>
 </template>
