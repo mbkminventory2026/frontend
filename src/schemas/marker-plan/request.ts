@@ -1,6 +1,6 @@
 export interface CreateRatioSizeMarkerRequest {
   id_wo_shell_size: number;
-  qty_plan: number;
+  ratio_plan: number;
 }
 
 export interface CreateRatioMarkerRequest {

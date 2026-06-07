@@ -390,7 +390,7 @@ const handleSubmit = async () => {
           ket: rat.ket,
           sizes: rat.sizes.map((sz) => ({
             id_wo_shell_size: sz.id_wo_shell_size,
-            qty_plan: Math.round((parseFloat(sz.ratio_plan) || 0) * (parseFloat(rat.plan_spreading_gelaran) || 0))
+            ratio_plan: parseInt(sz.ratio_plan) || 0
           }))
         }))
       }))
