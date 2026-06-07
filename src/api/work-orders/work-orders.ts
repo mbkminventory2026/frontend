@@ -204,3 +204,17 @@ export const getWorkOrderReturns = async (params: {
   };
 };
 
+export interface DailyReportListItem {
+  division: string;
+  tanggal: string;
+  qty: number;
+  id_wo_shell_size: number;
+}
+
+export const getWorkOrderDailyReports = async (id: string | number) => {
+  if (!id) throw new Error("ID is required");
+  const response = await apiClient.get<{ items: DailyReportListItem[] }>(
+    `/api/v1/work-orders/${id}/daily-reports`
+  );
+  return response.data;
+};

@@ -23,6 +23,7 @@ import {
   Shield,
   Factory,
   ClipboardList,
+  ClipboardCheck,
 } from "lucide-vue-next"
 import { useAuthStore } from "@/store/authStore"
 import { usePermission } from '@/composables/usePermission'
@@ -191,6 +192,16 @@ const navMainItems = computed(() => {
           permission: "WO_READ",
         },
         {
+          title: "Marker Plan",
+          url: "/marker-plan",
+          permission: "MARKER_PLAN_READ",
+        },
+        {
+          title: "Packing List",
+          url: "/packing-list",
+          permission: "PACKING_LIST_READ",
+        },
+        {
           title: "PR Internal",
           url: "/pr-internal",
           permission: "PO_INTERNAL_READ",
@@ -218,10 +229,26 @@ const navMainItems = computed(() => {
       ],
     },
     {
-      title: "Laporan Pabrik",
+      title: "Approval",
+      url: "#",
+      icon: ClipboardCheck,
+      items: [
+        {
+          title: "Cek & Approval",
+          url: "/approvals",
+          permission: "has_any_approval",
+        },
+      ],
+    },
+    {
+      title: "Laporan Produksi",
       url: "#",
       icon: ClipboardList,
       items: [
+        {
+          title: "Ringkasan Laporan",
+          url: "/reports",
+        },
         {
           title: "Cutting",
           url: "/reports/cutting/create",
@@ -261,6 +288,17 @@ const navMainItems = computed(() => {
         return {
           ...item,
           items: item.items.filter((subItem) => {
+            if (subItem.permission === 'has_any_approval') {
+              const approvalPermissions = [
+                'PR_INTERNAL_READ',
+                'PO_INTERNAL_READ',
+                'WO_READ',
+                'MARKER_PLAN_READ',
+                'TIMELINE_READ',
+                'PACKING_LIST_READ'
+              ]
+              return approvalPermissions.some((permission) => hasPermission(permission))
+            }
             return !subItem.permission || hasPermission(subItem.permission)
           })
         }

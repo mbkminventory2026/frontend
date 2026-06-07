@@ -19,15 +19,28 @@ import { Spinner } from '@/components/ui/spinner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { formatDate } from '@/lib/formatter';
+import { useAuthStore } from '@/store/authStore';
 
 const router = useRouter();
 const { hasPermission } = usePermission();
+const authStore = useAuthStore();
 const params = useParams({ from: '/_authenticated/roles/$id' });
 const id = computed(() => params.value.id);
 
 const values = ref<any>(null);
 const allPermissions = ref<any[]>([]);
 const isLoading = ref(false);
+
+const canModify = computed(() => {
+    if (!values.value) return false;
+    const isSuperAdmin = authStore.roleName === 'SUPER_ADMIN';
+    const targetRoleName = values.value.nama_role;
+    return isSuperAdmin || (
+        targetRoleName !== 'SUPER_ADMIN' &&
+        targetRoleName !== 'OPERATOR' &&
+        targetRoleName !== authStore.roleName
+    );
+});
 
 const matchedPermissions = computed(() => {
     if (!values.value || !values.value.hak_akses_ids || allPermissions.value.length === 0) return [];
@@ -83,7 +96,7 @@ onMounted(() => {
                         Kembali
                     </Button>
                     <Button
-                        v-if="hasPermission('ROLE_UPDATE')"
+                        v-if="hasPermission('ROLE_UPDATE') && canModify"
                         @click="router.navigate({ to: '/roles/edit/$id', params: { id } })"
                         class="flex-1 md:flex-none"
                     >

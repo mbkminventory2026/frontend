@@ -12,6 +12,7 @@ const clientRouteTargets: RouteTarget[] = [
   { path: '/po-client', permission: 'PO_CLIENT_READ' },
   { path: '/work-order', permission: 'WO_READ' },
   { path: '/production-summary', permission: 'PRODUCTION_SUMMARY_READ' },
+  { path: '/packing-list', permission: 'PACKING_LIST_READ' },
 ]
 
 const internalDefaultTargets: RouteTarget[] = [

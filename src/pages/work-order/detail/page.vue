@@ -896,13 +896,32 @@ onMounted(fetchDetail);
                                         </span>
                                     </td>
                                     <td class="px-4 py-3.5 text-center">
-                                        <button
-                                            type="button"
-                                            @click.stop="selectShell(shell.id_wo_shell)"
-                                            class="text-[10px] font-semibold text-neutral-500 group-hover:text-neutral-800 underline underline-offset-2 transition-colors"
-                                        >
-                                            Lihat Progress &amp; Sizes →
-                                        </button>
+                                        <div class="flex items-center justify-center gap-2">
+                                            <button
+                                                type="button"
+                                                @click.stop="selectShell(shell.id_wo_shell)"
+                                                class="text-[10px] font-semibold text-neutral-500 group-hover:text-neutral-800 underline underline-offset-2 transition-colors"
+                                            >
+                                                Lihat Progress &amp; Sizes →
+                                            </button>
+                                            <template v-if="hasPermission('MARKER_PLAN_CREATE')">
+                                                <span class="text-neutral-300">|</span>
+                                                <button
+                                                    type="button"
+                                                    @click.stop="router.navigate({ 
+                                                        to: '/marker-plan/create', 
+                                                        search: { 
+                                                            poNumber: detail.po_number, 
+                                                            woId: detail.id_wo, 
+                                                            shellId: shell.id_wo_shell 
+                                                        } 
+                                                    })"
+                                                    class="text-[10px] font-semibold text-emerald-600 hover:text-emerald-800 underline underline-offset-2 transition-colors"
+                                                >
+                                                    Buat Marker Plan
+                                                </button>
+                                            </template>
+                                        </div>
                                     </td>
                                 </tr>
                             </tbody>
