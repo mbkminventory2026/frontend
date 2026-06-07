@@ -188,7 +188,7 @@ const navMainItems = computed(() => {
         },
         {
           title: "Marker Plan",
-          url: "/marker-plan/create",
+          url: "/marker-plan",
           permission: "MARKER_PLAN_READ",
         },
         {
