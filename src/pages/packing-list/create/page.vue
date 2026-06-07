@@ -26,6 +26,7 @@ const woDetail = ref<WorkOrderDetailResponse | null>(null);
 
 // Header state
 interface RejectSizeInput {
+  id_wo_shell_size: number;
   qty: string;
   sizeName: string;
 }
@@ -38,6 +39,7 @@ const totalReject = computed(() => {
 
 // Dynamic Box Groups State
 interface SizeInput {
+  id_wo_shell_size: number;
   qty: string;
   sizeName: string;
 }
@@ -123,6 +125,7 @@ watch(selectedWoId, async (newWoId) => {
       
       // Initialize reject sizes state
       rejectSizes.value = woSizes.value.map(sz => ({
+        id_wo_shell_size: sz.id_wo_shell_size,
         qty: '',
         sizeName: sz.size
       }));
@@ -157,6 +160,7 @@ const addBoxGroup = () => {
     box_no_end: String(nextStart),
     note: '',
     sizes: woSizes.value.map(sz => ({
+      id_wo_shell_size: sz.id_wo_shell_size,
       qty: '',
       sizeName: sz.size
     }))
@@ -264,10 +268,12 @@ const handleSubmit = async () => {
         box_no_end: parseInt(group.box_no_end),
         note: group.note,
         sizes: group.sizes.map(sz => ({
+          id_wo_shell_size: sz.id_wo_shell_size,
           qty: parseInt(sz.qty) || 0
         }))
       })),
       reject_sizes: rejectSizes.value.map(sz => ({
+        id_wo_shell_size: sz.id_wo_shell_size,
         qty: parseInt(sz.qty) || 0
       }))
     };

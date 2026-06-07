@@ -161,9 +161,9 @@ onMounted(() => {
                             </CardTitle>
                         </CardHeader>
                         <CardContent class="p-5 space-y-3 text-sm">
-                            <div v-for="(sz, sIdx) in woSizes" :key="sz.id_wo_shell_size" class="flex justify-between items-center py-1.5 border-b border-neutral-100 last:border-0">
+                            <div v-for="sz in woSizes" :key="sz.id_wo_shell_size" class="flex justify-between items-center py-1.5 border-b border-neutral-100 last:border-0">
                                 <span class="text-neutral-500 font-medium">Size {{ sz.size }}</span>
-                                <span class="font-bold text-neutral-900 font-mono">{{ (detail.reject_sizes[sIdx]?.qty || 0).toLocaleString('id-ID') }} Pcs</span>
+                                <span class="font-bold text-neutral-900 font-mono">{{ (detail.reject_sizes?.find(r => r.id_wo_shell_size === sz.id_wo_shell_size)?.qty || 0).toLocaleString('id-ID') }} Pcs</span>
                             </div>
                         </CardContent>
                     </Card>
@@ -210,8 +210,8 @@ onMounted(() => {
                                             <td class="px-3 py-3 font-sans">{{ item.color }}</td>
                                             
                                             <!-- Dynamic size quantities mapping -->
-                                            <td v-for="(sz, sIdx) in woSizes" :key="sz.id_wo_shell_size" class="px-3 py-3 text-center text-neutral-600">
-                                                {{ item.sizes[sIdx]?.qty || 0 }}
+                                            <td v-for="sz in woSizes" :key="sz.id_wo_shell_size" class="px-3 py-3 text-center text-neutral-600">
+                                                {{ item.sizes?.find(s => s.id_wo_shell_size === sz.id_wo_shell_size)?.qty || 0 }}
                                             </td>
                                             
                                             <!-- Qty per Box -->

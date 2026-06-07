@@ -1,4 +1,5 @@
 export interface CreatePackingListItemSizeRequest {
+  id_wo_shell_size: number;
   qty: number;
 }
 
@@ -13,6 +14,7 @@ export interface CreatePackingListItemRequest {
 }
 
 export interface CreatePackingListRejectSizeRequest {
+  id_wo_shell_size: number;
   qty: number;
 }
 
