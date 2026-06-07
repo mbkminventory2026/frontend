@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed, watch } from 'vue';
+import { useSearch } from '@tanstack/vue-router';
 import { toast } from 'vue-sonner';
 import { 
   ClipboardCheck, 
@@ -53,9 +54,20 @@ const isLoadingHistory = ref(false);
 const historyPage = ref(1);
 const historyLimit = 10;
 
+const search = useSearch({ strict: false }) as any;
+
 // Filters
-const selectedTableFilter = ref('');
-const selectedStatusFilter = ref('approved'); // Default to approved history
+const selectedTableFilter = ref(search.value?.table || '');
+const selectedStatusFilter = ref(search.value?.status || 'approved'); // Default to approved history
+
+const filteredPendingItems = computed(() => {
+  if (!selectedTableFilter.value) return pendingItems.value;
+  return pendingItems.value.filter(item => item.nama_tabel_dokumen === selectedTableFilter.value);
+});
+
+watch(() => search.value?.table, (newTable) => {
+  selectedTableFilter.value = newTable || '';
+});
 
 // ─── Modal State ───────────────────────────────────────
 const showReviewModal = ref(false);
@@ -294,7 +306,7 @@ onMounted(() => {
       </div>
 
       <!-- Empty State -->
-      <div v-else-if="pendingItems.length === 0" class="flex flex-col items-center justify-center py-10 px-4 text-center bg-white/50 dark:bg-neutral-950/30 border border-neutral-200/60 dark:border-neutral-800/80 rounded-xl shadow-xs">
+      <div v-else-if="filteredPendingItems.length === 0" class="flex flex-col items-center justify-center py-10 px-4 text-center bg-white/50 dark:bg-neutral-950/30 border border-neutral-200/60 dark:border-neutral-800/80 rounded-xl shadow-xs">
         <div class="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 p-3 rounded-full mb-3">
           <CheckCircle2 class="w-8 h-8 text-emerald-500 dark:text-emerald-400" />
         </div>
@@ -319,7 +331,7 @@ onMounted(() => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            <TableRow v-for="item in pendingItems" :key="item.id_otoritas_detail" class="hover:bg-neutral-50/40 dark:hover:bg-neutral-900/20">
+            <TableRow v-for="item in filteredPendingItems" :key="item.id_otoritas_detail" class="hover:bg-neutral-50/40 dark:hover:bg-neutral-900/20">
               <TableCell>
                 <div class="flex items-center gap-2">
                   <span class="p-1.5 rounded-lg border" :class="getDocTypeClass(item.nama_tabel_dokumen)">
