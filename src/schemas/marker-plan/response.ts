@@ -18,6 +18,10 @@ export interface RatioMarkerResponse {
   cons_buyer?: number | null;
   roll_qty: number;
   sambungan_roll: number;
+  plot: number;
+  lebar_kain: number;
+  panjang_marker_unit: string;
+  ket: string;
   created_at: string;
   sizes: RatioSizeMarkerResponse[];
 }
