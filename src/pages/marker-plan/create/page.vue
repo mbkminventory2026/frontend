@@ -57,6 +57,7 @@ interface RatioInput {
 
 interface ComponentInput {
   nama_komponen: string;
+  id_wo_shell: number | '';
   ratios: RatioInput[];
 }
 
@@ -138,9 +139,11 @@ watch(selectedShellId, (newShellId) => {
 });
 
 const initDefaultComponent = (shell: WorkOrderShell) => {
+  const name = shell.color ? `${shell.fabric} ${shell.color}` : shell.fabric;
   components.value = [
     {
-      nama_komponen: 'Fabric Utama',
+      nama_komponen: name,
+      id_wo_shell: shell.id_wo_shell,
       ratios: [
         createEmptyRatio(shell)
       ]
@@ -168,12 +171,10 @@ const createEmptyRatio = (shell: WorkOrderShell): RatioInput => {
 };
 
 const addComponent = () => {
-  if (!selectedShell.value) return;
   components.value.push({
     nama_komponen: '',
-    ratios: [
-      createEmptyRatio(selectedShell.value)
-    ]
+    id_wo_shell: '',
+    ratios: []
   });
 };
 
@@ -181,11 +182,55 @@ const removeComponent = (compIdx: number) => {
   components.value.splice(compIdx, 1);
 };
 
-const addRatioRow = (compIdx: number) => {
-  if (!selectedShell.value) return;
+const handleComponentShellChange = (compIdx: number) => {
   const comp = components.value[compIdx];
-  if (comp) {
-    comp.ratios.push(createEmptyRatio(selectedShell.value));
+  if (!comp) return;
+
+  if (comp.id_wo_shell === '') {
+    comp.ratios = [];
+    return;
+  }
+
+  const shell = woDetail.value?.shells.find((s) => s.id_wo_shell === comp.id_wo_shell);
+  if (shell) {
+    if (comp.ratios.length === 0) {
+      comp.ratios.push(createEmptyRatio(shell));
+    } else {
+      comp.ratios = comp.ratios.map((ratio) => {
+        return {
+          ...ratio,
+          id_wo_shell: shell.id_wo_shell,
+          sizes: (shell.sizes ?? []).map((sz) => {
+            const existingSize = ratio.sizes.find((s) => s.size === sz.size);
+            return {
+              id_wo_shell_size: sz.id_wo_shell_size,
+              size: sz.size,
+              qty_plan: existingSize ? existingSize.qty_plan : ''
+            };
+          })
+        };
+      });
+    }
+  }
+};
+
+const getComponentShell = (comp: ComponentInput): WorkOrderShell | null => {
+  if (!comp.id_wo_shell || !woDetail.value?.shells) return null;
+  return woDetail.value.shells.find((s) => s.id_wo_shell === comp.id_wo_shell) ?? null;
+};
+
+const addRatioRow = (compIdx: number) => {
+  const comp = components.value[compIdx];
+  if (!comp) return;
+
+  if (comp.id_wo_shell === '') {
+    toast.error('Harap pilih Fabric / Shell Rujukan untuk komponen ini terlebih dahulu.');
+    return;
+  }
+
+  const shell = woDetail.value?.shells.find((s) => s.id_wo_shell === comp.id_wo_shell);
+  if (shell) {
+    comp.ratios.push(createEmptyRatio(shell));
   }
 };
 
@@ -226,6 +271,10 @@ const handleSubmit = async () => {
       toast.error(`Harap isi nama komponen pada Komponen #${cIdx + 1}`);
       return;
     }
+    if (!comp.id_wo_shell) {
+      toast.error(`Harap pilih Fabric / Shell Rujukan pada Komponen "${comp.nama_komponen || cIdx + 1}"`);
+      return;
+    }
     let rIdx = 0;
     for (const rat of comp.ratios) {
       // Check mandatory fields
@@ -262,7 +311,7 @@ const handleSubmit = async () => {
       components: components.value.map((comp) => ({
         nama_komponen: comp.nama_komponen,
         ratios: comp.ratios.map((rat) => ({
-          id_wo_shell: Number(selectedShellId.value),
+          id_wo_shell: Number(comp.id_wo_shell),
           cons: parseFloat(rat.cons) || 0,
           plan_spreading_gelaran: parseFloat(rat.plan_spreading_gelaran) || 0,
           panjang_marker: parseFloat(rat.panjang_marker) || 0,
@@ -458,10 +507,38 @@ onMounted(async () => {
             </button>
 
             <!-- Component Header inputs -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-md">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
               <div class="space-y-1.5">
                 <Label class="text-xs font-semibold text-neutral-700">Nama Komponen <span class="text-red-500">*</span></Label>
-                <Input v-model="comp.nama_komponen" type="text" placeholder="Contoh: Fabric Utama, Interlining, Kantong" class="h-9 text-xs bg-white border-neutral-200" required />
+                <Input
+                  v-model="comp.nama_komponen"
+                  type="text"
+                  placeholder="Contoh: Fabric Utama, Interlining, Kantong"
+                  class="h-9 text-xs bg-white border-neutral-200"
+                  :disabled="compIdx === 0"
+                  required
+                />
+              </div>
+
+              <div class="space-y-1.5">
+                <Label class="text-xs font-semibold text-neutral-700">Fabric / Shell Rujukan <span class="text-red-500">*</span></Label>
+                <div class="relative">
+                  <select
+                    v-model="comp.id_wo_shell"
+                    :disabled="compIdx === 0"
+                    @change="handleComponentShellChange(compIdx)"
+                    class="w-full h-9 rounded-md border border-neutral-200 bg-white pl-3 pr-9 py-1 text-sm shadow-xs transition-colors outline-none focus-visible:ring-2 focus-visible:ring-neutral-800 disabled:cursor-not-allowed disabled:opacity-60 appearance-none cursor-pointer"
+                    required
+                  >
+                    <option value="" disabled>Pilih Fabric / Shell</option>
+                    <option v-for="shell in woDetail?.shells" :key="shell.id_wo_shell" :value="shell.id_wo_shell">
+                      {{ shell.fabric }} ({{ shell.color }})
+                    </option>
+                  </select>
+                  <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5">
+                    <ChevronDownIcon class="w-4 h-4 text-neutral-400" />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -481,13 +558,20 @@ onMounted(async () => {
                       <th class="px-3 py-2.5 w-[6%]">Roll Qty</th>
                       <th class="px-3 py-2.5 w-[6%]">Sambungan</th>
                       <!-- Dynamic size headers -->
-                      <th v-for="sz in selectedShell.sizes" :key="sz.id_wo_shell_size" class="px-3 py-2.5 text-center w-[6%] bg-neutral-100/50">
+                      <th v-for="sz in (getComponentShell(comp)?.sizes || [])" :key="sz.id_wo_shell_size" class="px-3 py-2.5 text-center w-[6%] bg-neutral-100/50">
                         Sz {{ sz.size }}
                       </th>
                       <th class="px-3 py-2.5 text-center w-[5%]">Aksi</th>
                     </tr>
                   </thead>
-                  <tbody class="divide-y divide-neutral-150 text-neutral-800">
+                  <tbody v-if="comp.ratios.length === 0" class="text-neutral-800">
+                    <tr>
+                      <td :colspan="9 + (getComponentShell(comp)?.sizes?.length || 0)" class="p-6 text-center text-neutral-400 italic">
+                        Belum ada data ratio. Silakan pilih Fabric / Shell Rujukan terlebih dahulu kemudian klik "Tambah Baris Ratio".
+                      </td>
+                    </tr>
+                  </tbody>
+                  <tbody v-else class="divide-y divide-neutral-150 text-neutral-800">
                     <tr v-for="(ratio, ratioIdx) in comp.ratios" :key="ratioIdx" class="hover:bg-neutral-50/30 transition-colors">
                       <!-- Cons -->
                       <td class="p-2">
