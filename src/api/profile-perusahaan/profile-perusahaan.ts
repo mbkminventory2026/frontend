@@ -1,8 +1,8 @@
 import { apiClient } from "@/lib/apiClient";
 import { mapPayloadToSnakeCase } from "@/lib/utils";
 import type {
-    CompanyResponseItem
-} from '@/schemas/company/response';
+    ProfilePerusahaanResponseItem
+} from '@/schemas/profile-perusahaan/response';
 
 /**
  * Clean payload from null or undefined values
@@ -43,7 +43,6 @@ const processPayload = async (data: any) => {
         if (val instanceof File) {
             snakeCaseValue[key] = await fileToBase64(val);
         } else if (Array.isArray(val) && val[0] instanceof File) {
-            // Handle multiple files if needed, here just first one for simplicity
             snakeCaseValue[key] = await fileToBase64(val[0]);
         }
     }
@@ -51,12 +50,12 @@ const processPayload = async (data: any) => {
     return snakeCaseValue;
 }
 
-export const getCompany = async (params: {
+export const getProfilePerusahaan = async (params: {
     limit: number,
     offset: number,
     search?: string
 }) => {
-    const response = await apiClient.get<CompanyResponseItem[]>('/api/v1/master/company', {
+    const response = await apiClient.get<ProfilePerusahaanResponseItem[]>('/api/v1/master/profile-perusahaan', {
         params: {
             limit: params.limit,
             offset: params.offset,
@@ -64,7 +63,7 @@ export const getCompany = async (params: {
         }
     })
 
-    console.log('getCompany response:', response.data);
+    console.log('getProfilePerusahaan response:', response.data);
 
     return {
         results: response.data,
@@ -72,29 +71,27 @@ export const getCompany = async (params: {
     }
 }
 
-export const createCompany = async (data: any) => {
+export const createProfilePerusahaan = async (data: any) => {
     const payload = await processPayload(data);
     console.log('Final Create Payload:', payload);
-    // Send as JSON always
-    return await apiClient.post('/api/v1/master/company', payload);
+    return await apiClient.post('/api/v1/master/profile-perusahaan', payload);
 }
 
-export const updateCompany = async (id: string | number, data: any) => {
+export const updateProfilePerusahaan = async (id: string | number, data: any) => {
     const payload = await processPayload(data);
-    // Send as JSON always
-    return await apiClient.put(`/api/v1/master/company/${id}`, payload);
+    return await apiClient.put(`/api/v1/master/profile-perusahaan/${id}`, payload);
 }
 
-export const deleteCompany = async (id: string | number) => {
+export const deleteProfilePerusahaan = async (id: string | number) => {
     if (!id) throw new Error("ID is required for deletion");
 
-    return await apiClient.delete(`/api/v1/master/company/${id}`);
+    return await apiClient.delete(`/api/v1/master/profile-perusahaan/${id}`);
 }
 
-export const getCompanyById = async (id: string | number) => {
+export const getProfilePerusahaanById = async (id: string | number) => {
     if (!id) throw new Error("ID is required");
 
-    const response = await apiClient.get<CompanyResponseItem[]>(`/api/v1/master/company/${id}`);
+    const response = await apiClient.get<ProfilePerusahaanResponseItem[]>(`/api/v1/master/profile-perusahaan/${id}`);
     const data = response.data;
     return Array.isArray(data) ? data[0] : data;
 }

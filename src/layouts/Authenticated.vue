@@ -24,6 +24,7 @@ import {
   Factory,
   ClipboardList,
   ClipboardCheck,
+  Building,
 } from "lucide-vue-next"
 import { useAuthStore } from "@/store/authStore"
 import { usePermission } from '@/composables/usePermission'
@@ -88,6 +89,12 @@ const navMainItems = computed(() => {
 
   const rawItems: NavSection[] = [
     {
+      title: "Profil Perusahaan",
+      url: "/profile-perusahaan",
+      icon: Building,
+      permission: "MASTER_PROFILE_PERUSAHAAN_READ",
+    },
+    {
       title: "Dashboard",
       url: "/dashboard",
       icon: LayoutDashboard,
@@ -129,11 +136,6 @@ const navMainItems = computed(() => {
           title: "Daftar Warna",
           url: "/warna",
           permission: "MASTER_WARNA_READ",
-        },
-        {
-          title: "Profil Perusahaan",
-          url: "/company",
-          permission: "MASTER_COMPANY_READ",
         },
       ],
     },

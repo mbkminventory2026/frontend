@@ -10,7 +10,7 @@ import {
     User,
 } from 'lucide-vue-next';
 
-import { getCompany, updateCompany } from '@/api/company/company';
+import { getProfilePerusahaan, updateProfilePerusahaan } from '@/api/profile-perusahaan/profile-perusahaan';
 import { useForm } from '@/composables/form/useForm';
 import { useAddressField } from '@/composables/form/useAddressField';
 
@@ -34,14 +34,14 @@ import AppFormField from '@/components/form/AppFormField.vue';
 
 const form = useForm({
     api: {
-        get: () => getCompany({ limit: 1, offset: 0 }),
+        get: () => getProfilePerusahaan({ limit: 1, offset: 0 }),
         update: (_id, payload) => {
             // Remove read-only fields
-            const { id_company, created_at, ...data } = payload;
-            return updateCompany(id_company, data);
+            const { id_profile_perusahaan, created_at, ...data } = payload;
+            return updateProfilePerusahaan(id_profile_perusahaan, data);
         }
     },
-    id: 'id_company', // Just a placeholder to trigger update mode, logic handled in update function
+    id: 'id_profile_perusahaan', // Just a placeholder to trigger update mode, logic handled in update function
     immediate: true
 });
 
@@ -59,7 +59,7 @@ const { parsedAddress } = useAddressField(() => values.value?.alamat);
             <p class="text-muted-foreground animate-pulse">Memuat profil perusahaan...</p>
         </div>
 
-        <div v-else-if="values && values.id_company">
+        <div v-else-if="values && values.id_profile_perusahaan">
             <!-- VIEW MODE -->
             <div v-if="!isEditing" class="space-y-6 animate-in fade-in duration-500">
                 <!-- Header Section -->
