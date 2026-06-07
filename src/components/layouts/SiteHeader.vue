@@ -33,14 +33,14 @@ const handleLogout = () => {
 </script>
 
 <template>
-  <header class="bg-background sticky top-0 z-50 flex w-full items-center border-b">
+  <header class="bg-sidebar sticky top-0 z-50 flex w-full items-center border-sidebar-border border-b text-sidebar-foreground">
     <div 
       class="flex h-(--header-height) w-full items-center justify-between pr-4 transition-[padding] duration-200 ease-linear"
       :class="state === 'collapsed' ? 'pl-2' : 'pl-4'"
     >
       <div class="flex items-center">
         <Button
-          class="h-8 w-8"
+          class="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           variant="ghost"
           size="icon"
           @click="toggleSidebar"
@@ -52,18 +52,18 @@ const handleLogout = () => {
       <div class="flex items-center gap-4">
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
-            <Button variant="ghost" class="relative h-10 flex items-center gap-2 px-2 hover:bg-accent rounded-lg cursor-pointer">
+            <Button variant="ghost" class="relative h-10 flex items-center gap-2 px-2 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-lg cursor-pointer text-sidebar-foreground">
               <Avatar class="h-8 w-8 rounded-lg">
                 <AvatarImage src="/avatars/admin.jpg" :alt="username" />
-                <AvatarFallback class="rounded-lg bg-teal-800 text-white font-bold">
+                <AvatarFallback class="rounded-lg bg-sidebar-primary text-sidebar-primary-foreground font-bold">
                   {{ username.slice(0, 2).toUpperCase() }}
                 </AvatarFallback>
               </Avatar>
               <div class="hidden md:flex flex-col text-left text-xs leading-tight">
-                <span class="font-semibold text-slate-800 dark:text-slate-200">{{ username }}</span>
-                <span class="text-muted-foreground text-[10px]">{{ role }}</span>
+                <span class="font-semibold text-sidebar-foreground">{{ username }}</span>
+                <span class="text-sidebar-foreground/70 text-[10px]">{{ role }}</span>
               </div>
-              <ChevronsUpDown class="size-4 text-muted-foreground" />
+              <ChevronsUpDown class="size-4 text-sidebar-foreground/70" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent class="w-56" align="end" :side-offset="4">
