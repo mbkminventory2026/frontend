@@ -192,6 +192,11 @@ const navMainItems = computed(() => {
           permission: "MARKER_PLAN_READ",
         },
         {
+          title: "Timeline Produksi",
+          url: "/timeline-produksi",
+          permission: "TIMELINE_PRODUKSI_READ",
+        },
+        {
           title: "PR Internal",
           url: "/pr-internal",
           permission: "PO_INTERNAL_READ",
