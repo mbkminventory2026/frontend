@@ -295,7 +295,7 @@ const calculateConsPlusAllow = (ratio: RatioInput): number => {
 const calculateDiff = (ratio: RatioInput): number => {
   const consBuyer = parseFloat(ratio.cons_buyer) || 0;
   const consPlusAllow = calculateConsPlusAllow(ratio);
-  return consBuyer - consPlusAllow;
+  return consPlusAllow - consBuyer;
 };
 
 const calculateTotalNeedFabric = (ratio: RatioInput): number => {
