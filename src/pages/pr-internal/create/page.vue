@@ -8,6 +8,8 @@ import { createPRInternal } from '@/api/pr-internals/pr-internals';
 import { getWorkOrders, getWorkOrderById, type WorkOrderListItem } from '@/api/work-orders/work-orders';
 import { formatRupiah } from '@/lib/formatter';
 import { parseToInt } from '@/lib/number';
+import { useAuthStore } from '@/store/authStore';
+import { getUserById } from '@/api/users/users';
 
 import AppForm from '@/components/form/AppForm.vue';
 import AppFormField from '@/components/form/AppFormField.vue';
@@ -18,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { useForm } from '@/composables/form/useForm';
 
 const router = useRouter();
+const authStore = useAuthStore();
 
 // Setup form
 const form = useForm({
@@ -54,17 +57,24 @@ watch(() => values.value.idWo, async (newVal) => {
     isLoadingMaterials.value = true;
     try {
         const detail = await getWorkOrderById(Number(newVal));
-        woMaterials.value = detail.material_lists || [];
+        console.log("Work Order yang dipilih ID:", newVal);
+        console.log("Work Order detail response:", detail);
+        console.log("Isi material list dari Work Order:", detail.material_lists);
+        const materials = detail.material_lists || [];
+        woMaterials.value = materials;
 
-        // If items has only one empty default row, reset it so it prompts for materials selection
-        if (values.value.items) {
-            if (values.value.items.length === 1 && !values.value.items[0].item) {
-                values.value.items[0].isCustom = false;
-                values.value.items[0].materialId = null;
-            } else {
-                // Reset to one empty row to prevent mismatched material IDs from previous WO
-                values.value.items = [{ item: '', description: '', qty: 1, unit: '', estPrice: 'Rp 0', materialId: null, isCustom: false }];
-            }
+        if (materials.length > 0) {
+            values.value.items = materials.map((mat: any) => ({
+                materialId: mat.id_material_list,
+                isCustom: false,
+                item: mat.description,
+                unit: mat.uom,
+                qty: 1,
+                estPrice: 'Rp 0',
+                description: [mat.size, mat.color].filter(Boolean).join(' - ')
+            }));
+        } else {
+            values.value.items = [{ item: '', description: '', qty: 1, unit: '', estPrice: 'Rp 0', materialId: null, isCustom: true }];
         }
     } catch (e) {
         console.error('Gagal mengambil material Work Order:', e);
@@ -237,12 +247,26 @@ form.save = async () => {
     return originalSave(payload);
 };
 
-onMounted(() => {
+onMounted(async () => {
     fetchWorkOrdersData();
+    let departemen = '';
+    const claims = authStore.decodedClaims;
+    if (claims && claims.user_id) {
+        if (authStore.roleName === 'super-admin' || authStore.user?.username === 'super-admin') {
+            departemen = 'produksi';
+        } else {
+            try {
+                const userDetail = await getUserById(claims.user_id);
+                departemen = userDetail.nama_departemen || '';
+            } catch (e) {
+                console.error('Gagal mengambil departemen user:', e);
+            }
+        }
+    }
     values.value = {
         tanggal: '',
         nama: '',
-        departemen: '',
+        departemen: departemen,
         vendorName: '',
         vendorAddress: '',
         vendorTelp: '',
@@ -294,7 +318,7 @@ onMounted(() => {
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <AppFormField name="nama" label="Nama PR *" placeholder="Contoh: PR-INT-2026-001" />
                         <AppFormField name="tanggal" type="date" label="Tanggal *" />
-                        <AppFormField name="departemen" label="Departemen *" placeholder="Contoh: Produksi" />
+                        <AppFormField name="departemen" label="Departemen *" placeholder="Contoh: Produksi" disabled />
                         <AppFormField name="projek" label="Projek *" placeholder="Nama proyek terkait" />
                         <AppFormField
                             name="idWo"

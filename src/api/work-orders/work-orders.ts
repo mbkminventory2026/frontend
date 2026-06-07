@@ -14,6 +14,9 @@ export interface WorkOrderListItem {
   po_number: string;
   po_client_item_style: string;
   created_at: string;
+  has_retur: boolean;
+  id_po_client: number;
+  retur_file?: string;
 }
 
 export interface WorkOrderShellSize {
@@ -162,3 +165,42 @@ export const clientCloseWorkOrder = async (id: string | number) => {
   if (!id) throw new Error("ID is required");
   return await apiClient.patch(`/api/v1/work-orders/${id}/client-close`);
 };
+
+export interface ReturClientListItem {
+  id_retur_client: number;
+  id_wo: number;
+  file: string;
+  deskripsi: string;
+  created_at: string;
+  buyer: string;
+  model: string;
+  wo_qty: number;
+  po_number: string;
+  id_mitra: number;
+  mitra_name: string;
+  id_po_client: number;
+}
+
+export const getWorkOrderReturns = async (params: {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+}) => {
+  const response = await apiClient.get<{
+    items: ReturClientListItem[];
+    pagination: { total_items: number };
+  }>("/api/v1/work-orders/returns", {
+    params: {
+      page: params.page ?? 1,
+      pageSize: params.pageSize ?? 20,
+      search: params.search,
+    },
+  });
+
+  return {
+    results: response.data.items || [],
+    count:
+      response.data.pagination?.total_items || response.data.items?.length || 0,
+  };
+};
+

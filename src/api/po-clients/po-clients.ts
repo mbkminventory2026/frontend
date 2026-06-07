@@ -9,6 +9,9 @@ export interface POClientItemResponse {
     qty: number;
     price: number;
     created_at?: string;
+    id_wo?: number;
+    wo_status?: string;
+    has_retur?: boolean;
 }
 
 export interface PenanggungJawabResponse {
@@ -28,6 +31,7 @@ export interface POClientListItem {
     id_mitra: number;
     mitra_name: string;
     created_at: string;
+    has_retur?: boolean;
 }
 
 export interface POClientDetailResponse {

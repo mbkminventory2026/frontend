@@ -61,7 +61,20 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
     columns: [
         { header: 'Created At', accessorKey: 'created_at', cell: ({ row }) => formatDate(row.getValue('created_at')) },
         { header: 'ID PO', accessorKey: 'id_po_client' },
-        { header: 'PO Number', accessorKey: 'po_number' },
+        { 
+            header: 'PO Number', 
+            accessorKey: 'po_number',
+            cell: ({ row }) => {
+                const poNumber = row.getValue('po_number') as string;
+                const hasRetur = row.original.has_retur;
+                return h('div', { class: 'flex items-center gap-2' }, [
+                    h('span', { class: 'font-semibold' }, poNumber),
+                    hasRetur ? h('span', { 
+                        class: 'inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-800 border border-orange-200 animate-pulse' 
+                    }, 'Retur Diajukan') : null
+                ]);
+            }
+        },
         { header: 'Tanggal', accessorKey: 'tanggal', cell: ({ row }) => formatDate(row.getValue('tanggal')) },
         { header: 'Season', accessorKey: 'season' },
         { header: 'Delivery', accessorKey: 'delivery', cell: ({ row }) => formatDate(row.getValue('delivery')) },

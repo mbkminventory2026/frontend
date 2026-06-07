@@ -186,6 +186,11 @@ const navMainItems = computed(() => {
           permission: "WO_READ",
         },
         {
+          title: "Ajuan Pengembalian",
+          url: "/ajuan-pengembalian",
+          permission: "WO_READ",
+        },
+        {
           title: "PR Internal",
           url: "/pr-internal",
           permission: "PO_INTERNAL_READ",

@@ -17,10 +17,12 @@ import { Button } from '@/components/ui/button';
 import { useTable } from '@/composables/useTable';
 import { formatDate } from '@/lib/formatter';
 import { usePermission } from '@/composables/usePermission';
+import { useAuthStore } from '@/store/authStore';
 
 const router = useRouter();
 const search = useSearch({ strict: false }) as any;
 const { hasPermission } = usePermission();
+const authStore = useAuthStore();
 
 // ─── Table State ───────────────────────────────────────
 const data = ref<WorkOrderListItem[]>([]);
@@ -95,10 +97,17 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
             accessorKey: 'status',
             cell: ({ row }) => {
                 const status = (row.getValue('status') as string || '').toLowerCase();
+                const hasRetur = row.original.has_retur;
+                const role = (authStore.roleName || '').toUpperCase();
+                const isCompanyStaff = role === 'SUPER_ADMIN' || role === 'ADMIN_PRODUKSI';
+
                 let badgeClass = 'bg-neutral-100 text-neutral-800 border border-neutral-200';
                 let label = status.toUpperCase();
 
-                if (status === 'closed') {
+                if (isCompanyStaff && hasRetur) {
+                    badgeClass = 'bg-red-100 text-red-800 border border-red-200';
+                    label = 'DIKEMBALIKAN';
+                } else if (status === 'closed') {
                     badgeClass = 'bg-neutral-100 text-neutral-800 border border-neutral-200';
                     label = 'Closed';
                 } else if (status === 'client_closed') {
@@ -112,9 +121,33 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
                     label = 'Pending';
                 }
 
-                return h('span', {
+                const statusBadge = h('span', {
                     class: `inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${badgeClass}`
                 }, label);
+
+                if (hasRetur) {
+                    if (isCompanyStaff) {
+                        const fileLink = row.original.retur_file ? h('a', {
+                            href: 'http://localhost:8080/' + row.original.retur_file,
+                            target: '_blank',
+                            class: 'inline-flex items-center gap-1 text-[10px] font-bold text-red-700 hover:text-red-800 hover:underline cursor-pointer bg-red-50 border border-red-200 rounded px-1.5 py-0.5 ml-2 transition-colors duration-150',
+                            onClick: (e: Event) => e.stopPropagation()
+                        }, 'Lihat File Bukti') : null;
+                        
+                        return h('div', { class: 'flex items-center gap-1' }, [statusBadge, fileLink]);
+                    } else {
+                        const returBadge = h('span', {
+                            class: 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-orange-100 text-orange-800 border border-orange-200 cursor-pointer hover:bg-orange-200 ml-2 transition-colors duration-150',
+                            onClick: (e: Event) => {
+                                e.stopPropagation();
+                                router.navigate({ to: '/po-client/$id', params: { id: String(row.original.id_po_client) } });
+                            }
+                        }, 'Retur');
+                        return h('div', { class: 'flex items-center gap-1' }, [statusBadge, returBadge]);
+                    }
+                }
+
+                return statusBadge;
             }
         },
         {
@@ -143,7 +176,7 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
                             onClick: () => handleCloseWO(id)
                         }, () => [
                             h(CheckCircleIcon, { class: 'w-4 h-4 mr-1' }),
-                            'Selesaikan'
+                            'Tandai Selesai'
                         ])
                     ] : [])
                 ]);
