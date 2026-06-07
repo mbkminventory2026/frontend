@@ -192,6 +192,11 @@ const navMainItems = computed(() => {
           permission: "MARKER_PLAN_READ",
         },
         {
+          title: "Packing List",
+          url: "/packing-list",
+          permission: "PACKING_LIST_READ",
+        },
+        {
           title: "PR Internal",
           url: "/pr-internal",
           permission: "PO_INTERNAL_READ",
