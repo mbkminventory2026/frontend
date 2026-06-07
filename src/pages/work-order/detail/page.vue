@@ -391,13 +391,31 @@ onMounted(fetchDetail);
                                     </span>
                                 </td>
                                 <td class="px-4 py-3.5 text-center">
-                                    <button
-                                        type="button"
-                                        @click.stop="openShellSizes(shell)"
-                                        class="text-[10px] font-semibold text-neutral-500 group-hover:text-neutral-800 underline underline-offset-2 transition-colors"
-                                    >
-                                        Lihat Sizes →
-                                    </button>
+                                    <div class="flex items-center justify-center gap-2">
+                                        <button
+                                            type="button"
+                                            @click.stop="openShellSizes(shell)"
+                                            class="text-[10px] font-semibold text-neutral-500 hover:text-neutral-800 underline underline-offset-2 transition-colors"
+                                        >
+                                            Lihat Sizes
+                                        </button>
+                                        <span v-if="hasPermission('MARKER_PLAN_CREATE')" class="text-neutral-300">|</span>
+                                        <button
+                                            v-if="hasPermission('MARKER_PLAN_CREATE')"
+                                            type="button"
+                                            @click.stop="router.navigate({ 
+                                                to: '/marker-plan/create', 
+                                                search: { 
+                                                    poNumber: detail.po_number, 
+                                                    woId: detail.id_wo, 
+                                                    shellId: shell.id_wo_shell 
+                                                } 
+                                            })"
+                                            class="text-[10px] font-semibold text-emerald-600 hover:text-emerald-800 underline underline-offset-2 transition-colors"
+                                        >
+                                            Buat Marker Plan
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
