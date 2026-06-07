@@ -14,6 +14,10 @@ export interface CreateRatioMarkerRequest {
   roll_qty: number;
   sambungan_roll: number;
   sizes: CreateRatioSizeMarkerRequest[];
+  plot?: number;
+  lebar_kain?: number;
+  panjang_marker_unit?: string;
+  ket?: string;
 }
 
 export interface CreateKomponenMarkerPlanRequest {
