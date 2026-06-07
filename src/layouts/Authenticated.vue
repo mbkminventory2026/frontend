@@ -90,9 +90,9 @@ const navMainItems = computed(() => {
   const rawItems: NavSection[] = [
     {
       title: "Profil Perusahaan",
-      url: "/profile-perusahaan",
+      url: "/profil-perusahaan",
       icon: Building,
-      permission: "MASTER_PROFILE_PERUSAHAAN_READ",
+      permission: "MASTER_PROFIL_PERUSAHAAN_READ",
     },
     {
       title: "Dashboard",

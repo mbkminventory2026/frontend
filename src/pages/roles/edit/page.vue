@@ -35,7 +35,7 @@ const PAGE_LABELS: Record<string, string> = {
     MASTER_BARANG: "Daftar Barang",
     MASTER_MITRA: "Mitra Perusahaan",
     MASTER_JENIS_BARANG: "Jenis Barang",
-    MASTER_COMPANY: "Profile Perusahaan (Company)",
+    MASTER_PROFIL_PERUSAHAAN: "Profil Perusahaan",
     MASTER_DEPARTEMEN: "Departemen",
     PO_CLIENT: "PO Client",
     PR_INTERNAL: "PR Internal",

@@ -405,7 +405,7 @@ const permissionGroups = computed(() => {
     MASTER_BARANG: "Daftar Barang",
     MASTER_MITRA: "Mitra Perusahaan",
     MASTER_JENIS_BARANG: "Jenis Barang",
-    MASTER_PROFILE_PERUSAHAAN: "Profile Perusahaan",
+    MASTER_PROFIL_PERUSAHAAN: "Profil Perusahaan",
     MASTER_DEPARTEMEN: "Departemen",
     PO_CLIENT: "PO Client",
     PR_INTERNAL: "PR Internal",

@@ -1,38 +1,38 @@
 import { createFileRoute } from '@tanstack/vue-router'
-import ProfilePerusahaanPage from '@/pages/profile-perusahaan/page.vue'
+import ProfilPerusahaanPage from '@/pages/profil-perusahaan/page.vue'
 
 import { createTableParamsSchema } from '@/schemas/table-params'
 import { validateTableSearchRedirect, stripTableDefaults } from '@/lib/table-utils'
 import { requirePermission } from '@/lib/requirePermission'
 
-const ProfilePerusahaanSearchKeys = [
+const ProfilPerusahaanSearchKeys = [
     'about',
     'alamat',
     'created_at',
     'email',
-    'id_profile_perusahaan',
+    'id_profil_perusahaan',
     'logo',
     'nama',
     'no_telp'
 ] as const
 
-export const profilePerusahaanSchema = createTableParamsSchema([...ProfilePerusahaanSearchKeys])
+export const profilPerusahaanSchema = createTableParamsSchema([...ProfilPerusahaanSearchKeys])
 
-export const Route = createFileRoute('/_authenticated/profile-perusahaan')({
+export const Route = createFileRoute('/_authenticated/profil-perusahaan')({
   validateSearch: (search: Record<string, unknown>) => {
-    const parsed = profilePerusahaanSchema.parse(search)
+    const parsed = profilPerusahaanSchema.parse(search)
     return stripTableDefaults(parsed)
   },
   beforeLoad: ({ search, location }) => {
-    requirePermission('MASTER_PROFILE_PERUSAHAAN_READ')()
+    requirePermission('MASTER_PROFIL_PERUSAHAAN_READ')()
     validateTableSearchRedirect(
-        '/_authenticated/profile-perusahaan',
+        '/_authenticated/profil-perusahaan',
         location.search as Record<string, any>,
         search
     )
   },
-  component: ProfilePerusahaanPage,
+  component: ProfilPerusahaanPage,
   staticData: {
-    breadcrumb: 'Profile Perusahaan'
+    breadcrumb: 'Profil Perusahaan'
   }
 })
