@@ -271,12 +271,20 @@ const calculateTotalQty = (ratio: RatioInput): number => {
   }, 0);
 };
 
-const calculateSisa = (comp: ComponentInput, ratio: RatioInput): number => {
+const calculateSisa = (comp: ComponentInput, ratioIdx: number): number => {
   const shell = getComponentShell(comp);
   if (!shell) return 0;
   const totalWoQty = shell.sizes.reduce((acc, sz) => acc + (sz.qty || 0), 0);
-  const totalQty = calculateTotalQty(ratio);
-  return totalWoQty - totalQty;
+  
+  let plannedQtyUpToRow = 0;
+  for (let i = 0; i <= ratioIdx; i++) {
+    const r = comp.ratios[i];
+    if (r) {
+      plannedQtyUpToRow += calculateTotalQty(r);
+    }
+  }
+  
+  return totalWoQty - plannedQtyUpToRow;
 };
 
 const calculateNetCons = (ratio: RatioInput): number => {
@@ -671,7 +679,7 @@ onMounted(async () => {
 
                       <!-- Sisa -->
                       <td class="p-2">
-                        <Input :value="calculateSisa(comp, ratio)" type="text" class="h-8 text-xs border-neutral-100 bg-neutral-50 font-mono text-right text-neutral-600" disabled />
+                        <Input :value="calculateSisa(comp, ratioIdx)" type="text" class="h-8 text-xs border-neutral-100 bg-neutral-50 font-mono text-right text-neutral-600" disabled />
                       </td>
 
                       <!-- Plot -->
