@@ -23,10 +23,22 @@ import { useDialog } from '@/composables/useDialog';
 import { type DialogSchemaType } from '@/schemas/dialog/dialog';
 import { formatDate } from '@/lib/formatter';
 import DeleteButton from '@/components/DeleteButton.vue';
+import { useAuthStore } from '@/store/authStore';
 
 const { hasPermission } = usePermission();
+const authStore = useAuthStore();
 const search = useSearch({ strict: false }) as any;
 const router = useRouter();
+
+const RESERVED_ROLES = [
+    'SUPER_ADMIN',
+    'OPERATOR',
+    'ADMIN_KEUANGAN',
+    'ADMIN_PRODUKSI',
+    'ADMIN_GUDANG',
+    'MANAGER',
+    'CLIENT'
+];
 
 const data = ref<any[]>([]);
 const totalCount = ref(0);
@@ -109,7 +121,15 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
                 'View'
             ]));
 
-            if (hasPermission('ROLE_UPDATE')) {
+            const isSuperAdmin = authStore.roleName === 'SUPER_ADMIN';
+            const targetRoleName = item.nama_role;
+            const canModify = isSuperAdmin || (
+                targetRoleName !== 'SUPER_ADMIN' &&
+                targetRoleName !== 'OPERATOR' &&
+                targetRoleName !== authStore.roleName
+            );
+
+            if (hasPermission('ROLE_UPDATE') && canModify) {
                 buttons.push(h(Button, {
                     variant: 'ghost',
                     size: 'sm',
@@ -157,7 +177,9 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
                 ]));
             }
 
-            if (hasPermission('ROLE_DELETE')) {
+            const isReservedRole = RESERVED_ROLES.includes(item.nama_role.trim().toUpperCase());
+
+            if (hasPermission('ROLE_DELETE') && canModify && !isReservedRole) {
                 buttons.push(h(DeleteButton, {
                     onConfirm: async () => {
                         await deleteRole(item.id_role);

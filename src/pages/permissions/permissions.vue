@@ -1,10 +1,9 @@
 <script setup lang="ts">
 import { h, ref, watch, onMounted } from 'vue';
 import { useSearch, useRouter } from '@tanstack/vue-router';
-import { PlusIcon, EyeIcon, PencilIcon } from 'lucide-vue-next';
+import { EyeIcon } from 'lucide-vue-next';
 
 import {
-    deletePermissions,
     getPermissions
 } from '@/api/permissions/permissions';
 import { type PermissionsResponseItem } from '@/schemas/permissions/response';
@@ -14,9 +13,7 @@ import DataTable from '@/components/DataTable.vue';
 import { Button } from '@/components/ui/button';
 
 import { useTable } from '@/composables/useTable';
-import { usePermission } from '@/composables/usePermission';
 import { formatDate } from '@/lib/formatter';
-import DeleteButton from '@/components/DeleteButton.vue';
 
 const search = useSearch({ strict: false }) as any;
 const router = useRouter();
@@ -24,7 +21,6 @@ const router = useRouter();
 const data = ref<PermissionsResponseItem[]>([]);
 const totalCount = ref(0);
 const isLoading = ref(false);
-const { hasPermission } = usePermission();
 
 const fetchData = async () => {
     isLoading.value = true;
@@ -75,27 +71,8 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
                 }, () => [
                     h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
                     'View'
-                ]),
-                hasPermission('PERMISSION_UPDATE')
-                    ? h(Button, {
-                        variant: 'ghost',
-                        size: 'sm',
-                        onClick: () => router.navigate({ to: '/permissions/edit/$id', params: { id: String(id) } })
-                    }, () => [
-                        h(PencilIcon, { class: 'w-4 h-4 mr-1' }),
-                        'Edit'
-                    ])
-                    : null,
-                hasPermission('PERMISSION_DELETE')
-                    ? h(DeleteButton, {
-                        onConfirm: async() => {
-                            await deletePermissions(id);
-                            await fetchData()
-                        },
-                        confirmMessage: 'Apakah Anda yakin ingin menghapus Permissions ini?'
-                    })
-                    : null,
-            ].filter(Boolean)
+                ])
+            ]
         ) }
     }
     ],
@@ -122,15 +99,6 @@ watch(() => search, () => {
         @search="onSearch"
         @clear-filter="clearFilter"
     >
-        <template #actions>
-            <Button
-                v-if="hasPermission('PERMISSION_CREATE')"
-                @click="router.navigate({ to: '/permissions/create' })"
-                variant="outline"
-            >
-                <PlusIcon class="w-4 h-4 mr-2" />
-                Tambah Permissions
-            </Button>
-        </template>
+
     </DataTable>
 </template>

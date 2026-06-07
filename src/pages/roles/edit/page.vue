@@ -12,9 +12,11 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Spinner } from '@/components/ui/spinner';
 import { Card } from '@/components/ui/card';
+import { useAuthStore } from '@/store/authStore';
 
 const router = useRouter();
 const params = useParams({ from: '/_authenticated/roles/edit/$id' });
+const authStore = useAuthStore();
 
 const namaRole = ref('');
 const selectedPermissionIds = ref<(string | number)[]>([]);
@@ -234,6 +236,22 @@ const loadRoleData = async () => {
         if (!idRole) throw new Error("ID Role tidak ditemukan");
 
         const roleData = await getRoleById(idRole);
+
+        // Prevent editing sensitive roles if not SUPER_ADMIN
+        const isSuperAdmin = authStore.roleName === 'SUPER_ADMIN';
+        const targetRoleName = roleData.nama_role;
+        const canModify = isSuperAdmin || (
+            targetRoleName !== 'SUPER_ADMIN' &&
+            targetRoleName !== 'OPERATOR' &&
+            targetRoleName !== authStore.roleName
+        );
+
+        if (!canModify) {
+            toast.error("Anda tidak memiliki hak akses untuk mengedit role ini.");
+            router.navigate({ to: '/roles' });
+            return;
+        }
+
         namaRole.value = roleData.nama_role;
         selectedPermissionIds.value = roleData.hak_akses_ids || [];
     } catch (error) {
