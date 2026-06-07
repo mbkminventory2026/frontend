@@ -72,15 +72,15 @@ const uniqueSizes = computed(() => {
     });
 });
 
-// Helper to look up Qty Plan for a specific size in a ratio
+// Helper to look up Ratio Plan for a specific size in a ratio
 const getSizeQty = (ratioSizes: any[], sizeName: string) => {
     const found = ratioSizes.find(s => s.size === sizeName);
-    return found ? found.qty_plan : 0;
+    return found ? found.ratio_plan : 0;
 };
 
-// Calculate total planned qty for a single ratio row
-const getRatioTotalQty = (ratioSizes: any[]) => {
-    return ratioSizes.reduce((acc, curr) => acc + (curr.qty_plan || 0), 0);
+// Calculate total planned qty for a single ratio row (ratio * gelaran)
+const getRatioTotalQty = (ratioSizes: any[], planSpreadingGelaran: number) => {
+    return ratioSizes.reduce((acc, curr) => acc + Math.round((curr.ratio_plan || 0) * planSpreadingGelaran), 0);
 };
 
 onMounted(() => {
@@ -191,7 +191,7 @@ onMounted(() => {
                         
                         <!-- Total Plan Qty for ratio row -->
                         <td class="px-3 py-3 text-right font-bold text-neutral-950 bg-neutral-50/45">
-                          {{ getRatioTotalQty(ratio.sizes).toLocaleString('id-ID') }}
+                          {{ getRatioTotalQty(ratio.sizes, ratio.plan_spreading_gelaran).toLocaleString('id-ID') }}
                         </td>
                       </tr>
                     </tbody>

@@ -2,7 +2,7 @@ export interface RatioSizeMarkerResponse {
   id_ratio_size_marker: number;
   id_ratio_marker: number;
   id_wo_shell_size: number;
-  qty_plan: number;
+  ratio_plan: number;
   size?: string;
 }
 
