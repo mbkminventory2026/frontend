@@ -58,7 +58,7 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
         { header: 'Tanggal Efektif', accessorKey: 'tanggal_efektif', cell: ({ row }) => formatDate(row.getValue('tanggal_efektif')) },
         { header: 'Buyer', accessorKey: 'buyer' },
         { header: 'Model', accessorKey: 'model' },
-        { header: 'Fabric', accessorKey: 'fabric' },
+        { header: 'Fabric', accessorKey: 'deskripsi' },
         { header: 'Color', accessorKey: 'color' },
         {
             header: 'Actions',

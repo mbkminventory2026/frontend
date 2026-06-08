@@ -147,7 +147,7 @@ const submitReport = async () => {
                     </div>
                     <div>
                         <SheetTitle class="text-base font-bold text-neutral-900">
-                            {{ shell?.fabric || 'Shell' }} — {{ shell?.color || '' }}
+                            {{ shell?.deskripsi || 'Shell' }} — {{ shell?.color || '' }}
                         </SheetTitle>
                         <SheetDescription class="text-xs text-neutral-500 mt-0.5">
                             Distribusi ukuran &amp; rasio untuk shell kain ini

@@ -141,7 +141,7 @@ watch(selectedShellId, (newShellId) => {
 });
 
 const initDefaultComponent = (shell: WorkOrderShell) => {
-  const name = shell.color ? `${shell.fabric} ${shell.color}` : shell.fabric;
+  const name = shell.color ? `${shell.deskripsi} ${shell.color}` : shell.deskripsi;
   components.value = [
     {
       nama_komponen: name,
@@ -541,7 +541,7 @@ onMounted(async () => {
               >
                 <option value="" disabled>Pilih Fabric / Shell</option>
                 <option v-for="shell in woDetail?.shells" :key="shell.id_wo_shell" :value="shell.id_wo_shell">
-                  {{ shell.fabric }} ({{ shell.color }})
+                  {{ shell.deskripsi }} ({{ shell.color }})
                 </option>
               </select>
               <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5">
@@ -556,7 +556,7 @@ onMounted(async () => {
           <div class="flex items-center justify-between border-b pb-3 border-neutral-100">
             <h2 class="text-xs font-bold text-neutral-700 uppercase tracking-wider flex items-center gap-2">
               <span class="inline-block w-1.5 h-4 bg-emerald-600 rounded-full"></span>
-              Pengaturan Komponen & Ratio (Kain: {{ selectedShell.fabric }}, Warna: {{ selectedShell.color }})
+              Pengaturan Komponen & Ratio (Kain: {{ selectedShell.deskripsi }}, Warna: {{ selectedShell.color }})
             </h2>
             <Button type="button" @click="addComponent" size="sm" variant="outline" class="h-8 border-dashed border-neutral-300 text-neutral-700 hover:bg-neutral-50">
               <PlusIcon class="w-3.5 h-3.5 mr-1" /> Tambah Komponen
@@ -602,7 +602,7 @@ onMounted(async () => {
                   >
                     <option value="" disabled>Pilih Fabric / Shell</option>
                     <option v-for="shell in woDetail?.shells" :key="shell.id_wo_shell" :value="shell.id_wo_shell">
-                      {{ shell.fabric }} ({{ shell.color }})
+                      {{ shell.deskripsi }} ({{ shell.color }})
                     </option>
                   </select>
                   <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5">

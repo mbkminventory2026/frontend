@@ -145,7 +145,7 @@ const totalQty = computed(() => {
 const shellOptions = computed(() => {
     if (!woDetail.value || !woDetail.value.shells) return [];
     return woDetail.value.shells.map((s: any) => ({
-        label: `${s.fabric} - ${s.color}`,
+        label: `${s.deskripsi} - ${s.color}`,
         value: String(s.id_wo_shell)
     }));
 });

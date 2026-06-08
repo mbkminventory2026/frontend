@@ -20,7 +20,7 @@ export interface MarkerPlanListItem {
   no_dokumen: string;
   tanggal_efektif: string;
   id_wo_shell: number;
-  fabric: string;
+  deskripsi: string;
   color: string;
   id_wo: number;
   buyer: string;

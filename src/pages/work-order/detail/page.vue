@@ -424,7 +424,7 @@ onMounted(fetchDetail);
                                 </span>
                             </div>
                             <p class="text-sm text-neutral-500 mt-0.5">
-                                {{ selectedShell.fabric }} ({{ selectedShell.color }})
+                                {{ selectedShell.deskripsi }} ({{ selectedShell.color }})
                             </p>
                         </div>
                     </div>
@@ -870,7 +870,7 @@ onMounted(fetchDetail);
                                     class="hover:bg-neutral-50 cursor-pointer transition-colors group"
                                     @click="selectShell(shell.id_wo_shell)"
                                 >
-                                    <td class="px-4 py-3.5 font-semibold text-neutral-800">{{ shell.fabric }}</td>
+                                    <td class="px-4 py-3.5 font-semibold text-neutral-800">{{ shell.deskripsi }}</td>
                                     <td class="px-4 py-3.5">
                                         <span class="inline-flex items-center gap-1.5 font-medium text-neutral-700">
                                             <span

@@ -125,7 +125,7 @@ watch(selectedWoId, async (newWoId) => {
 });
 
 const initDefaultComponent = (shell: WorkOrderShell) => {
-  const name = shell.color ? `${shell.fabric} ${shell.color}` : shell.fabric;
+  const name = shell.color ? `${shell.deskripsi} ${shell.color}` : shell.deskripsi;
   components.value = [
     {
       nama_komponen: name,
@@ -527,7 +527,7 @@ onMounted(async () => {
                   >
                     <option value="" disabled>Pilih Fabric / Shell Rujukan</option>
                     <option v-for="shell in woDetail?.shells" :key="shell.id_wo_shell" :value="shell.id_wo_shell">
-                      {{ shell.fabric }} ({{ shell.color }})
+                      {{ shell.deskripsi }} ({{ shell.color }})
                     </option>
                   </select>
                   <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5">

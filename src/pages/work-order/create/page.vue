@@ -137,14 +137,14 @@ watch(() => step1.id_po_client_item, (newVal) => {
 
 // Step 2: Shells
 interface ShellSize { size: string; qty: any; ratio: any; }
-interface Shell { fabric: string; color: string; cons: any; allow: any; berat_1_yd: any; sizes: ShellSize[]; }
+interface Shell { deskripsi: string; color: string; cons: any; allow: any; berat_1_yd: any; sizes: ShellSize[]; }
 
 const shells = ref<Shell[]>([
-  { fabric: '', color: '', cons: 0, allow: 0, berat_1_yd: 0, sizes: [{ size: '', qty: 0, ratio: 1 }] }
+  { deskripsi: '', color: '', cons: 0, allow: 0, berat_1_yd: 0, sizes: [{ size: '', qty: 0, ratio: 1 }] }
 ]);
 
 const addShell = () => {
-  shells.value.push({ fabric: '', color: '', cons: 0, allow: 0, berat_1_yd: 0, sizes: [] });
+  shells.value.push({ deskripsi: '', color: '', cons: 0, allow: 0, berat_1_yd: 0, sizes: [] });
 };
 const removeShell = (i: number) => shells.value.splice(i, 1);
 const addSize = (shellIdx: number) => {
@@ -233,7 +233,7 @@ const step1Valid = computed(() =>
 const step2Valid = computed(() =>
   shells.value.length > 0 &&
   shells.value.every((s) =>
-    s.fabric.trim() &&
+    s.deskripsi.trim() &&
     s.color.trim() &&
     parseNumber(s.cons) > 0 &&
     parseInteger(s.allow) >= 1 &&
@@ -271,7 +271,7 @@ const handleSubmit = async () => {
       delivery: step1.delivery,
       id_po_client_item: parseInteger(step1.id_po_client_item),
       shells: shells.value.map(s => ({
-        fabric: s.fabric,
+        deskripsi: s.deskripsi,
         color: s.color,
         cons: parseNumber(s.cons),
         allow: parseInteger(s.allow),
@@ -491,7 +491,7 @@ const handleSubmit = async () => {
               <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <div class="space-y-1 col-span-2 sm:col-span-1">
                   <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Fabric *</label>
-                  <input v-model="shell.fabric" type="text" placeholder="cth: Ripstop Nylon"
+                  <input v-model="shell.deskripsi" type="text" placeholder="cth: Ripstop Nylon"
                     class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition" />
                 </div>
                 <div class="space-y-1">

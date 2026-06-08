@@ -29,7 +29,7 @@ export interface WorkOrderShellSize {
 
 export interface WorkOrderShell {
   id_wo_shell: number;
-  fabric: string;
+  deskripsi: string;
   cons: number;
   color: string;
   allow: number;
