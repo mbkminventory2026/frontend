@@ -309,6 +309,64 @@ const generateLabelsFromSizes = () => {
   }
 };
 
+const generateBarcodes = () => {
+  const colors = Array.from(new Set(shells.value.map(s => s.color.trim()).filter(Boolean)));
+  const sizesList: string[] = [];
+  shells.value.forEach(s => {
+    s.sizes.forEach(sz => {
+      if (sz.size.trim() && !sizesList.includes(sz.size.trim())) {
+        sizesList.push(sz.size.trim());
+      }
+    });
+  });
+
+  if (colors.length === 0 || sizesList.length === 0) {
+    toast.error('Tidak ada warna atau ukuran di Shell yang bisa dijadikan rujukan.');
+    return;
+  }
+
+  let addedCount = 0;
+  colors.forEach(color => {
+    sizesList.forEach(size => {
+      const barcodeDesc = `Barcode ${color} - ${size}`;
+      const exists = trims.value.some(t => 
+        t.item.toLowerCase() === 'barcode' && 
+        t.color.toLowerCase() === color.toLowerCase() && 
+        t.description.toLowerCase() === barcodeDesc.toLowerCase()
+      );
+
+      if (!exists) {
+        const qty = shells.value
+          .filter(s => s.color.toLowerCase() === color.toLowerCase() && s.material_type === 'fabric')
+          .reduce((sum, s) => {
+            const sz = s.sizes.find(sz => sz.size.trim().toLowerCase() === size.toLowerCase());
+            return sum + (sz ? getSizeCalculatedQty(sz) : 0);
+          }, 0);
+
+        trims.value.push({
+          item: 'Barcode',
+          description: barcodeDesc,
+          color: color,
+          code: `BAR-${color.toUpperCase().replace(/\s+/g, '-')}-${size.toUpperCase().replace(/\s+/g, '-')}`,
+          cons: 1,
+          qty: qty || 0,
+          uom: 'PCS',
+          position: 'Packaging',
+          allow: 1,
+          provided_by: 'permata'
+        });
+        addedCount++;
+      }
+    });
+  });
+
+  if (addedCount > 0) {
+    toast.success(`Berhasil menambahkan ${addedCount} Barcode berdasarkan warna dan ukuran shell.`);
+  } else {
+    toast.info('Semua Barcode untuk kombinasi warna dan ukuran shell yang ada sudah diinput.');
+  }
+};
+
 const addMaterial = () => {
   materials.value.push({ description: '', size: '', color: '', uom: '' });
 };
@@ -731,6 +789,9 @@ const handleSubmit = async () => {
                   </Button>
                   <Button type="button" variant="outline" size="sm" class="border-neutral-300 text-neutral-600 hover:text-neutral-900 shadow-xs text-xs" @click="generateLabelsFromSizes">
                     <SparklesIcon class="w-3.5 h-3.5 mr-1" /> Auto Label (Size)
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" class="border-neutral-300 text-neutral-600 hover:text-neutral-900 shadow-xs text-xs" @click="generateBarcodes">
+                    <SparklesIcon class="w-3.5 h-3.5 mr-1" /> Auto Barcode (Warna & Size)
                   </Button>
                   <Button variant="outline" size="sm" class="border-neutral-300 shadow-xs text-xs" @click="addTrim">
                     <PlusCircleIcon class="w-4 h-4 mr-1.5" /> Tambah Trim
