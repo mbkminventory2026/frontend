@@ -138,35 +138,27 @@ watch(() => step1.id_po_client_item, (newVal) => {
 });
 
 // Step 2: Shells
-interface ShellSize { size: string; qty: any; ratio: any; }
-interface Shell { material_type: string; deskripsi: string; provided_by: string; color: string; cons: any; allow: any; berat_1_yd: any; sizes: ShellSize[]; }
+interface ShellSize { size: string; ratio: any; }
+interface Shell { material_type: string; deskripsi: string; provided_by: string; color: string; cons: any; allow: any; berat_1_yd: any; qty_per_ratio: any; sizes: ShellSize[]; }
 
 const shells = ref<Shell[]>([
-  { material_type: 'fabric', deskripsi: '', provided_by: 'permatatex', color: '', cons: 0, allow: 0, berat_1_yd: 0, sizes: [{ size: '', qty: 0, ratio: 1 }] }
+  { material_type: 'fabric', deskripsi: '', provided_by: 'permatatex', color: '', cons: 0, allow: 0, berat_1_yd: 0, qty_per_ratio: 0, sizes: [{ size: '', ratio: 1 }] }
 ]);
 
 const addShell = () => {
-  shells.value.push({ material_type: 'fabric', deskripsi: '', provided_by: 'permatatex', color: '', cons: 0, allow: 0, berat_1_yd: 0, sizes: [] });
+  shells.value.push({ material_type: 'fabric', deskripsi: '', provided_by: 'permatatex', color: '', cons: 0, allow: 0, berat_1_yd: 0, qty_per_ratio: 0, sizes: [] });
 };
 const removeShell = (i: number) => shells.value.splice(i, 1);
 const addSize = (shellIdx: number) => {
   const shell = shells.value[shellIdx];
   if (shell) {
-    shell.sizes.push({ size: '', qty: 0, ratio: 1 });
+    shell.sizes.push({ size: '', ratio: 1 });
   }
 };
 const removeSize = (shellIdx: number, sizeIdx: number) => {
   const shell = shells.value[shellIdx];
   if (shell) {
     shell.sizes.splice(sizeIdx, 1);
-  }
-};
-
-const handleQtyChange = (shellIdx: number, sizeIdx: number, val: string) => {
-  const shell = shells.value[shellIdx];
-  if (shell && shell.sizes[sizeIdx]) {
-    const size = shell.sizes[sizeIdx];
-    size.qty = val;
   }
 };
 
@@ -179,16 +171,16 @@ const handleRatioChange = (shellIdx: number, sizeIdx: number, val: string) => {
   }
 };
 
-const getSizeCalculatedQty = (size: ShellSize) => {
-  const qty = parseInteger(size.qty) || 0;
+const getSizeCalculatedQty = (shell: Shell, size: ShellSize) => {
+  const qtyPerRatio = parseInteger(shell.qty_per_ratio) || 0;
   const ratio = parseToFloat(size.ratio) || 0;
-  return Math.round(qty * ratio);
+  return Math.round(qtyPerRatio * ratio);
 };
 
 const getShellTotalQty = (shellIdx: number) => {
   const shell = shells.value[shellIdx];
   if (!shell || !shell.sizes) return 0;
-  return shell.sizes.reduce((acc, curr) => acc + getSizeCalculatedQty(curr), 0);
+  return shell.sizes.reduce((acc, curr) => acc + getSizeCalculatedQty(shell, curr), 0);
 };
 
 // Sync step1.qty with the sum of all shell sizes' quantity
@@ -233,7 +225,7 @@ const generateThreadsFromColors = () => {
       const totalColorQty = shells.value
         .filter(s => s.color.toLowerCase() === color.toLowerCase() && s.material_type === 'fabric')
         .reduce((sum, s) => {
-          return sum + s.sizes.reduce((szSum, sz) => szSum + getSizeCalculatedQty(sz), 0);
+          return sum + s.sizes.reduce((szSum, sz) => szSum + getSizeCalculatedQty(s, sz), 0);
         }, 0);
 
       trims.value.push({
@@ -265,7 +257,7 @@ const generateLabelsFromSizes = () => {
     s.sizes.forEach(sz => {
       if (sz.size.trim()) {
         const sizeName = sz.size.trim();
-        const calculatedQty = getSizeCalculatedQty(sz);
+        const calculatedQty = getSizeCalculatedQty(s, sz);
         const existing = sizesList.find(item => item.size.toLowerCase() === sizeName.toLowerCase());
         if (existing) {
           existing.qty += calculatedQty;
@@ -340,7 +332,7 @@ const generateBarcodes = () => {
           .filter(s => s.color.toLowerCase() === color.toLowerCase() && s.material_type === 'fabric')
           .reduce((sum, s) => {
             const sz = s.sizes.find(sz => sz.size.trim().toLowerCase() === size.toLowerCase());
-            return sum + (sz ? getSizeCalculatedQty(sz) : 0);
+            return sum + (sz ? getSizeCalculatedQty(s, sz) : 0);
           }, 0);
 
         trims.value.push({
@@ -399,8 +391,9 @@ const step2Valid = computed(() =>
     parseNumber(s.cons) > 0 &&
     parseInteger(s.allow) >= 1 &&
     parseNumber(s.berat_1_yd) > 0 &&
+    parseInteger(s.qty_per_ratio) > 0 &&
     s.sizes.length > 0 &&
-    s.sizes.every(sz => sz.size.trim() && parseInteger(sz.qty) > 0 && parseToFloat(sz.ratio) > 0)
+    s.sizes.every(sz => sz.size.trim() && parseToFloat(sz.ratio) > 0)
   ) &&
   calculatedTotalQty.value <= (parseInteger(step1.qty) || 0)
 );
@@ -440,7 +433,7 @@ const handleSubmit = async () => {
         berat_1_yd: parseNumber(s.berat_1_yd),
         sizes: s.sizes.map(sz => ({
           size: sz.size,
-          qty: getSizeCalculatedQty(sz),
+          qty: getSizeCalculatedQty(s, sz),
           ratio: parseInteger(sz.ratio),
         })),
       })),
@@ -651,7 +644,7 @@ const handleSubmit = async () => {
               </div>
 
               <!-- Shell Fields -->
-              <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+              <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
                 <div class="space-y-1">
                   <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Material Type *</label>
                   <select v-model="shell.material_type"
@@ -693,6 +686,11 @@ const handleSubmit = async () => {
                   <input v-model="shell.berat_1_yd" @input="shell.berat_1_yd = ($event.target as HTMLInputElement).value.replace(/,/g, '.')" type="text" placeholder="0.8"
                     class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition" />
                 </div>
+                <div class="space-y-1">
+                  <label class="text-[10px] font-bold text-neutral-500 uppercase">Qty / Ratio *</label>
+                  <input v-model="shell.qty_per_ratio" type="text" placeholder="cth: 42"
+                    class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition" />
+                </div>
               </div>
 
               <!-- Sizes Sub-table -->
@@ -718,7 +716,6 @@ const handleSubmit = async () => {
                       <thead class="bg-neutral-50 border-b border-neutral-200">
                         <tr>
                           <th class="px-3 py-2 text-left text-[10px] font-bold text-neutral-500 uppercase">Size</th>
-                          <th class="px-3 py-2 text-left text-[10px] font-bold text-neutral-500 uppercase">Qty (pcs)</th>
                           <th class="px-3 py-2 text-left text-[10px] font-bold text-neutral-500 uppercase">Ratio</th>
                           <th class="px-3 py-2 text-left text-[10px] font-bold text-neutral-500 uppercase">Total Qty Size</th>
                           <th class="px-3 py-2 w-10"></th>
@@ -731,15 +728,11 @@ const handleSubmit = async () => {
                               class="w-full rounded border border-neutral-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-neutral-400 bg-white" />
                           </td>
                           <td class="px-3 py-2">
-                            <input :value="size.qty" @input="handleQtyChange(si, zi, ($event.target as HTMLInputElement).value)" type="text" placeholder="200"
-                              class="w-full rounded border border-neutral-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-neutral-400" />
-                          </td>
-                          <td class="px-3 py-2">
                             <input :value="size.ratio" @input="handleRatioChange(si, zi, ($event.target as HTMLInputElement).value)" type="text" placeholder="1"
                               class="w-full rounded border border-neutral-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-neutral-400" />
                           </td>
                           <td class="px-3 py-2 font-medium text-neutral-700">
-                            {{ getSizeCalculatedQty(size) }} pcs
+                            {{ getSizeCalculatedQty(shell, size) }} pcs
                           </td>
                           <td class="px-3 py-2">
                             <button @click="removeSize(si, zi)" type="button" class="text-neutral-300 hover:text-red-400 transition">
