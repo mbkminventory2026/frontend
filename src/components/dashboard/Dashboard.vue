@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
 import OperatorDashboard from './OperatorDashboard.vue';
+import FinanceDashboard from './FinanceDashboard.vue';
 // import { useDashboard } from '@/composables/dashboard/useDashboard';
 // Mendefinisikan props dengan benar
 const props = defineProps<{
@@ -48,6 +49,9 @@ const emit = defineEmits<{
     <!-- Menampilkan Operator Dashboard khusus untuk Admin Produksi atau Operator -->
     <OperatorDashboard v-if="props.role === 'Admin Produksi' || props.role === 'Operator' || props.username === 'operator' || !props.role" />
     
+    <!-- Menampilkan Finance Dashboard khusus untuk Admin Keuangan -->
+    <FinanceDashboard v-else-if="props.role === 'Admin Keuangan' || props.username === 'admin-keuangan'" />
+
     <!-- Placeholder untuk Role Lain -->
     <div v-else class="bg-white p-12 rounded-xl shadow-sm border text-center">
       <div class="mx-auto w-16 h-16 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mb-4">
