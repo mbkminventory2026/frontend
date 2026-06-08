@@ -10,6 +10,14 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
 import { useBreadcrumbs } from "@/composables/useBreadcrumbs"
 import { Outlet, Link } from "@tanstack/vue-router"
 import {
@@ -24,22 +32,23 @@ import {
   Factory,
   ClipboardList,
   ClipboardCheck,
+  Building,
 } from "lucide-vue-next"
 import { useAuthStore } from "@/store/authStore"
 import { usePermission } from '@/composables/usePermission'
-import { computed } from "vue"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
+import { computed, onMounted } from "vue"
+import { useBrandingStore } from "@/store/brandingStore"
 
 const { breadcrumbs } = useBreadcrumbs()
 const authStore = useAuthStore()
 const { hasPermission } = usePermission()
+const brandingStore = useBrandingStore()
+
+onMounted(() => {
+  brandingStore.fetchBranding()
+})
+
+
 
 type NavLeaf = {
   title: string
@@ -88,6 +97,12 @@ const navMainItems = computed(() => {
 
   const rawItems: NavSection[] = [
     {
+      title: "Profil Perusahaan",
+      url: "/profil-perusahaan",
+      icon: Building,
+      permission: "MASTER_PROFIL_PERUSAHAAN_READ",
+    },
+    {
       title: "Dashboard",
       url: "/dashboard",
       icon: LayoutDashboard,
@@ -129,11 +144,6 @@ const navMainItems = computed(() => {
           title: "Daftar Warna",
           url: "/warna",
           permission: "MASTER_WARNA_READ",
-        },
-        {
-          title: "Profil Perusahaan",
-          url: "/company",
-          permission: "MASTER_COMPANY_READ",
         },
       ],
     },

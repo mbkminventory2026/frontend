@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { 
     BuildingIcon, 
     Mail, 
@@ -8,11 +9,16 @@ import {
     PencilIcon, 
     SaveIcon, 
     User,
+    Globe,
+    Instagram,
+    Facebook,
+    ImageIcon,
 } from 'lucide-vue-next';
 
-import { getCompany, updateCompany } from '@/api/company/company';
+import { getProfilPerusahaan, updateProfilPerusahaan } from '@/api/profil-perusahaan/profil-perusahaan';
 import { useForm } from '@/composables/form/useForm';
 import { useAddressField } from '@/composables/form/useAddressField';
+import { useBrandingStore } from '@/store/brandingStore';
 
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -32,23 +38,36 @@ import { Separator } from '@/components/ui/separator';
 import AppForm from '@/components/form/AppForm.vue';
 import AppFormField from '@/components/form/AppFormField.vue';
 
+const brandingStore = useBrandingStore();
+
 const form = useForm({
     api: {
-        get: () => getCompany({ limit: 1, offset: 0 }),
+        get: () => getProfilPerusahaan({ limit: 1, offset: 0 }),
         update: (_id, payload) => {
             // Remove read-only fields
-            const { id_company, created_at, ...data } = payload;
-            return updateCompany(id_company, data);
+            const { id_profil_perusahaan, created_at, ...data } = payload;
+            return updateProfilPerusahaan(id_profil_perusahaan, data);
         }
     },
-    id: 'id_company', // Just a placeholder to trigger update mode, logic handled in update function
-    immediate: true
+    id: 'id_profil_perusahaan', // Just a placeholder to trigger update mode, logic handled in update function
+    immediate: true,
+    onSuccess: () => {
+        brandingStore.fetchBranding();
+    }
 });
 
 const { values, isLoading, isSaving, isEditing } = form;
 
 // Using the modular logic for address display
 const { parsedAddress } = useAddressField(() => values.value?.alamat);
+
+const parsedMedsos = computed(() => {
+    try {
+        return values.value?.medsos ? JSON.parse(values.value.medsos) : {};
+    } catch (e) {
+        return {};
+    }
+});
 
 </script>
 
@@ -59,7 +78,7 @@ const { parsedAddress } = useAddressField(() => values.value?.alamat);
             <p class="text-muted-foreground animate-pulse">Memuat profil perusahaan...</p>
         </div>
 
-        <div v-else-if="values && values.id_company">
+        <div v-else-if="values && values.id_profil_perusahaan">
             <!-- VIEW MODE -->
             <div v-if="!isEditing" class="space-y-6 animate-in fade-in duration-500">
                 <!-- Header Section -->
@@ -81,6 +100,9 @@ const { parsedAddress } = useAddressField(() => values.value?.alamat);
                             </span>
                             <span class="flex items-center gap-1.5">
                                 <Phone class="w-4 h-4" /> {{ values.no_telp }}
+                            </span>
+                            <span v-if="values.link_website" class="flex items-center gap-1.5">
+                                <Globe class="w-4 h-4" /> <a :href="values.link_website" target="_blank" class="hover:underline text-primary">{{ values.link_website }}</a>
                             </span>
                         </div>
                     </div>
@@ -140,6 +162,35 @@ const { parsedAddress } = useAddressField(() => values.value?.alamat);
                                             </p>
                                         </div>
                                     </div>
+
+                                    <template v-if="values.link_website">
+                                        <Separator />
+                                        <div class="flex items-start gap-3">
+                                            <Globe class="w-4 h-4 mt-1 text-primary" />
+                                            <div class="space-y-1">
+                                                <p class="text-sm font-medium leading-none">Website Resmi</p>
+                                                <p class="text-sm text-muted-foreground">
+                                                    <a :href="values.link_website" target="_blank" class="hover:underline text-primary">{{ values.link_website }}</a>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card>
+                            <CardHeader>
+                                <CardTitle class="text-lg">Background Halaman Login</CardTitle>
+                                <CardDescription>Gambar latar belakang saat login.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div v-if="values.background_login" class="relative rounded-lg overflow-hidden border max-h-48">
+                                    <img :src="values.background_login" alt="Background Login" class="w-full object-cover max-h-48" />
+                                </div>
+                                <div v-else class="flex flex-col items-center justify-center p-8 border border-dashed rounded-lg bg-muted/40 text-center text-muted-foreground">
+                                    <ImageIcon class="w-8 h-8 mb-2 opacity-50" />
+                                    <p class="text-sm">Belum ada gambar background login yang diunggah.</p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -164,6 +215,31 @@ const { parsedAddress } = useAddressField(() => values.value?.alamat);
                                             {{ values.about || 'Belum ada informasi deskripsi perusahaan.' }}
                                         </div>
                                     </div>
+                                    
+                                    <template v-if="values.text_footer">
+                                        <Separator class="my-4" />
+                                        <div class="space-y-1">
+                                            <p class="text-sm font-medium leading-none text-foreground">Teks Footer / Hak Cipta</p>
+                                            <p class="text-sm text-muted-foreground leading-relaxed">
+                                                {{ values.text_footer }}
+                                            </p>
+                                        </div>
+                                    </template>
+
+                                    <template v-if="parsedMedsos && Object.keys(parsedMedsos).length > 0">
+                                        <Separator class="my-4" />
+                                        <div class="space-y-2">
+                                            <p class="text-sm font-medium">Media Sosial</p>
+                                            <div class="flex flex-wrap gap-4">
+                                                <a v-if="parsedMedsos.instagram" :href="parsedMedsos.instagram" target="_blank" class="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+                                                    <Instagram class="w-4 h-4 text-pink-600" /> Instagram
+                                                </a>
+                                                <a v-if="parsedMedsos.facebook" :href="parsedMedsos.facebook" target="_blank" class="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+                                                    <Facebook class="w-4 h-4 text-blue-600" /> Facebook
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </template>
                                 </div>
                             </CardContent>
                         </Card>
@@ -186,11 +262,12 @@ const { parsedAddress } = useAddressField(() => values.value?.alamat);
                         <div class="md:col-span-2 space-y-6">
                             <Card>
                                 <CardHeader>
-                                    <CardTitle class="text-lg">Logo Perusahaan</CardTitle>
-                                    <CardDescription>Unggah logo resmi perusahaan.</CardDescription>
+                                    <CardTitle class="text-lg">Media & Aset Tampilan</CardTitle>
+                                    <CardDescription>Unggah logo resmi dan background halaman login.</CardDescription>
                                 </CardHeader>
-                                <CardContent>
-                                    <AppFormField name="logo" type="file" />
+                                <CardContent class="space-y-4">
+                                    <AppFormField name="logo" type="file" label="Logo Perusahaan" />
+                                    <AppFormField name="background_login" type="file" label="Background Halaman Login" />
                                 </CardContent>
                             </Card>
                             <Card>
@@ -210,16 +287,24 @@ const { parsedAddress } = useAddressField(() => values.value?.alamat);
                             </Card>
                         </div>
 
-                        <!-- Right Column: Contact & Address -->
+                        <!-- Right Column: Contact & Address & Footer -->
                         <div class="space-y-6">
                             <Card class="h-full">
                                 <CardHeader>
-                                    <CardTitle class="text-lg">Kontak & Alamat</CardTitle>
+                                    <CardTitle class="text-lg">Kontak, Alamat & Footer</CardTitle>
                                 </CardHeader>
                                 <CardContent class="space-y-6">
                                     <AppFormField name="email" type="email" label="Email Perusahaan" placeholder="email@perusahaan.com" />
                                     <AppFormField name="no_telp" label="Nomor Telepon" placeholder="Contoh: 021-xxxxxxx" />
                                     <AppFormField name="alamat" type="address" label="Alamat Lengkap" />
+                                    <AppFormField name="link_website" label="Website Resmi" placeholder="https://www.company.com" />
+                                    <AppFormField name="text_footer" label="Teks Footer / Hak Cipta" placeholder="© 2026 PT PermataTex. All Rights Reserved." />
+                                    <AppFormField 
+                                        name="medsos" 
+                                        type="textarea" 
+                                        label="Media Sosial (Format JSON)" 
+                                        placeholder='{"instagram": "https://instagram.com/permatatex", "facebook": "https://facebook.com/permatatex"}' 
+                                    />
                                 </CardContent>
                             </Card>
                         </div>
