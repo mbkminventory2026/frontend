@@ -36,3 +36,8 @@ export const formatDate = (dateString: string | Date) : string => {
 
     return datePart;
 }
+
+export const formatNumber = (nilai: number): string => {
+    if (isNaN(nilai) || nilai == null) return '0';
+    return new Intl.NumberFormat('id-ID').format(nilai);
+};

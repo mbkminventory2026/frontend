@@ -27,7 +27,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { formatDate } from '@/lib/formatter';
+import { formatDate, formatNumber } from '@/lib/formatter';
 
 import { usePermission } from '@/composables/usePermission';
 import { useAuthStore } from '@/store/authStore';
@@ -63,9 +63,7 @@ const returnFileRef = ref<HTMLInputElement | null>(null);
 const isSubmittingReturn = ref(false);
 const returnWoId = ref<number | null>(null);
 
-const formatAngka = (nilai: number) => {
-  return new Intl.NumberFormat('id-ID').format(nilai);
-};
+
 
 const fetchWOProgress = async () => {
     if (!selectedItemForProgress.value || !selectedItemForProgress.value.id_wo) {
@@ -88,11 +86,6 @@ const fetchWOProgress = async () => {
 };
 
 const fetchItemsProgress = async () => {
-    console.log("[DEBUG] User login info:", {
-        roleName: authStore.roleName,
-        isMitra: authStore.isMitra,
-        isClient: isClient.value
-    });
     if (!detail.value || !detail.value.items) return;
     for (const item of detail.value.items) {
         if (item.id_wo) {
@@ -107,17 +100,9 @@ const fetchItemsProgress = async () => {
                     });
                 }
                 itemsProgressMap.value[item.id_wo] = { shipped, target };
-                console.log(`[DEBUG] Item PO (Style: ${item.style}, WO ID: ${item.id_wo}):`, {
-                    target,
-                    shipped,
-                    is100Percent: shipped >= target && target > 0,
-                    wo_status: item.wo_status
-                });
             } catch (e) {
                 console.error(`Gagal fetch progress untuk WO ${item.id_wo}:`, e);
             }
-        } else {
-            console.log(`[DEBUG] Item PO (Style: ${item.style}) has no configured WO (id_wo is null/undefined)`);
         }
     }
 };
@@ -269,14 +254,7 @@ const shellSizesProgressList = computed(() => {
 const isItemEligibleForActions = (item: any) => {
     if (!item.id_wo) return false;
     const progress = itemsProgressMap.value[item.id_wo];
-    const eligible = progress && progress.shipped >= progress.target && progress.target > 0;
-    console.log(`[DEBUG] Checking eligibility for item (Style: ${item.style}, WO ID: ${item.id_wo}):`, {
-        progress,
-        eligible,
-        wo_status: item.wo_status,
-        isClient: isClient.value
-    });
-    return eligible;
+    return progress && progress.shipped >= progress.target && progress.target > 0;
 };
 
 const handleCloseWO = async (woId: number) => {
@@ -335,12 +313,7 @@ const submitReturn = async () => {
     }
 };
 
-const getShippedPct = (idWo?: number) => {
-    if (!idWo) return '0%';
-    const progress = itemsProgressMap.value[idWo];
-    if (!progress || !progress.target) return '0%';
-    return `${Math.round((progress.shipped / progress.target) * 100)}%`;
-};
+
 
 const handleSelectItemChange = (itemId: number) => {
     if (!detail.value || !detail.value.items) return;
@@ -526,9 +499,17 @@ onMounted(() => {
                                                     </div>
 
                                                     <!-- Progress percentage -->
-                                                    <span class="text-[10px] text-neutral-400 font-mono">
-                                                        Shipped: {{ getShippedPct(item.id_wo) }}
-                                                    </span>
+                                                    <div v-if="item.id_wo" class="w-36 mt-1 text-left">
+                                                        <!-- <ProductionProgressBar 
+                                                            :target="itemsProgressMap[item.id_wo]?.target ?? 0" 
+                                                            :cutting="0" 
+                                                            :sewing="0" 
+                                                            :qc-pass="0" 
+                                                            :packing="0" 
+                                                            :shipped="itemsProgressMap[item.id_wo]?.shipped ?? 0" 
+                                                            :show-overall-only="true" 
+                                                        /> -->
+                                                    </div>
 
                                                     <!-- Actions (only when WO is open, is 100% shipped, and user is client or has client close permission) -->
                                                     <div v-if="isClient && ['open', 'pending', 'approved'].includes((item.wo_status || '').toLowerCase()) && isItemEligibleForActions(item)" class="flex gap-1 mt-1">
@@ -671,7 +652,7 @@ onMounted(() => {
                                                 <div class="flex items-center justify-between mb-2">
                                                     <span class="text-sm font-bold text-neutral-800">Size {{ sz.size }}</span>
                                                     <span class="text-xs font-bold text-neutral-500">
-                                                        {{ formatAngka(sz.shipped) }} / {{ formatAngka(sz.target) }} <span class="text-[10px] font-normal">pcs</span>
+                                                        {{ formatNumber(sz.shipped) }} / {{ formatNumber(sz.target) }} <span class="text-[10px] font-normal">pcs</span>
                                                     </span>
                                                 </div>
                                                 <div class="space-y-1.5">

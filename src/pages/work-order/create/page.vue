@@ -95,12 +95,22 @@ const onPOSelect = async (poId: number) => {
     const detail = await getPOClientById(poId);
     poDeliveryDate.value = detail.delivery ? detail.delivery.split('T')[0] : '';
     step1.buyer = detail.mitra_name || '';
-    poItemOptions.value = (detail.items || []).map((item: any) => ({
+    
+    // PERBAIKAN: Filter item garmen yang BELUM memiliki id_wo (id_wo null atau undefined)
+    const availableItems = (detail.items || []).filter((item: any) => !item.id_wo);
+    
+    poItemOptions.value = availableItems.map((item: any) => ({
       ...item,
       id_po_client_item: item.id_po_client_item,
     }));
+
+    // Beri info jika semua item dari PO tersebut sudah diproses
+    if (detail.items?.length > 0 && availableItems.length === 0) {
+      toast.info('Semua item garmen di dalam PO ini sudah dikonfigurasi ke Work Order.');
+    }
   } catch (e) {
     console.error('Gagal fetch PO items:', e);
+    toast.error('Gagal mengambil daftar item PO Client.');
   } finally {
     isLoadingPOItems.value = false;
   }
@@ -295,17 +305,23 @@ const handleSubmit = async () => {
     toast.success('Work Order berhasil dibuat!');
     router.navigate({ to: '/work-order' });
   } catch (error: any) {
-    console.error('Gagal membuat Work Order. Payload:', payload, 'Response error:', error.response?.data);
-    const errMsg = error.response?.data?.message || 'Gagal membuat Work Order.';
-    const details = error.response?.data?.error;
-    if (Array.isArray(details)) {
-      const fieldErrs = details.map((d: any) => `${d.field}: ${d.message}`).join(', ');
-      toast.error(`${errMsg} (${fieldErrs})`);
-    } else if (details?.code) {
-      toast.error(`${errMsg} (${details.code})`);
-    } else {
-      toast.error(errMsg);
-    }
+      console.error('Gagal membuat Work Order. Payload:', payload, 'Response error:', error.response?.data);
+      
+      const backendError = error.response?.data?.error;
+      const backendMessage = error.response?.data?.message;
+
+      // PERBAIKAN: Jika backend mengirimkan pesan konflik berbentuk string langsung
+      if (typeof backendError === 'string') {
+        toast.error(backendError);
+      } else if (backendMessage) {
+        toast.error(backendMessage);
+      } else if (Array.isArray(backendError)) {
+        // Jika terjadi error skema array validator dari Gin
+        const fieldErrs = backendError.map((d: any) => `${d.field}: ${d.message}`).join(', ');
+        toast.error(`Gagal membuat Work Order: (${fieldErrs})`);
+      } else {
+        toast.error('Gagal membuat Work Order. Silakan cek koneksi jaringan Anda.');
+      }
   } finally {
     isSubmitting.value = false;
   }
@@ -391,7 +407,9 @@ const handleSubmit = async () => {
                   :disabled="!step1.selectedPOId || isLoadingPOItems"
                   class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition disabled:bg-neutral-50 disabled:text-neutral-400 disabled:cursor-not-allowed"
                 >
-                  <option value="">{{ isLoadingPOItems ? 'Memuat item...' : 'Pilih PO Item...' }}</option>
+                  <option value="">
+                    {{ isLoadingPOItems ? 'Memuat item...' : (step1.selectedPOId && poItemOptions.length === 0) ? 'Tidak ada item garmen tersedia (Semua sudah memiliki WO)' : 'Pilih PO Item...' }}
+                  </option>
                   <option v-for="item in poItemOptions" :key="item.id_po_client_item" :value="item.id_po_client_item">
                     {{ item.style }} — {{ item.colour }} ({{ item.qty }} pcs)
                   </option>

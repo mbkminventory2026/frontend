@@ -2,6 +2,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { getProductionSummary, createFactoryReport, getWorkOrderList } from '@/api/production/production'
 import type { ProductionAggregateResponse, WorkOrderOption } from '@/schemas/production/production'
 import { usePermission } from '@/composables/usePermission'
+import { formatNumber } from '@/lib/formatter'
 
 export function useProductionDashboard() {
   const { hasPermission } = usePermission()
@@ -27,7 +28,7 @@ export function useProductionDashboard() {
   })
 
   // ─── Helpers ───────────────────────────────────────────
-  const formatAngka = (nilai: number) => new Intl.NumberFormat('id-ID').format(nilai)
+  const formatAngka = formatNumber
 
   const hitungProgresBobot = (target: number, prod: any) => {
     if (!target || target <= 0) return 0

@@ -323,17 +323,10 @@ const preSubmitReport = () => {
         return;
     }
 
-    if (maxReportQty.value !== null && qtyVal > maxReportQty.value) {
-        const targetQty = activeProductionItem.value?.target_qty ?? 0;
-        if (maxReportQty.value === targetQty) {
-            toast.error(
-                `QTY tidak boleh melebihi target quantity WO Shell Size: ${targetQty.toLocaleString('id-ID')} pcs.`
-            );
-        } else {
-            toast.error(
-                `QTY tidak boleh melebihi output ${prevStageLabel.value}: ${maxReportQty.value.toLocaleString('id-ID')} pcs.`
-            );
-        }
+    if (maxReportQty.value > 0 && qtyVal > maxReportQty.value) {
+        toast.error(
+            `QTY tidak boleh melebihi batas ${prevStageLabel.value}: ${maxReportQty.value.toLocaleString('id-ID')} pcs.`
+        );
         return;
     }
     

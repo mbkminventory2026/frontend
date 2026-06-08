@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { formatNumber } from '@/lib/formatter'
 import {
   ScissorsIcon,
   CheckCircle2Icon,
@@ -22,10 +23,6 @@ const props = withDefaults(
     showOverallOnly: false
   }
 )
-
-const formatAngka = (nilai: number) => {
-  return new Intl.NumberFormat('id-ID').format(nilai)
-}
 
 const hitungPersen = (val: number, targetVal: number) => {
   if (!targetVal || targetVal <= 0) return 0
@@ -107,10 +104,10 @@ const stages = computed(() => {
         </div>
         <div class="text-left sm:text-right">
           <p class="text-xs text-muted-foreground">
-            Target: <span class="font-bold text-foreground">{{ formatAngka(target) }} pcs</span>
+            Target: <span class="font-bold text-foreground">{{ formatNumber(target) }} pcs</span>
           </p>
           <p class="text-xs text-muted-foreground mt-0.5">
-            Shipped: <span class="font-bold text-foreground">{{ formatAngka(shipped) }} pcs</span>
+            Shipped: <span class="font-bold text-foreground">{{ formatNumber(shipped) }} pcs</span>
           </p>
         </div>
       </div>
@@ -142,7 +139,7 @@ const stages = computed(() => {
           <div class="space-y-1">
             <span class="text-xs font-semibold text-muted-foreground block leading-none">{{ stage.label }}</span>
             <span class="text-lg font-bold text-foreground tracking-tight block">
-              {{ formatAngka(stage.qty) }} <span class="text-[10px] font-normal text-muted-foreground">pcs</span>
+              {{ formatNumber(stage.qty) }} <span class="text-[10px] font-normal text-muted-foreground">pcs</span>
             </span>
           </div>
           <div class="p-1.5 rounded-lg border" :class="stage.bgColor">

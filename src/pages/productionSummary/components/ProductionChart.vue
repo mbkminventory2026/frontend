@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Card, CardContent } from '@/components/ui/card'
+import { formatNumber } from '@/lib/formatter'
 
 export interface ChartBar {
   label: string
@@ -10,8 +11,6 @@ export interface ChartBar {
 defineProps<{
   data: ChartBar[]
 }>()
-
-const formatAngka = (n: number) => new Intl.NumberFormat('id-ID').format(n)
 </script>
 
 <template>
@@ -24,7 +23,7 @@ const formatAngka = (n: number) => new Intl.NumberFormat('id-ID').format(n)
           class="flex flex-col items-center flex-1 h-full justify-end"
         >
           <span class="text-[11px] font-semibold text-muted-foreground mb-1.5">
-            {{ formatAngka(item.value) }}
+            {{ formatNumber(item.value) }}
           </span>
           <div
             class="w-full max-w-[40px] mx-auto bg-primary rounded-t transition-all duration-500"

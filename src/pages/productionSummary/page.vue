@@ -32,6 +32,7 @@ import { useDialog } from '@/composables/useDialog'
 import { useProductionDashboard } from '@/composables/dashboard/useProductionDashboard'
 import { type DialogSchemaType } from '@/schemas/dialog/dialog'
 import { usePermission } from '@/composables/usePermission'
+import { formatNumber } from '@/lib/formatter'
 
 const { hasPermission } = usePermission()
 
@@ -49,7 +50,6 @@ const {
   progressInfo,
   lastUpdateInfo,
   chartData,
-  formatAngka,
   getRowCompletion,
   fetchWorkOrders,
   fetchData,
@@ -152,7 +152,7 @@ const productionDialogSchema = computed<DialogSchemaType>(() => [
     rules: 'required',
     position: 'full',
     options: data.value.map(item => ({
-      label: `${item.model_name} (Size ${item.size}) [Target: ${formatAngka(item.target_qty)} pcs]`,
+      label: `${item.model_name} (Size ${item.size}) [Target: ${formatNumber(item.target_qty)} pcs]`,
       value: item.id_wo_shell_size,
     })),
   },
@@ -276,7 +276,7 @@ watch(() => search, () => {
                 :key="wo.id_wo"
                 :value="String(wo.id_wo)"
               >
-                WO #{{ wo.id_wo }} — {{ wo.buyer }} — {{ wo.model }} ({{ formatAngka(wo.qty) }} pcs)
+                WO #{{ wo.id_wo }} — {{ wo.buyer }} — {{ wo.model }} ({{ formatNumber(wo.qty) }} pcs)
               </SelectItem>
             </SelectGroup>
           </SelectContent>
