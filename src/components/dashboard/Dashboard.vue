@@ -3,8 +3,9 @@ import { computed } from 'vue';
 import { Button } from '@/components/ui/button';
 import OperatorDashboard from './OperatorDashboard.vue';
 import FinanceDashboard from './FinanceDashboard.vue';
-import ProductionOperatorDashboard from './ProductionOperatorDashboard.vue';
-// import { useDashboard } from '@/composables/dashboard/useDashboard';
+import AdminProduksiDashboard from './AdminProduksiDashboard.vue';
+import ManagerDashboard from './ManagerDashboard.vue';
+import ClientDashboard from './ClientDashboard.vue';
 const props = defineProps<{
     username?: string;
     role?: string;
@@ -52,7 +53,9 @@ const roleLabel = computed(() => normalizedRole.value.replace(/_/g, ' ') || 'ADM
     <OperatorDashboard v-if="normalizedRole === 'OPERATOR'" />
     
     <FinanceDashboard v-else-if="normalizedRole === 'ADMIN_KEUANGAN'" />
-    <ProductionOperatorDashboard v-else-if="normalizedRole === 'ADMIN_PRODUKSI'" />
+    <AdminProduksiDashboard v-else-if="normalizedRole === 'ADMIN_PRODUKSI'" />
+    <ManagerDashboard v-else-if="normalizedRole === 'MANAGER'" />
+    <ClientDashboard v-else-if="normalizedRole === 'CLIENT'" />
 
     <!-- Placeholder untuk Role Lain -->
     <div v-else class="bg-white p-12 rounded-xl shadow-sm border text-center">
