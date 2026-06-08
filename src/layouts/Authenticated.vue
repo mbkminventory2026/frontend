@@ -66,6 +66,16 @@ type NavSection = {
 }
 
 const navMainItems = computed(() => {
+  const masterDataTitle = authStore.roleName === "ADMIN_KEUANGAN"
+    ? "Referensi Pengadaan"
+    : authStore.roleName === "ADMIN_GUDANG"
+      ? "Referensi Gudang"
+      : authStore.roleName === "ADMIN_PRODUKSI"
+        ? "Referensi Produksi"
+        : authStore.roleName === "MANAGER"
+          ? "Referensi Operasional"
+        : "Master Data"
+
   if (authStore.isMitra) {
     return [
       {
@@ -184,7 +194,7 @@ const navMainItems = computed(() => {
       permission: "AI_ESTIMATION_READ",
     },
     {
-      title: "Master Data",
+      title: masterDataTitle,
       url: "#",
       icon: Boxes,
       items: [
