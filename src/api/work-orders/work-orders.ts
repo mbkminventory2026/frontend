@@ -53,6 +53,7 @@ export interface WorkOrderTrim {
   created_by: string;
   allow: number;
   created_at: string;
+  provided_by: string;
 }
 
 export interface MaterialList {

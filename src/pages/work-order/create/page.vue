@@ -7,7 +7,9 @@ import {
   PlusCircleIcon,
   Trash2Icon,
   ChevronRightIcon,
-  ChevronLeftIcon
+  ChevronLeftIcon,
+  SparklesIcon,
+  CopyIcon
 } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
@@ -196,18 +198,117 @@ const calculatedTotalQty = computed(() => {
 
 
 // Step 3: Trims & Materials
-interface Trim { item: string; description: string; color: string; code: string; cons: number; qty: number; uom: string; position: string; allow: number; }
+interface Trim { item: string; description: string; color: string; code: string; cons: number; qty: number; uom: string; position: string; allow: number; provided_by: string; }
 interface Material { description: string; size: string; color: string; uom: string; }
 
 const trims = ref<Trim[]>([
-  { item: '', description: '', color: '', code: '', cons: 0, qty: 0, uom: 'PCS', position: '', allow: 1 }
+  { item: '', description: '', color: '', code: '', cons: 0, qty: 0, uom: 'PCS', position: '', allow: 1, provided_by: 'permata' }
 ]);
 const materials = ref<Material[]>([]);
 
 const addTrim = () => {
-  trims.value.push({ item: '', description: '', color: '', code: '', cons: 0, qty: 0, uom: 'PCS', position: '', allow: 1 });
+  trims.value.push({ item: '', description: '', color: '', code: '', cons: 0, qty: 0, uom: 'PCS', position: '', allow: 1, provided_by: 'permata' });
 };
 const removeTrim = (i: number) => trims.value.splice(i, 1);
+
+const duplicateTrim = (i: number) => {
+  const t = trims.value[i];
+  if (t) {
+    trims.value.splice(i + 1, 0, { ...t });
+    toast.success('Trim berhasil diduplikasi.');
+  }
+};
+
+const generateThreadsFromColors = () => {
+  const colors = Array.from(new Set(shells.value.map(s => s.color.trim()).filter(Boolean)));
+  if (colors.length === 0) {
+    toast.error('Tidak ada warna kain di Shell yang bisa dijadikan rujukan.');
+    return;
+  }
+  
+  let addedCount = 0;
+  colors.forEach(color => {
+    const exists = trims.value.some(t => t.item.toLowerCase() === 'thread' && t.color.toLowerCase() === color.toLowerCase());
+    if (!exists) {
+      const totalColorQty = shells.value
+        .filter(s => s.color.toLowerCase() === color.toLowerCase() && s.material_type === 'fabric')
+        .reduce((sum, s) => {
+          return sum + s.sizes.reduce((szSum, sz) => szSum + getSizeCalculatedQty(sz), 0);
+        }, 0);
+
+      trims.value.push({
+        item: 'Thread',
+        description: `Thread ${color}`,
+        color: color,
+        code: `THR-${color.toUpperCase().replace(/\s+/g, '-')}`,
+        cons: 0.1,
+        qty: totalColorQty || 1000,
+        uom: 'CON',
+        position: 'Sewing',
+        allow: 3,
+        provided_by: 'permata'
+      });
+      addedCount++;
+    }
+  });
+
+  if (addedCount > 0) {
+    toast.success(`Berhasil menambahkan ${addedCount} Thread berdasarkan warna shell.`);
+  } else {
+    toast.info('Semua Thread untuk warna shell yang ada sudah diinput.');
+  }
+};
+
+const generateLabelsFromSizes = () => {
+  const sizesList: { size: string; qty: number }[] = [];
+  shells.value.forEach(s => {
+    s.sizes.forEach(sz => {
+      if (sz.size.trim()) {
+        const sizeName = sz.size.trim();
+        const calculatedQty = getSizeCalculatedQty(sz);
+        const existing = sizesList.find(item => item.size.toLowerCase() === sizeName.toLowerCase());
+        if (existing) {
+          existing.qty += calculatedQty;
+        } else {
+          sizesList.push({ size: sizeName, qty: calculatedQty });
+        }
+      }
+    });
+  });
+
+  if (sizesList.length === 0) {
+    toast.error('Tidak ada ukuran di Shell yang bisa dijadikan rujukan.');
+    return;
+  }
+
+  let addedCount = 0;
+  sizesList.forEach(item => {
+    const labelDesc = `Main Size Label - ${item.size}`;
+    const exists = trims.value.some(t => t.description === labelDesc);
+    if (!exists) {
+      trims.value.push({
+        item: 'Main Size Label',
+        description: labelDesc,
+        color: '',
+        code: '',
+        cons: 1,
+        qty: item.qty,
+        uom: 'PCS',
+        position: 'Labeling',
+        allow: 3,
+        provided_by: 'permata'
+      });
+      addedCount++;
+    }
+  });
+
+  if (addedCount > 0) {
+    toast.success(`Berhasil menambahkan ${addedCount} Main Size Label berdasarkan ukuran shell.`);
+  } else {
+    toast.info('Semua Main Size Label untuk ukuran shell yang ada sudah diinput.');
+  }
+};
+
 const addMaterial = () => {
   materials.value.push({ description: '', size: '', color: '', uom: '' });
 };
@@ -250,12 +351,11 @@ const step3Valid = computed(() =>
   trims.value.length >= 1 &&
   trims.value.every(t =>
     t.item.trim() &&
-    t.color.trim() &&
-    t.code.trim() &&
     parseNumber(t.cons) > 0 &&
     parseInteger(t.qty) > 0 &&
     t.uom.trim() &&
-    parseInteger(t.allow) >= 1
+    parseInteger(t.allow) >= 1 &&
+    t.provided_by.trim()
   ) &&
   // materials are optional (omitempty) but if added, must have size, color, uom
   materials.value.every(m => m.size.trim() && m.color.trim() && m.uom.trim())
@@ -296,6 +396,7 @@ const handleSubmit = async () => {
         uom: t.uom,
         position: t.position,
         allow: parseInteger(t.allow),
+        provided_by: t.provided_by,
       })),
       material_lists: materials.value.map(m => ({
         description: m.description,
@@ -619,14 +720,22 @@ const handleSubmit = async () => {
           <div v-if="wizardStep === 3" class="p-6 space-y-6">
             <!-- Trims Section -->
             <div class="space-y-3">
-              <div class="flex items-center justify-between">
+              <div class="flex items-center justify-between flex-wrap gap-2">
                 <div>
                   <h3 class="text-sm font-bold text-neutral-700">Trims / Aksesoris <span class="text-red-500">*</span></h3>
                   <p class="text-[10px] text-neutral-400 mt-0.5">Minimal 1 trim wajib diisi (syarat backend).</p>
                 </div>
-                <Button variant="outline" size="sm" class="border-neutral-300 shadow-xs" @click="addTrim">
-                  <PlusCircleIcon class="w-4 h-4 mr-1.5" /> Tambah Trim
-                </Button>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <Button type="button" variant="outline" size="sm" class="border-neutral-300 text-neutral-600 hover:text-neutral-900 shadow-xs text-xs" @click="generateThreadsFromColors">
+                    <SparklesIcon class="w-3.5 h-3.5 mr-1" /> Auto Thread (Warna)
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" class="border-neutral-300 text-neutral-600 hover:text-neutral-900 shadow-xs text-xs" @click="generateLabelsFromSizes">
+                    <SparklesIcon class="w-3.5 h-3.5 mr-1" /> Auto Label (Size)
+                  </Button>
+                  <Button variant="outline" size="sm" class="border-neutral-300 shadow-xs text-xs" @click="addTrim">
+                    <PlusCircleIcon class="w-4 h-4 mr-1.5" /> Tambah Trim
+                  </Button>
+                </div>
               </div>
 
               <div v-if="trims.length === 0" class="text-center py-6 border-2 border-dashed border-red-200 rounded-xl text-red-400 text-sm">
@@ -636,9 +745,14 @@ const handleSubmit = async () => {
               <div v-for="(trim, ti) in trims" :key="ti" class="border border-neutral-200 rounded-xl p-4 bg-neutral-50/40 space-y-3">
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-bold text-neutral-500 uppercase tracking-wider">Trim #{{ ti + 1 }}</span>
-                  <button @click="removeTrim(ti)" type="button" class="text-neutral-400 hover:text-red-500 transition">
-                    <Trash2Icon class="w-4 h-4" />
-                  </button>
+                  <div class="flex items-center gap-2">
+                    <button @click="duplicateTrim(ti)" type="button" class="text-neutral-400 hover:text-neutral-700 transition" title="Duplikasi Trim">
+                      <CopyIcon class="w-4 h-4" />
+                    </button>
+                    <button @click="removeTrim(ti)" type="button" class="text-neutral-400 hover:text-red-500 transition" title="Hapus Trim">
+                      <Trash2Icon class="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   <div class="space-y-1 col-span-2 sm:col-span-1">
@@ -674,11 +788,6 @@ const handleSubmit = async () => {
                     <input v-model="trim.uom" type="text" placeholder="PCS / SET"
                       class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition" />
                   </div>
-                  <div class="space-y-1 col-span-2">
-                    <label class="text-[10px] font-bold text-neutral-500 uppercase">Description</label>
-                    <input v-model="trim.description" type="text" placeholder="Deskripsi singkat trim"
-                      class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition" />
-                  </div>
                   <div class="space-y-1">
                     <label class="text-[10px] font-bold text-neutral-500 uppercase">Allow (%) *</label>
                     <input v-model="trim.allow" type="text" placeholder="3"
@@ -687,6 +796,19 @@ const handleSubmit = async () => {
                   <div class="space-y-1">
                     <label class="text-[10px] font-bold text-neutral-500 uppercase">Position</label>
                     <input v-model="trim.position" type="text" placeholder="cth: Front"
+                      class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition" />
+                  </div>
+                  <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Provided By *</label>
+                    <select v-model="trim.provided_by"
+                      class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition cursor-pointer h-9">
+                      <option value="client">Client</option>
+                      <option value="permata">Permatatex</option>
+                    </select>
+                  </div>
+                  <div class="space-y-1 col-span-2 sm:col-span-3">
+                    <label class="text-[10px] font-bold text-neutral-500 uppercase">Description</label>
+                    <input v-model="trim.description" type="text" placeholder="Deskripsi singkat trim"
                       class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition" />
                   </div>
                 </div>

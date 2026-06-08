@@ -1067,6 +1067,7 @@ onMounted(fetchDetail);
                                     <thead class="bg-neutral-50/50 border-b border-neutral-200">
                                         <tr>
                                             <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Item</th>
+                                            <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Provided By</th>
                                             <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Code</th>
                                             <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Color</th>
                                             <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider text-right">Cons</th>
@@ -1078,6 +1079,7 @@ onMounted(fetchDetail);
                                     <tbody class="divide-y divide-neutral-100">
                                         <tr v-for="trim in detail.trims" :key="trim.id_wo_trim" class="hover:bg-neutral-50/40">
                                             <td class="px-4 py-3 font-semibold text-neutral-800">{{ trim.item }}</td>
+                                            <td class="px-4 py-3 font-medium text-neutral-700 capitalize">{{ trim.provided_by }}</td>
                                             <td class="px-4 py-3 font-mono text-neutral-600">{{ trim.code }}</td>
                                             <td class="px-4 py-3 text-neutral-700">{{ trim.color }}</td>
                                             <td class="px-4 py-3 font-mono text-right text-neutral-700">{{ trim.cons }}</td>
