@@ -41,7 +41,10 @@ interface Props extends SidebarProps {
   projects: ProjectItem[]
 }
 
+import { useBrandingStore } from "@/store/brandingStore"
+
 const props = defineProps<Props>()
+const brandingStore = useBrandingStore()
 </script>
 
 <template>
@@ -54,13 +57,14 @@ const props = defineProps<Props>()
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton size="lg" as-child>
-            <a href="#">
-              <div class="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                <Factory class="size-4" />
+            <a href="/">
+              <div class="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden">
+                <img v-if="brandingStore.logo" :src="brandingStore.logo" alt="Logo" class="w-full h-full object-cover" />
+                <Factory v-else class="size-4" />
               </div>
               <div class="grid flex-1 text-left text-sm leading-tight">
-                <span class="truncate font-semibold text-sidebar-primary">Permatatex</span>
-                <span class="truncate text-xs opacity-80">Garment Industry</span>
+                <span class="truncate font-semibold text-sidebar-primary">{{ brandingStore.nama }}</span>
+                <span class="truncate text-xs opacity-80">{{ brandingStore.email || 'Garment Industry' }}</span>
               </div>
             </a>
           </SidebarMenuButton>

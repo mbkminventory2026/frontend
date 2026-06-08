@@ -18,6 +18,7 @@ import {
 import { getProfilPerusahaan, updateProfilPerusahaan } from '@/api/profil-perusahaan/profil-perusahaan';
 import { useForm } from '@/composables/form/useForm';
 import { useAddressField } from '@/composables/form/useAddressField';
+import { useBrandingStore } from '@/store/brandingStore';
 
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
@@ -37,6 +38,8 @@ import { Separator } from '@/components/ui/separator';
 import AppForm from '@/components/form/AppForm.vue';
 import AppFormField from '@/components/form/AppFormField.vue';
 
+const brandingStore = useBrandingStore();
+
 const form = useForm({
     api: {
         get: () => getProfilPerusahaan({ limit: 1, offset: 0 }),
@@ -47,7 +50,10 @@ const form = useForm({
         }
     },
     id: 'id_profil_perusahaan', // Just a placeholder to trigger update mode, logic handled in update function
-    immediate: true
+    immediate: true,
+    onSuccess: () => {
+        brandingStore.fetchBranding();
+    }
 });
 
 const { values, isLoading, isSaving, isEditing } = form;

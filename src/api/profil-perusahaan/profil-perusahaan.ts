@@ -55,7 +55,7 @@ export const getProfilPerusahaan = async (params: {
     offset: number,
     search?: string
 }) => {
-    const response = await apiClient.get<ProfilPerusahaanResponseItem[]>('/api/v1/profil-perusahaan', {
+    const response = await apiClient.get<any>('/api/v1/profil-perusahaan', {
         params: {
             limit: params.limit,
             offset: params.offset,
@@ -65,9 +65,12 @@ export const getProfilPerusahaan = async (params: {
 
     console.log('getProfilPerusahaan response:', response.data);
 
+    const data = response.data;
+    const results = data ? (Array.isArray(data) ? data : [data]) : [];
+
     return {
-        results: response.data,
-        count: Number(response.headers['x-total-count']) || (Array.isArray(response.data) ? response.data.length : (response.data ? 1 : 0))
+        results: results as ProfilPerusahaanResponseItem[],
+        count: results.length
     }
 }
 

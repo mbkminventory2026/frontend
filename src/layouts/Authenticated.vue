@@ -10,6 +10,14 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
 import { useBreadcrumbs } from "@/composables/useBreadcrumbs"
 import { Outlet, Link } from "@tanstack/vue-router"
 import {
@@ -28,19 +36,19 @@ import {
 } from "lucide-vue-next"
 import { useAuthStore } from "@/store/authStore"
 import { usePermission } from '@/composables/usePermission'
-import { computed } from "vue"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
+import { computed, onMounted } from "vue"
+import { useBrandingStore } from "@/store/brandingStore"
 
 const { breadcrumbs } = useBreadcrumbs()
 const authStore = useAuthStore()
 const { hasPermission } = usePermission()
+const brandingStore = useBrandingStore()
+
+onMounted(() => {
+  brandingStore.fetchBranding()
+})
+
+
 
 type NavLeaf = {
   title: string
