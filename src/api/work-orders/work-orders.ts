@@ -35,6 +35,8 @@ export interface WorkOrderShell {
   allow: number;
   berat_1_yd: number;
   created_at: string;
+  provided_by: string;
+  material_type: string;
   sizes: WorkOrderShellSize[];
 }
 

@@ -137,14 +137,14 @@ watch(() => step1.id_po_client_item, (newVal) => {
 
 // Step 2: Shells
 interface ShellSize { size: string; qty: any; ratio: any; }
-interface Shell { deskripsi: string; color: string; cons: any; allow: any; berat_1_yd: any; sizes: ShellSize[]; }
+interface Shell { material_type: string; deskripsi: string; provided_by: string; color: string; cons: any; allow: any; berat_1_yd: any; sizes: ShellSize[]; }
 
 const shells = ref<Shell[]>([
-  { deskripsi: '', color: '', cons: 0, allow: 0, berat_1_yd: 0, sizes: [{ size: '', qty: 0, ratio: 1 }] }
+  { material_type: 'fabric', deskripsi: '', provided_by: 'permatatex', color: '', cons: 0, allow: 0, berat_1_yd: 0, sizes: [{ size: '', qty: 0, ratio: 1 }] }
 ]);
 
 const addShell = () => {
-  shells.value.push({ deskripsi: '', color: '', cons: 0, allow: 0, berat_1_yd: 0, sizes: [] });
+  shells.value.push({ material_type: 'fabric', deskripsi: '', provided_by: 'permatatex', color: '', cons: 0, allow: 0, berat_1_yd: 0, sizes: [] });
 };
 const removeShell = (i: number) => shells.value.splice(i, 1);
 const addSize = (shellIdx: number) => {
@@ -233,7 +233,9 @@ const step1Valid = computed(() =>
 const step2Valid = computed(() =>
   shells.value.length > 0 &&
   shells.value.every((s) =>
+    s.material_type.trim() &&
     s.deskripsi.trim() &&
+    s.provided_by.trim() &&
     s.color.trim() &&
     parseNumber(s.cons) > 0 &&
     parseInteger(s.allow) >= 1 &&
@@ -271,7 +273,9 @@ const handleSubmit = async () => {
       delivery: step1.delivery,
       id_po_client_item: parseInteger(step1.id_po_client_item),
       shells: shells.value.map(s => ({
+        material_type: s.material_type,
         deskripsi: s.deskripsi,
+        provided_by: s.provided_by,
         color: s.color,
         cons: parseNumber(s.cons),
         allow: parseInteger(s.allow),
@@ -489,10 +493,26 @@ const handleSubmit = async () => {
 
               <!-- Shell Fields -->
               <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <div class="space-y-1 col-span-2 sm:col-span-1">
-                  <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Fabric *</label>
-                  <input v-model="shell.deskripsi" type="text" placeholder="cth: Ripstop Nylon"
+                <div class="space-y-1">
+                  <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Material Type *</label>
+                  <select v-model="shell.material_type"
+                    class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition cursor-pointer h-9">
+                    <option value="fabric">Fabric</option>
+                    <option value="interlining">Interlining</option>
+                  </select>
+                </div>
+                <div class="space-y-1">
+                  <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Deskripsi *</label>
+                  <input v-model="shell.deskripsi" type="text" placeholder="cth: Ripstop Nylon, 2016F"
                     class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition" />
+                </div>
+                <div class="space-y-1">
+                  <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Provided By *</label>
+                  <select v-model="shell.provided_by"
+                    class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition cursor-pointer h-9">
+                    <option value="client">Client</option>
+                    <option value="permata">Permatatex</option>
+                  </select>
                 </div>
                 <div class="space-y-1">
                   <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Color *</label>

@@ -430,6 +430,10 @@ onMounted(fetchDetail);
                     </div>
                     
                     <div class="text-xs font-semibold text-neutral-600 bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-2 flex items-center gap-4">
+                        <div>Type: <span class="text-neutral-900 capitalize">{{ selectedShell.material_type }}</span></div>
+                        <div class="h-3 w-px bg-neutral-200"></div>
+                        <div>Provided By: <span class="text-neutral-900 capitalize">{{ selectedShell.provided_by }}</span></div>
+                        <div class="h-3 w-px bg-neutral-200"></div>
                         <div>Cons: <span class="font-mono text-neutral-900">{{ selectedShell.cons }} yd</span></div>
                         <div class="h-3 w-px bg-neutral-200"></div>
                         <div>Allow: <span class="font-mono text-neutral-900">{{ selectedShell.allow }}%</span></div>
@@ -854,7 +858,9 @@ onMounted(fetchDetail);
                         <table class="w-full text-left border-collapse text-xs">
                             <thead class="bg-neutral-50/50 border-b border-neutral-200">
                                 <tr>
-                                    <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Fabric</th>
+                                    <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Type</th>
+                                    <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Deskripsi</th>
+                                    <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Provided By</th>
                                     <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Color</th>
                                     <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider text-right">Cons (yd)</th>
                                     <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider text-right">Allow</th>
@@ -870,7 +876,9 @@ onMounted(fetchDetail);
                                     class="hover:bg-neutral-50 cursor-pointer transition-colors group"
                                     @click="selectShell(shell.id_wo_shell)"
                                 >
+                                    <td class="px-4 py-3.5 font-medium text-neutral-700 capitalize">{{ shell.material_type }}</td>
                                     <td class="px-4 py-3.5 font-semibold text-neutral-800">{{ shell.deskripsi }}</td>
+                                    <td class="px-4 py-3.5 font-medium text-neutral-700 capitalize">{{ shell.provided_by }}</td>
                                     <td class="px-4 py-3.5">
                                         <span class="inline-flex items-center gap-1.5 font-medium text-neutral-700">
                                             <span
