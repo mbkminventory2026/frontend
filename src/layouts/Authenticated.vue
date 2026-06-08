@@ -95,6 +95,74 @@ const navMainItems = computed(() => {
     ].filter((item) => !item.permission || hasPermission(item.permission))
   }
 
+  if (authStore.roleName === "OPERATOR") {
+    const operatorItems: NavSection[] = [
+      {
+        title: "Dashboard",
+        url: "/dashboard",
+        icon: LayoutDashboard,
+        permission: "DASHBOARD_READ",
+      },
+      {
+        title: "Manajemen Akses",
+        url: "#",
+        icon: Users,
+        items: [
+          {
+            title: "Daftar Pengguna",
+            url: "/users",
+            permission: "USER_READ",
+          },
+          {
+            title: "Reset Password Request",
+            url: "/password-reset-requests",
+            permission: "PASSWORD_RESET_REQUEST_READ",
+          },
+        ],
+      },
+      {
+        title: "Role & Hak Akses",
+        url: "#",
+        icon: Shield,
+        items: [
+          {
+            title: "Manajemen Role",
+            url: "/roles",
+            permission: "ROLE_READ",
+          },
+          {
+            title: "Hak Akses & Fitur",
+            url: "/permissions",
+            permission: "PERMISSION_READ",
+          },
+        ],
+      },
+    ]
+
+    return operatorItems
+      .map((item) => {
+        if (item.permission && !hasPermission(item.permission)) {
+          return null
+        }
+
+        if (item.items) {
+          return {
+            ...item,
+            items: item.items.filter((subItem) => !subItem.permission || hasPermission(subItem.permission)),
+          }
+        }
+
+        return item
+      })
+      .filter((item): item is NavSection => {
+        if (!item) return false
+        if (item.items) {
+          return item.items.length > 0
+        }
+        return true
+      })
+  }
+
   const rawItems: NavSection[] = [
     {
       title: "Profil Perusahaan",
