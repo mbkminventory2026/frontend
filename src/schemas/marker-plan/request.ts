@@ -11,8 +11,6 @@ export interface CreateRatioMarkerRequest {
   efficiency_marker: number;
   allowance: number;
   cons_buyer: number | null;
-  roll_qty: number;
-  sambungan_roll: number;
   sizes: CreateRatioSizeMarkerRequest[];
   plot?: number;
   lebar_kain?: number;

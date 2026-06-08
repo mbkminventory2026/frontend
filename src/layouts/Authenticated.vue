@@ -207,6 +207,11 @@ const navMainItems = computed(() => {
           permission: "MARKER_PLAN_READ",
         },
         {
+          title: "Spreading & Cutting Plan",
+          url: "/spreading-cutting-plan",
+          permission: "CUTTING_PLAN_READ",
+        },
+        {
           title: "Timeline Produksi",
           url: "/timeline-produksi",
           permission: "TIMELINE_PRODUKSI_READ",

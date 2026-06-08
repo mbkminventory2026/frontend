@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { onMounted, computed, ref, watch } from 'vue';
 import { useRouter, useSearch } from '@tanstack/vue-router';
-import { PlusIcon, Trash2Icon, ArrowLeftIcon, SaveIcon, ChevronDownIcon, Layers2Icon } from 'lucide-vue-next';
+import { PlusIcon, Trash2Icon, ArrowLeftIcon, SaveIcon, ChevronDownIcon, ScissorsIcon } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
 import { getPOClients, type POClientListItem } from '@/api/po-clients/po-clients';
 import { getWorkOrders, getWorkOrderById, type WorkOrderListItem, type WorkOrderDetailResponse, type WorkOrderShell } from '@/api/work-orders/work-orders';
-import { createMarkerPlan } from '@/api/marker-plan/marker-plan';
+import { createSpreadingCuttingPlan } from '@/api/spreading-cutting-plan/spreading-cutting-plan';
 
 import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import Separator from '@/components/ui/separator/Separator.vue';
 
 const router = useRouter();
 const search = useSearch({ strict: false }) as any;
@@ -26,10 +26,8 @@ const isLoadingWoDetail = ref(false);
 
 const selectedPoId = ref<number | ''>('');
 const selectedWoId = ref<number | ''>('');
-const selectedShellId = ref<number | ''>('');
 
 const woDetail = ref<WorkOrderDetailResponse | null>(null);
-const selectedShell = ref<WorkOrderShell | null>(null);
 
 // Header state
 const noDokumen = ref('');
@@ -51,6 +49,9 @@ interface RatioInput {
   efficiency_marker: string;
   allowance: string;
   cons_buyer: string;
+  roll_qty: string;
+  sambungan_roll: string;
+  reject: string;
   plot: string;
   lebar_kain: string;
   ket: string;
@@ -99,16 +100,12 @@ const filteredWoList = computed(() => {
 // Watch PO reset
 watch(selectedPoId, () => {
   selectedWoId.value = '';
-  selectedShellId.value = '';
   woDetail.value = null;
-  selectedShell.value = null;
   components.value = [];
 });
 
 // Watch WO loads details
 watch(selectedWoId, async (newWoId) => {
-  selectedShellId.value = '';
-  selectedShell.value = null;
   woDetail.value = null;
   components.value = [];
 
@@ -116,26 +113,18 @@ watch(selectedWoId, async (newWoId) => {
     isLoadingWoDetail.value = true;
     try {
       woDetail.value = await getWorkOrderById(newWoId);
+      // Initialize with one default component (Fabric Utama) and one empty ratio row
+      if (woDetail.value?.shells && woDetail.value.shells.length > 0) {
+        const firstShell = woDetail.value.shells[0];
+        if (firstShell) {
+          initDefaultComponent(firstShell);
+        }
+      }
     } catch (e) {
       console.error('Failed to load Work Order details:', e);
       toast.error('Gagal memuat rincian Work Order.');
     } finally {
       isLoadingWoDetail.value = false;
-    }
-  }
-});
-
-// Watch Shell choice
-watch(selectedShellId, (newShellId) => {
-  selectedShell.value = null;
-  components.value = [];
-
-  if (newShellId && woDetail.value?.shells) {
-    const shell = woDetail.value.shells.find((s) => s.id_wo_shell === newShellId);
-    if (shell) {
-      selectedShell.value = shell;
-      // Initialize with one default component (Fabric Utama) and one empty ratio row
-      initDefaultComponent(shell);
     }
   }
 });
@@ -163,6 +152,9 @@ const createEmptyRatio = (shell: WorkOrderShell): RatioInput => {
     efficiency_marker: '',
     allowance: '',
     cons_buyer: '',
+    roll_qty: '0',
+    sambungan_roll: '0',
+    reject: '0',
     plot: '1',
     lebar_kain: '',
     ket: '',
@@ -296,17 +288,7 @@ const calculateConsPlusAllow = (ratio: RatioInput): number => {
   return netCons * (1 + allowancePercent / 100);
 };
 
-const calculateDiff = (ratio: RatioInput): number => {
-  const consBuyer = parseFloat(ratio.cons_buyer) || 0;
-  const consPlusAllow = calculateConsPlusAllow(ratio);
-  return consPlusAllow - consBuyer;
-};
-
-const calculateTotalNeedFabric = (ratio: RatioInput): number => {
-  const netCons = calculateNetCons(ratio);
-  const totalQty = calculateTotalQty(ratio);
-  return netCons * totalQty;
-};
+// Unused functions removed to prevent build warnings/errors
 
 const calculateTotalNeedFabricAllow = (ratio: RatioInput): number => {
   const consPlusAllow = calculateConsPlusAllow(ratio);
@@ -324,8 +306,8 @@ const handleSubmit = async () => {
     toast.error('Harap isi Tanggal Efektif.');
     return;
   }
-  if (!selectedShellId.value) {
-    toast.error('Harap pilih Fabric/Shell Rujukan.');
+  if (!selectedWoId.value) {
+    toast.error('Harap pilih Work Order.');
     return;
   }
   if (components.value.length === 0) {
@@ -352,6 +334,9 @@ const handleSubmit = async () => {
         rat.panjang_marker === '' || 
         rat.efficiency_marker === '' || 
         rat.allowance === '' || 
+        rat.roll_qty === '' || 
+        rat.sambungan_roll === '' || 
+        rat.reject === '' || 
         rat.plot === '' ||
         rat.lebar_kain === ''
       ) {
@@ -375,7 +360,7 @@ const handleSubmit = async () => {
     const payload = {
       no_dokumen: noDokumen.value,
       tanggal_efektif: tanggalEfektif.value,
-      id_wo_shell: Number(selectedShellId.value),
+      id_wo: Number(selectedWoId.value),
       components: components.value.map((comp) => ({
         nama_komponen: comp.nama_komponen,
         ratios: comp.ratios.map((rat) => ({
@@ -386,6 +371,9 @@ const handleSubmit = async () => {
           efficiency_marker: parseFloat(rat.efficiency_marker) || 0,
           allowance: parseFloat(rat.allowance) || 0,
           cons_buyer: rat.cons_buyer !== '' ? parseFloat(rat.cons_buyer) : null,
+          roll_qty: parseInt(rat.roll_qty) || 0,
+          sambungan_roll: parseInt(rat.sambungan_roll) || 0,
+          reject: parseFloat(rat.reject) || 0,
           plot: parseInt(rat.plot) || 1,
           lebar_kain: parseFloat(rat.lebar_kain) || 0,
           panjang_marker_unit: rat.panjang_marker_unit,
@@ -398,17 +386,17 @@ const handleSubmit = async () => {
       }))
     };
 
-    const res = await createMarkerPlan(payload);
-    toast.success('Marker Plan berhasil disimpan!');
+    const res = await createSpreadingCuttingPlan(payload);
+    toast.success('Spreading & Cutting Plan berhasil disimpan!');
     
     // Redirect to detail page
-    if (res && res.id_marker_plan) {
-      router.navigate({ to: '/marker-plan/$id', params: { id: String(res.id_marker_plan) } });
+    if (res && res.id_spreading_cutting_plan) {
+      router.navigate({ to: '/spreading-cutting-plan/$id', params: { id: String(res.id_spreading_cutting_plan) } });
     } else {
-      router.navigate({ to: '/work-order' });
+      router.navigate({ to: '/spreading-cutting-plan' });
     }
   } catch (error: any) {
-    const msg = error?.response?.data?.message ?? 'Gagal membuat Marker Plan.';
+    const msg = error?.response?.data?.message ?? 'Gagal membuat Spreading & Cutting Plan.';
     toast.error(msg);
   } finally {
     isSaving.value = false;
@@ -428,13 +416,6 @@ onMounted(async () => {
       setTimeout(() => {
         if (search.value?.woId) {
           selectedWoId.value = Number(search.value.woId);
-          
-          // Wait for shell options to load and select
-          setTimeout(() => {
-            if (search.value?.shellId) {
-              selectedShellId.value = Number(search.value.shellId);
-            }
-          }, 450);
         }
       }, 250);
     }
@@ -447,13 +428,13 @@ onMounted(async () => {
     <!-- Header -->
     <div class="flex items-center gap-4 border-b pb-5 border-neutral-100 justify-between">
       <div class="flex items-center gap-3">
-        <div class="bg-neutral-50 border border-neutral-200 p-2.5 rounded-xl shadow-sm animate-fade-in">
-          <Layers2Icon class="w-6 h-6 text-neutral-700" />
+        <div class="bg-neutral-50 border border-neutral-200 p-2.5 rounded-xl shadow-sm">
+          <ScissorsIcon class="w-6 h-6 text-neutral-700" />
         </div>
         <div>
-          <h1 class="text-2xl font-bold tracking-tight text-neutral-900">Tambah Marker Plan</h1>
+          <h1 class="text-2xl font-bold tracking-tight text-neutral-900">Tambah Spreading & Cutting Plan</h1>
           <p class="text-[13px] text-neutral-500 mt-1">
-            Buat rencana pemotongan (marker plan) yang mengorganisasikan komponen kain, ratio marker, spreading gelaran, dan size breakdown.
+            Buat rencana spreading dan pemotongan (spreading & cutting plan) yang mengorganisasikan komponen kain, roll qty, reject, spreading gelaran, dan size breakdown untuk seluruh Work Order.
           </p>
         </div>
       </div>
@@ -475,7 +456,7 @@ onMounted(async () => {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div class="space-y-1.5">
             <Label class="text-xs font-semibold text-neutral-700">Nomor Dokumen <span class="text-red-500">*</span></Label>
-            <Input v-model="noDokumen" type="text" placeholder="Masukkan nomor dokumen marker plan" class="h-9 text-xs border-neutral-200" required />
+            <Input v-model="noDokumen" type="text" placeholder="Masukkan nomor dokumen plan" class="h-9 text-xs border-neutral-200" required />
           </div>
 
           <div class="space-y-1.5">
@@ -489,10 +470,10 @@ onMounted(async () => {
         <!-- Cascading WO selectors -->
         <h2 class="text-xs font-bold text-neutral-700 uppercase tracking-wider flex items-center gap-2">
           <span class="inline-block w-1.5 h-4 bg-neutral-900 rounded-full"></span>
-          Rujukan Work Order & Shell
+          Rujukan Work Order
         </h2>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
           <div class="space-y-1.5">
             <Label class="text-xs font-semibold text-neutral-700">Purchase Order <span class="text-red-500">*</span></Label>
             <div class="relative">
@@ -530,33 +511,14 @@ onMounted(async () => {
               </div>
             </div>
           </div>
-
-          <div class="space-y-1.5">
-            <Label class="text-xs font-semibold text-neutral-700">Pilih Fabric / Shell Rujukan <span class="text-red-500">*</span></Label>
-            <div class="relative">
-              <select
-                v-model="selectedShellId"
-                :disabled="!selectedWoId || isLoadingWoDetail"
-                class="w-full h-9 rounded-md border border-neutral-200 bg-white pl-3 pr-9 py-1 text-sm shadow-xs transition-colors outline-none focus-visible:ring-2 focus-visible:ring-neutral-800 disabled:cursor-not-allowed disabled:opacity-60 appearance-none cursor-pointer"
-              >
-                <option value="" disabled>Pilih Fabric / Shell</option>
-                <option v-for="shell in woDetail?.shells" :key="shell.id_wo_shell" :value="shell.id_wo_shell">
-                  {{ shell.fabric }} ({{ shell.color }})
-                </option>
-              </select>
-              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5">
-                <ChevronDownIcon class="w-4 h-4 text-neutral-400" />
-              </div>
-            </div>
-          </div>
         </div>
 
         <!-- DYNAMIC COMPONENTS AND RATIOS SECTION -->
-        <div v-if="selectedShell" class="space-y-6 pt-4">
+        <div v-if="selectedWoId && woDetail" class="space-y-6 pt-4">
           <div class="flex items-center justify-between border-b pb-3 border-neutral-100">
             <h2 class="text-xs font-bold text-neutral-700 uppercase tracking-wider flex items-center gap-2">
               <span class="inline-block w-1.5 h-4 bg-emerald-600 rounded-full"></span>
-              Pengaturan Komponen & Ratio (Kain: {{ selectedShell.fabric }}, Warna: {{ selectedShell.color }})
+              Pengaturan Komponen & Ratio Spreading
             </h2>
             <Button type="button" @click="addComponent" size="sm" variant="outline" class="h-8 border-dashed border-neutral-300 text-neutral-700 hover:bg-neutral-50">
               <PlusIcon class="w-3.5 h-3.5 mr-1" /> Tambah Komponen
@@ -564,7 +526,7 @@ onMounted(async () => {
           </div>
 
           <!-- Component Cards Loop -->
-          <div v-for="(comp, compIdx) in components" :key="compIdx" class="bg-neutral-50/45 border border-neutral-200 rounded-xl p-5 space-y-4 shadow-sm relative animate-fade-in">
+          <div v-for="(comp, compIdx) in components" :key="compIdx" class="bg-neutral-50/45 border border-neutral-200 rounded-xl p-5 space-y-4 shadow-sm relative">
             <!-- Delete Component btn -->
             <button
               v-if="components.length > 1"
@@ -585,7 +547,6 @@ onMounted(async () => {
                   type="text"
                   placeholder="Contoh: Fabric Utama, Interlining, Kantong"
                   class="h-9 text-xs bg-white border-neutral-200"
-                  :disabled="compIdx === 0"
                   required
                 />
               </div>
@@ -595,12 +556,11 @@ onMounted(async () => {
                 <div class="relative">
                   <select
                     v-model="comp.id_wo_shell"
-                    :disabled="compIdx === 0"
                     @change="handleComponentShellChange(compIdx)"
-                    class="w-full h-9 rounded-md border border-neutral-200 bg-white pl-3 pr-9 py-1 text-sm shadow-xs transition-colors outline-none focus-visible:ring-2 focus-visible:ring-neutral-800 disabled:cursor-not-allowed disabled:opacity-60 appearance-none cursor-pointer"
+                    class="w-full h-9 rounded-md border border-neutral-200 bg-white pl-3 pr-9 py-1 text-sm shadow-xs transition-colors outline-none focus-visible:ring-2 focus-visible:ring-neutral-800 disabled:cursor-not-allowed disabled:opacity-60 appearance-none cursor-pointer text-xs"
                     required
                   >
-                    <option value="" disabled>Pilih Fabric / Shell</option>
+                    <option value="" disabled>Pilih Fabric / Shell Rujukan</option>
                     <option v-for="shell in woDetail?.shells" :key="shell.id_wo_shell" :value="shell.id_wo_shell">
                       {{ shell.fabric }} ({{ shell.color }})
                     </option>
@@ -612,186 +572,177 @@ onMounted(async () => {
               </div>
             </div>
 
-            <!-- Ratio Table inside Component -->
-            <div class="space-y-2">
-              <Label class="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Ratio Marker & Spreading Plan</Label>
-              <div class="overflow-x-auto border border-neutral-200 rounded-lg shadow-inner bg-white">
-                <table class="w-full text-left border-collapse text-xs min-w-[1600px]">
-                  <thead class="bg-neutral-50 border-b border-neutral-200 text-[10px] uppercase font-bold text-neutral-500">
-                    <tr>
-                      <th class="px-3 py-2.5 w-[3%]">No</th>
-                      <!-- Dynamic size headers -->
-                      <th v-for="sz in (getComponentShell(comp)?.sizes || [])" :key="sz.id_wo_shell_size" class="px-3 py-2.5 text-center w-[5%] bg-neutral-100/50">
-                        Sz {{ sz.size }}
-                      </th>
-                      <th class="px-3 py-2.5 w-[6%]">Total QTY</th>
-                      <th class="px-3 py-2.5 w-[6%]">Gelaran</th>
-                      <th class="px-3 py-2.5 w-[6%]">Sisa</th>
-                      <th class="px-3 py-2.5 w-[5%]">Plot</th>
-                      <th class="px-3 py-2.5 w-[6%]">Lebar Kain</th>
-                      <th class="px-3 py-2.5 w-[11%]">Panjang Marker</th>
-                      <th class="px-3 py-2.5 w-[6%]">Net Cons</th>
-                      <th class="px-3 py-2.5 w-[6%]">Efficiency (%)</th>
-                      <th class="px-3 py-2.5 w-[6%]">Allowance (%)</th>
-                      <th class="px-3 py-2.5 w-[7%]">Cons+Allow (Yds)</th>
-                      <th class="px-3 py-2.5 w-[6%]">Cons Buyer</th>
-                      <th class="px-3 py-2.5 w-[6%]">Diff</th>
-                      <th class="px-3 py-2.5 w-[7%]">Total Need Fabric</th>
-                      <th class="px-3 py-2.5 w-[7%]">Total Need+Allow</th>
-                      <th class="px-3 py-2.5 w-[8%]">Ket</th>
-                      <th class="px-3 py-2.5 text-center w-[4%]">Aksi</th>
+            <!-- Ratio Rows for this Component -->
+            <div v-if="comp.id_wo_shell && getComponentShell(comp)" class="space-y-4 pt-2">
+              <div class="flex items-center justify-between border-b border-neutral-100 pb-1.5">
+                <h3 class="text-xs font-semibold text-neutral-600">Ratio Breakdown & Size Spreading</h3>
+                <Button type="button" @click="addRatioRow(compIdx)" size="sm" variant="ghost" class="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 h-7 text-xs px-2.5">
+                  <PlusIcon class="w-3.5 h-3.5 mr-1" /> Tambah Baris Ratio
+                </Button>
+              </div>
+
+              <!-- Responsive table wrapper -->
+              <div class="overflow-x-auto border border-neutral-200 rounded-lg bg-white shadow-xs">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr class="bg-neutral-50/75 border-b border-neutral-200 text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
+                      <th class="p-3 w-16 text-center">Row</th>
+                      <th class="p-3 min-w-[280px]">Sizes (XS - XXL Ratio) <span class="text-red-500">*</span></th>
+                      <th class="p-3 w-28 text-center">Gelaran (Plies) <span class="text-red-500">*</span></th>
+                      <th class="p-3 w-28 text-center">Marker Lgth <span class="text-red-500">*</span></th>
+                      <th class="p-3 w-28 text-center">Unit <span class="text-red-500">*</span></th>
+                      <th class="p-3 w-28 text-center">Eff (%) <span class="text-red-500">*</span></th>
+                      <th class="p-3 w-28 text-center">Allow (%) <span class="text-red-500">*</span></th>
+                      <th class="p-3 w-28 text-center">Roll Qty <span class="text-red-500">*</span></th>
+                      <th class="p-3 w-28 text-center">Join Roll <span class="text-red-500">*</span></th>
+                      <th class="p-3 w-28 text-center">Reject (Yd) <span class="text-red-500">*</span></th>
+                      <th class="p-3 w-24 text-center">Plot <span class="text-red-500">*</span></th>
+                      <th class="p-3 w-28 text-center">Width (In) <span class="text-red-500">*</span></th>
+                      <th class="p-3 w-28 text-center">Cons Buyer</th>
+                      <th class="p-3 w-24 text-center">Sisa (Pcs)</th>
+                      <th class="p-3 w-24 text-center">Cons+Allow</th>
+                      <th class="p-3 w-24 text-center">Total Need (Yd)</th>
+                      <th class="p-3 w-36">Notes</th>
+                      <th class="p-3 w-12 text-center">Action</th>
                     </tr>
                   </thead>
-                  <tbody v-if="comp.ratios.length === 0" class="text-neutral-800">
-                    <tr>
-                      <td :colspan="17 + (getComponentShell(comp)?.sizes?.length || 0)" class="p-6 text-center text-neutral-400 italic">
-                        Belum ada data ratio. Silakan pilih Fabric / Shell Rujukan terlebih dahulu kemudian klik "Tambah Baris Ratio".
-                      </td>
-                    </tr>
-                  </tbody>
-                  <tbody v-else class="divide-y divide-neutral-150 text-neutral-800">
+                  <tbody class="divide-y divide-neutral-200">
                     <tr v-for="(ratio, ratioIdx) in comp.ratios" :key="ratioIdx" class="hover:bg-neutral-50/30 transition-colors">
-                      <!-- No -->
-                      <td class="p-2 text-center font-mono font-medium">
-                        {{ ratioIdx + 1 }}
-                      </td>
                       
-                      <!-- Dynamic size inputs (ratio_plan) -->
-                      <td v-for="szIn in ratio.sizes" :key="szIn.id_wo_shell_size" class="p-2 bg-neutral-50/20">
-                        <Input v-model="szIn.ratio_plan" type="number" min="0" step="1" class="h-8 text-xs border-neutral-200 font-mono text-center bg-white" required />
-                      </td>
-
-                      <!-- Total QTY -->
-                      <td class="p-2">
-                        <Input :value="calculateTotalQty(ratio)" type="text" class="h-8 text-xs border-neutral-100 bg-neutral-50 font-mono text-right text-neutral-600" disabled />
-                      </td>
-
-                      <!-- Gelaran -->
-                      <td class="p-2">
-                        <Input v-model="ratio.plan_spreading_gelaran" type="number" min="0" step="1" class="h-8 text-xs border-neutral-200 font-mono text-right" required />
-                      </td>
-
-                      <!-- Sisa -->
-                      <td class="p-2">
-                        <Input :value="calculateSisa(comp, ratioIdx)" type="text" class="h-8 text-xs border-neutral-100 bg-neutral-50 font-mono text-right text-neutral-600" disabled />
-                      </td>
-
-                      <!-- Plot -->
-                      <td class="p-2">
-                        <Input v-model="ratio.plot" type="number" min="0" step="1" class="h-8 text-xs border-neutral-200 font-mono text-right" required />
-                      </td>
-
-                      <!-- Lebar Kain -->
-                      <td class="p-2">
-                        <Input v-model="ratio.lebar_kain" type="number" min="0" step="0.1" class="h-8 text-xs border-neutral-200 font-mono text-right" required />
-                      </td>
-
-                      <!-- Panjang Marker -->
-                      <td class="p-2">
-                        <div class="flex items-center gap-1 min-w-[110px]">
-                          <Input v-model="ratio.panjang_marker" type="number" min="0" step="0.001" class="h-8 text-xs border-neutral-200 font-mono text-right w-full" required />
-                          <select v-model="ratio.panjang_marker_unit" class="h-8 text-[10px] rounded-md border border-neutral-200 bg-white px-1">
-                            <option value="yard">yd</option>
-                            <option value="meter">m</option>
-                            <option value="inch">in</option>
-                          </select>
+                      <!-- Row Index -->
+                      <td class="p-3 text-center font-medium text-neutral-400 font-mono">{{ ratioIdx + 1 }}</td>
+                      
+                      <!-- Size Inputs Grid -->
+                      <td class="p-3">
+                        <div class="flex flex-wrap gap-3">
+                          <div v-for="(sz, szIdx) in ratio.sizes" :key="szIdx" class="flex items-center gap-1.5 bg-neutral-50 border border-neutral-200 px-2 py-1.5 rounded-lg shadow-2xs">
+                            <span class="font-bold text-neutral-600 min-w-7 text-[10px] text-center">{{ sz.size }}</span>
+                            <Input
+                              v-model="sz.ratio_plan"
+                              type="number"
+                              placeholder="0"
+                              class="w-11 h-7 text-center text-xs p-1 bg-white border-neutral-300 rounded focus-visible:ring-1 focus-visible:ring-neutral-800"
+                              min="0"
+                            />
+                            <!-- Displays calculated physical plies quantity for this size -->
+                            <span class="text-[9px] text-neutral-400 font-medium font-mono min-w-8">
+                              ({{ Math.round((parseFloat(sz.ratio_plan) || 0) * (parseFloat(ratio.plan_spreading_gelaran) || 0)) }} pcs)
+                            </span>
+                          </div>
                         </div>
                       </td>
 
-                      <!-- Net Cons -->
-                      <td class="p-2">
-                        <Input :value="calculateNetCons(ratio).toFixed(3)" type="text" class="h-8 text-xs border-neutral-100 bg-neutral-50 font-mono text-right text-neutral-600" disabled />
+                      <!-- Spreading Gelaran -->
+                      <td class="p-3">
+                        <Input v-model="ratio.plan_spreading_gelaran" type="number" placeholder="0" class="h-8 text-xs min-w-16 border-neutral-300" min="0" required />
+                      </td>
+
+                      <!-- Panjang Marker -->
+                      <td class="p-3">
+                        <Input v-model="ratio.panjang_marker" type="number" step="any" placeholder="0" class="h-8 text-xs min-w-16 border-neutral-300" min="0" required />
+                      </td>
+
+                      <!-- Unit -->
+                      <td class="p-3">
+                        <select v-model="ratio.panjang_marker_unit" class="h-8 rounded-md border border-neutral-300 bg-white px-2 text-xs shadow-2xs outline-none focus-visible:ring-1 focus-visible:ring-neutral-800 min-w-20 cursor-pointer">
+                          <option value="yard">Yard</option>
+                          <option value="meter">Meter</option>
+                          <option value="inch">Inch</option>
+                        </select>
                       </td>
 
                       <!-- Efficiency -->
-                      <td class="p-2">
-                        <Input v-model="ratio.efficiency_marker" type="number" min="0" max="100" step="0.01" class="h-8 text-xs border-neutral-200 font-mono text-right" required />
+                      <td class="p-3">
+                        <Input v-model="ratio.efficiency_marker" type="number" step="any" placeholder="0" class="h-8 text-xs min-w-16 border-neutral-300" min="0" max="100" required />
                       </td>
 
                       <!-- Allowance -->
-                      <td class="p-2">
-                        <Input v-model="ratio.allowance" type="number" min="0" step="0.01" class="h-8 text-xs border-neutral-200 font-mono text-right" required />
+                      <td class="p-3">
+                        <Input v-model="ratio.allowance" type="number" step="any" placeholder="0" class="h-8 text-xs min-w-16 border-neutral-300" min="0" required />
                       </td>
 
-                      <!-- Cons+Allow (Yds) -->
-                      <td class="p-2">
-                        <Input :value="calculateConsPlusAllow(ratio).toFixed(3)" type="text" class="h-8 text-xs border-neutral-100 bg-neutral-50 font-mono text-right text-neutral-600" disabled />
+                      <!-- Roll Qty -->
+                      <td class="p-3">
+                        <Input v-model="ratio.roll_qty" type="number" placeholder="0" class="h-8 text-xs min-w-16 border-neutral-300" min="0" required />
+                      </td>
+
+                      <!-- Join Roll -->
+                      <td class="p-3">
+                        <Input v-model="ratio.sambungan_roll" type="number" placeholder="0" class="h-8 text-xs min-w-16 border-neutral-300" min="0" required />
+                      </td>
+
+                      <!-- Reject -->
+                      <td class="p-3">
+                        <Input v-model="ratio.reject" type="number" step="any" placeholder="0" class="h-8 text-xs min-w-16 border-neutral-300" min="0" required />
+                      </td>
+
+                      <!-- Plot -->
+                      <td class="p-3">
+                        <Input v-model="ratio.plot" type="number" placeholder="1" class="h-8 text-xs min-w-14 border-neutral-300" min="1" required />
+                      </td>
+
+                      <!-- Lebar Kain -->
+                      <td class="p-3">
+                        <Input v-model="ratio.lebar_kain" type="number" step="any" placeholder="0" class="h-8 text-xs min-w-16 border-neutral-300" min="0" required />
                       </td>
 
                       <!-- Cons Buyer -->
-                      <td class="p-2">
-                        <Input v-model="ratio.cons_buyer" type="number" min="0" step="0.001" placeholder="Optional" class="h-8 text-xs border-neutral-200 font-mono text-right" />
+                      <td class="p-3">
+                        <Input v-model="ratio.cons_buyer" type="number" step="any" placeholder="Optional" class="h-8 text-xs min-w-20 border-neutral-300" min="0" />
                       </td>
 
-                      <!-- Diff -->
-                      <td class="p-2">
-                        <Input :value="calculateDiff(ratio).toFixed(3)" type="text" class="h-8 text-xs border-neutral-100 bg-neutral-50 font-mono text-right text-neutral-600" disabled />
+                      <!-- Sisa Qty (Pcs) -->
+                      <td class="p-3 text-center font-mono font-medium text-neutral-600">
+                        {{ calculateSisa(comp, ratioIdx) }}
                       </td>
 
-                      <!-- Total Need Fabric -->
-                      <td class="p-2">
-                        <Input :value="calculateTotalNeedFabric(ratio).toFixed(3)" type="text" class="h-8 text-xs border-neutral-100 bg-neutral-50 font-mono text-right text-neutral-600" disabled />
+                      <!-- Cons + Allowance (Yards) -->
+                      <td class="p-3 text-center font-mono font-semibold text-neutral-700">
+                        {{ calculateConsPlusAllow(ratio).toFixed(3) }}
                       </td>
 
-                      <!-- Total Need Fabric+Allow -->
-                      <td class="p-2">
-                        <Input :value="calculateTotalNeedFabricAllow(ratio).toFixed(3)" type="text" class="h-8 text-xs border-neutral-100 bg-neutral-50 font-mono text-right text-neutral-600" disabled />
+                      <!-- Total Need Fabric with Allowance (Yards) -->
+                      <td class="p-3 text-center font-mono font-bold text-emerald-700">
+                        {{ calculateTotalNeedFabricAllow(ratio).toFixed(2) }}
                       </td>
 
-                      <!-- Ket -->
-                      <td class="p-2">
-                        <Input v-model="ratio.ket" type="text" placeholder="Catatan" class="h-8 text-xs border-neutral-200 bg-white" />
+                      <!-- Notes -->
+                      <td class="p-3">
+                        <Input v-model="ratio.ket" type="text" placeholder="Catatan baris" class="h-8 text-xs min-w-28 border-neutral-300" />
                       </td>
 
-                      <!-- Delete Row button -->
-                      <td class="p-2 text-center">
-                        <Button
+                      <!-- Remove Action -->
+                      <td class="p-3 text-center">
+                        <button
                           type="button"
-                          variant="ghost"
-                          size="sm"
                           @click="removeRatioRow(compIdx, ratioIdx)"
-                          class="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md"
-                          :disabled="comp.ratios.length <= 1"
+                          class="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 transition-colors"
+                          title="Hapus Baris"
                         >
                           <Trash2Icon class="w-3.5 h-3.5" />
-                        </Button>
+                        </button>
                       </td>
+
                     </tr>
                   </tbody>
                 </table>
               </div>
             </div>
-
-            <!-- Add Row Button -->
-            <div class="flex justify-start pt-1">
-              <Button type="button" @click="addRatioRow(compIdx)" size="sm" variant="outline" class="h-8 border-neutral-200 text-neutral-600 hover:bg-white shadow-xs">
-                <PlusIcon class="w-3.5 h-3.5 mr-1" /> Tambah Baris Ratio
-              </Button>
-            </div>
           </div>
         </div>
 
-        <!-- Form Submission Button -->
-        <div class="flex justify-end pt-4 border-t border-neutral-100 gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            @click="router.history.back()"
-            :disabled="isSaving"
-            class="border-neutral-200 text-neutral-600"
-          >
+        <!-- Action Buttons -->
+        <div class="flex items-center justify-end gap-3 pt-6 border-t border-neutral-100">
+          <Button @click="router.history.back()" type="button" variant="outline" class="border-neutral-200">
             Batal
           </Button>
-          <Button
-            type="submit"
-            :disabled="isSaving || !selectedShellId"
-            class="bg-neutral-900 hover:bg-neutral-800 text-white font-medium transition-all shadow-sm"
-          >
-            <Spinner v-if="isSaving" class="w-4 h-4 mr-2" />
-            <SaveIcon v-else class="w-4 h-4 mr-2" />
-            {{ isSaving ? 'Menyimpan...' : 'Simpan Marker Plan' }}
+          <Button :disabled="isSaving || !selectedWoId" type="submit" class="bg-neutral-900 text-white hover:bg-neutral-800">
+            <SaveIcon v-if="!isSaving" class="w-4 h-4 mr-2" />
+            <span v-else class="w-4 h-4 mr-2 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+            Simpan Spreading Plan
           </Button>
         </div>
+
       </form>
     </Card>
   </div>

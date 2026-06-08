@@ -16,8 +16,6 @@ export interface RatioMarkerResponse {
   efficiency_marker: number;
   allowance: number;
   cons_buyer?: number | null;
-  roll_qty: number;
-  sambungan_roll: number;
   plot: number;
   lebar_kain: number;
   panjang_marker_unit: string;
