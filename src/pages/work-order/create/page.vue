@@ -328,7 +328,7 @@ const generateBarcodes = () => {
   let addedCount = 0;
   colors.forEach(color => {
     sizesList.forEach(size => {
-      const barcodeDesc = `Barcode ${color} - ${size}`;
+      const barcodeDesc = size; // Hanya [size] saja
       const exists = trims.value.some(t => 
         t.item.toLowerCase() === 'barcode' && 
         t.color.toLowerCase() === color.toLowerCase() && 
@@ -347,11 +347,11 @@ const generateBarcodes = () => {
           item: 'Barcode',
           description: barcodeDesc,
           color: color,
-          code: `BAR-${color.toUpperCase().replace(/\s+/g, '-')}-${size.toUpperCase().replace(/\s+/g, '-')}`,
+          code: '', // Code kosong
           cons: 1,
           qty: qty || 0,
           uom: 'PCS',
-          position: 'Packaging',
+          position: 'digantung di hangtag', // Position "digantung di hangtag"
           allow: 1,
           provided_by: 'permata'
         });
