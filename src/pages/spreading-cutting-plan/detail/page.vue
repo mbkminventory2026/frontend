@@ -103,19 +103,6 @@ const getConsPlusAllow = (ratio: any) => {
     return ratio.cons * (1 + (ratio.allowance || 0) / 100);
 };
 
-// Calculate Diff
-const getDiff = (ratio: any) => {
-    if (ratio.cons_buyer === null || ratio.cons_buyer === undefined) return null;
-    const consAllow = getConsPlusAllow(ratio);
-    return consAllow - ratio.cons_buyer;
-};
-
-// Calculate Total Need Fabric
-const getTotalNeedFabric = (ratio: any) => {
-    const totalQty = getRatioTotalQty(ratio.sizes, ratio.plan_spreading_gelaran);
-    return ratio.cons * totalQty;
-};
-
 // Calculate Total Need Fabric + Allow
 const getTotalNeedPlusAllow = (ratio: any) => {
     const totalQty = getRatioTotalQty(ratio.sizes, ratio.plan_spreading_gelaran);
@@ -192,31 +179,25 @@ onMounted(() => {
 
                 <!-- Ratio Table -->
                 <div class="overflow-x-auto border border-neutral-150 rounded-lg shadow-xs bg-white">
-                  <table class="w-full text-left border-collapse border-spacing-0 text-xs min-w-[2000px]">
+                  <table class="w-full text-left border-collapse border-spacing-0 text-xs min-w-[1200px]">
                     <thead class="bg-neutral-50/60 border-b border-neutral-200 text-[10px] uppercase font-bold text-neutral-500">
                       <tr>
-                        <th class="px-3 py-2.5 w-[3%]">No</th>
+                        <th class="px-3 py-2.5 w-[3%]">No.</th>
                         <!-- Dynamic size headers -->
                         <th v-for="sizeName in uniqueSizes" :key="sizeName" class="px-3 py-2.5 text-center w-[5%] bg-neutral-50">
-                          Sz {{ sizeName }}
+                          {{ sizeName }}
                         </th>
                         <th class="px-3 py-2.5 w-[6%]">Total QTY</th>
-                        <th class="px-3 py-2.5 w-[6%]">Gelaran</th>
+                        <th class="px-3 py-2.5 w-[6%]">Plan Spreading (Layer)</th>
                         <th class="px-3 py-2.5 w-[6%]">Sisa</th>
-                        <th class="px-3 py-2.5 w-[4%]">Plot</th>
                         <th class="px-3 py-2.5 w-[6%]">Lebar Kain</th>
-                        <th class="px-3 py-2.5 w-[9%]">Panjang Marker</th>
-                        <th class="px-3 py-2.5 w-[6%]">Net Cons</th>
-                        <th class="px-3 py-2.5 w-[6%]">Efficiency (%)</th>
+                        <th class="px-3 py-2.5 w-[6%]">Cons</th>
                         <th class="px-3 py-2.5 w-[6%]">Allowance (%)</th>
                         <th class="px-3 py-2.5 w-[6%]">Roll Qty</th>
                         <th class="px-3 py-2.5 w-[6%]">Join Roll</th>
                         <th class="px-3 py-2.5 w-[6%]">Reject (Yd)</th>
                         <th class="px-3 py-2.5 w-[7%]">Cons+Allow (Yds)</th>
-                        <th class="px-3 py-2.5 w-[6%]">Cons Buyer</th>
-                        <th class="px-3 py-2.5 w-[6%]">Diff</th>
-                        <th class="px-3 py-2.5 w-[7%]">Total Need Fabric</th>
-                        <th class="px-3 py-2.5 w-[7%]">Total Need+Allow</th>
+                        <th class="px-3 py-2.5 w-[7%]">Total Need (Yd)</th>
                         <th class="px-3 py-2.5 w-[8%]">Ket</th>
                       </tr>
                     </thead>
@@ -235,56 +216,34 @@ onMounted(() => {
                           {{ getRatioTotalQty(ratio.sizes, ratio.plan_spreading_gelaran).toLocaleString('id-ID') }}
                         </td>
                         
-                        <!-- Gelaran -->
-                        <td class="px-3 py-3 text-right">{{ ratio.plan_spreading_gelaran.toFixed(2) }}</td>
+                        <!-- Plan Spreading (Layer) -->
+                        <td class="px-3 py-3 text-right">{{ ratio.plan_spreading_gelaran }}</td>
                         
                         <!-- Sisa -->
                         <td class="px-3 py-3 text-right bg-neutral-50/20">{{ calculateDetailSisa(comp.ratios, ratioIdx).toLocaleString('id-ID') }}</td>
                         
-                        <!-- Plot -->
-                        <td class="px-3 py-3 text-right">{{ ratio.plot }}</td>
-                        
                         <!-- Lebar Kain -->
-                        <td class="px-3 py-3 text-right">{{ ratio.lebar_kain.toFixed(3) }}</td>
+                        <td class="px-3 py-3 text-right">{{ ratio.lebar_kain.toFixed(2) }}</td>
                         
-                        <!-- Panjang Marker -->
-                        <td class="px-3 py-3 text-right">{{ ratio.panjang_marker.toFixed(3) }} {{ ratio.panjang_marker_unit }}</td>
-                        
-                        <!-- Net Cons -->
+                        <!-- Cons -->
                         <td class="px-3 py-3 text-right">{{ ratio.cons.toFixed(3) }}</td>
-                        
-                        <!-- Efficiency -->
-                        <td class="px-3 py-3 text-right">{{ ratio.efficiency_marker.toFixed(2) }}%</td>
                         
                         <!-- Allowance -->
                         <td class="px-3 py-3 text-right">{{ ratio.allowance.toFixed(2) }}%</td>
-
+ 
                         <!-- Roll Qty -->
                         <td class="px-3 py-3 text-right">{{ ratio.roll_qty }}</td>
-
+ 
                         <!-- Join Roll -->
                         <td class="px-3 py-3 text-right">{{ ratio.sambungan_roll }}</td>
-
+ 
                         <!-- Reject -->
                         <td class="px-3 py-3 text-right text-red-600">{{ ratio.reject.toFixed(3) }}</td>
                         
                         <!-- Cons+Allow (Yds) -->
                         <td class="px-3 py-3 text-right font-medium text-neutral-900 bg-neutral-50/30">{{ getConsPlusAllow(ratio).toFixed(3) }}</td>
                         
-                        <!-- Cons Buyer -->
-                        <td class="px-3 py-3 text-right">
-                          {{ ratio.cons_buyer !== undefined && ratio.cons_buyer !== null ? ratio.cons_buyer.toFixed(3) : '—' }}
-                        </td>
-                        
-                        <!-- Diff -->
-                        <td class="px-3 py-3 text-right" :class="[getDiff(ratio) !== null && getDiff(ratio)! < 0 ? 'text-red-600 font-semibold' : '']">
-                          {{ getDiff(ratio) !== null ? getDiff(ratio)!.toFixed(3) : '—' }}
-                        </td>
-                        
-                        <!-- Total Need Fabric -->
-                        <td class="px-3 py-3 text-right">{{ getTotalNeedFabric(ratio).toFixed(3) }}</td>
-                        
-                        <!-- Total Need+Allow -->
+                        <!-- Total Need (Yd) -->
                         <td class="px-3 py-3 text-right font-medium text-neutral-900 bg-neutral-50/30">{{ getTotalNeedPlusAllow(ratio).toFixed(3) }}</td>
                         
                         <!-- Ket -->

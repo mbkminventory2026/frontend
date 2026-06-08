@@ -7,17 +7,12 @@ export interface CreateRatioSpreadingRequest {
   id_wo_shell: number;
   cons: number;
   plan_spreading_gelaran: number;
-  panjang_marker: number;
-  efficiency_marker: number;
   allowance: number;
-  cons_buyer: number | null;
   roll_qty: number;
   sambungan_roll: number;
   reject: number;
   sizes: CreateRatioSizeSpreadingRequest[];
-  plot?: number;
   lebar_kain?: number;
-  panjang_marker_unit?: string;
   ket?: string;
 }
 

@@ -44,15 +44,10 @@ interface RatioInput {
   id_wo_shell: number;
   cons: string;
   plan_spreading_gelaran: string;
-  panjang_marker: string;
-  panjang_marker_unit: 'yard' | 'meter' | 'inch';
-  efficiency_marker: string;
   allowance: string;
-  cons_buyer: string;
   roll_qty: string;
   sambungan_roll: string;
   reject: string;
-  plot: string;
   lebar_kain: string;
   ket: string;
   sizes: SizeInput[];
@@ -147,15 +142,10 @@ const createEmptyRatio = (shell: WorkOrderShell): RatioInput => {
     id_wo_shell: shell.id_wo_shell,
     cons: '',
     plan_spreading_gelaran: '',
-    panjang_marker: '',
-    panjang_marker_unit: 'yard',
-    efficiency_marker: '',
     allowance: '',
-    cons_buyer: '',
     roll_qty: '0',
     sambungan_roll: '0',
     reject: '0',
-    plot: '1',
     lebar_kain: '',
     ket: '',
     sizes: (shell.sizes ?? []).map((sz) => ({
@@ -242,15 +232,6 @@ const removeRatioRow = (compIdx: number, ratioIdx: number) => {
 };
 
 // Calculations Helpers
-const convertToYards = (value: number, unit: 'yard' | 'meter' | 'inch'): number => {
-  if (unit === 'meter') {
-    return value * 1.09361;
-  } else if (unit === 'inch') {
-    return value / 36;
-  }
-  return value;
-};
-
 const calculateTotalQty = (ratio: RatioInput): number => {
   const gelaran = parseFloat(ratio.plan_spreading_gelaran) || 0;
   return ratio.sizes.reduce((acc, sz) => {
@@ -275,20 +256,11 @@ const calculateSisa = (comp: ComponentInput, ratioIdx: number): number => {
   return totalWoQty - plannedQtyUpToRow;
 };
 
-const calculateNetCons = (ratio: RatioInput): number => {
-  const panjangYards = convertToYards(parseFloat(ratio.panjang_marker) || 0, ratio.panjang_marker_unit);
-  const totalRatio = ratio.sizes.reduce((acc, sz) => acc + (parseFloat(sz.ratio_plan) || 0), 0);
-  if (totalRatio === 0) return 0;
-  return panjangYards / totalRatio;
-};
-
 const calculateConsPlusAllow = (ratio: RatioInput): number => {
-  const netCons = calculateNetCons(ratio);
+  const consVal = parseFloat(ratio.cons) || 0;
   const allowancePercent = parseFloat(ratio.allowance) || 0;
-  return netCons * (1 + allowancePercent / 100);
+  return consVal * (1 + allowancePercent / 100);
 };
-
-// Unused functions removed to prevent build warnings/errors
 
 const calculateTotalNeedFabricAllow = (ratio: RatioInput): number => {
   const consPlusAllow = calculateConsPlusAllow(ratio);
@@ -331,13 +303,11 @@ const handleSubmit = async () => {
       // Check mandatory fields
       if (
         rat.plan_spreading_gelaran === '' || 
-        rat.panjang_marker === '' || 
-        rat.efficiency_marker === '' || 
+        rat.cons === '' || 
         rat.allowance === '' || 
         rat.roll_qty === '' || 
         rat.sambungan_roll === '' || 
         rat.reject === '' || 
-        rat.plot === '' ||
         rat.lebar_kain === ''
       ) {
         toast.error(`Harap lengkapi semua field numerik di Komponen "${comp.nama_komponen}" baris #${rIdx + 1}`);
@@ -365,18 +335,13 @@ const handleSubmit = async () => {
         nama_komponen: comp.nama_komponen,
         ratios: comp.ratios.map((rat) => ({
           id_wo_shell: Number(comp.id_wo_shell),
-          cons: calculateConsPlusAllow(rat) || 0,
+          cons: parseFloat(rat.cons) || 0,
           plan_spreading_gelaran: parseFloat(rat.plan_spreading_gelaran) || 0,
-          panjang_marker: parseFloat(rat.panjang_marker) || 0,
-          efficiency_marker: parseFloat(rat.efficiency_marker) || 0,
           allowance: parseFloat(rat.allowance) || 0,
-          cons_buyer: rat.cons_buyer !== '' ? parseFloat(rat.cons_buyer) : null,
           roll_qty: parseInt(rat.roll_qty) || 0,
           sambungan_roll: parseInt(rat.sambungan_roll) || 0,
           reject: parseFloat(rat.reject) || 0,
-          plot: parseInt(rat.plot) || 1,
           lebar_kain: parseFloat(rat.lebar_kain) || 0,
-          panjang_marker_unit: rat.panjang_marker_unit,
           ket: rat.ket,
           sizes: rat.sizes.map((sz) => ({
             id_wo_shell_size: sz.id_wo_shell_size,
@@ -586,24 +551,25 @@ onMounted(async () => {
                 <table class="w-full text-left border-collapse text-xs">
                   <thead>
                     <tr class="bg-neutral-50/75 border-b border-neutral-200 text-[11px] font-bold text-neutral-500 uppercase tracking-wider">
-                      <th class="p-3 w-16 text-center">Row</th>
-                      <th class="p-3 min-w-[280px]">Sizes (XS - XXL Ratio) <span class="text-red-500">*</span></th>
-                      <th class="p-3 w-28 text-center">Gelaran (Plies) <span class="text-red-500">*</span></th>
-                      <th class="p-3 w-28 text-center">Marker Lgth <span class="text-red-500">*</span></th>
-                      <th class="p-3 w-28 text-center">Unit <span class="text-red-500">*</span></th>
-                      <th class="p-3 w-28 text-center">Eff (%) <span class="text-red-500">*</span></th>
-                      <th class="p-3 w-28 text-center">Allow (%) <span class="text-red-500">*</span></th>
-                      <th class="p-3 w-28 text-center">Roll Qty <span class="text-red-500">*</span></th>
-                      <th class="p-3 w-28 text-center">Join Roll <span class="text-red-500">*</span></th>
-                      <th class="p-3 w-28 text-center">Reject (Yd) <span class="text-red-500">*</span></th>
-                      <th class="p-3 w-24 text-center">Plot <span class="text-red-500">*</span></th>
-                      <th class="p-3 w-28 text-center">Width (In) <span class="text-red-500">*</span></th>
-                      <th class="p-3 w-28 text-center">Cons Buyer</th>
-                      <th class="p-3 w-24 text-center">Sisa (Pcs)</th>
-                      <th class="p-3 w-24 text-center">Cons+Allow</th>
-                      <th class="p-3 w-24 text-center">Total Need (Yd)</th>
-                      <th class="p-3 w-36">Notes</th>
-                      <th class="p-3 w-12 text-center">Action</th>
+                      <th class="p-3 w-12 text-center font-bold">No.</th>
+                      
+                      <!-- Dynamic Size Columns -->
+                      <th v-for="sz in getComponentShell(comp)?.sizes" :key="sz.id_wo_shell_size" class="p-3 w-16 text-center border-r border-neutral-100 font-bold bg-neutral-100/50">
+                        {{ sz.size }}
+                      </th>
+                      
+                      <th class="p-3 w-28 text-center font-bold">Plan Spreading (Layer) <span class="text-red-500">*</span></th>
+                      <th class="p-3 w-28 text-center font-bold">Cons <span class="text-red-500">*</span></th>
+                      <th class="p-3 w-28 text-center font-bold">Allow (%) <span class="text-red-500">*</span></th>
+                      <th class="p-3 w-28 text-center font-bold">Roll Qty <span class="text-red-500">*</span></th>
+                      <th class="p-3 w-28 text-center font-bold">Join Roll <span class="text-red-500">*</span></th>
+                      <th class="p-3 w-28 text-center font-bold">Reject (Yd) <span class="text-red-500">*</span></th>
+                      <th class="p-3 w-28 text-center font-bold">Width (In) <span class="text-red-500">*</span></th>
+                      <th class="p-3 w-24 text-center font-bold">Sisa (Pcs)</th>
+                      <th class="p-3 w-24 text-center font-bold">Cons+Allow</th>
+                      <th class="p-3 w-24 text-center font-bold">Total Need (Yd)</th>
+                      <th class="p-3 w-36 font-bold">Notes</th>
+                      <th class="p-3 w-12 text-center font-bold">Action</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-neutral-200">
@@ -612,23 +578,19 @@ onMounted(async () => {
                       <!-- Row Index -->
                       <td class="p-3 text-center font-medium text-neutral-400 font-mono">{{ ratioIdx + 1 }}</td>
                       
-                      <!-- Size Inputs Grid -->
-                      <td class="p-3">
-                        <div class="flex flex-wrap gap-3">
-                          <div v-for="(sz, szIdx) in ratio.sizes" :key="szIdx" class="flex items-center gap-1.5 bg-neutral-50 border border-neutral-200 px-2 py-1.5 rounded-lg shadow-2xs">
-                            <span class="font-bold text-neutral-600 min-w-7 text-[10px] text-center">{{ sz.size }}</span>
-                            <Input
-                              v-model="sz.ratio_plan"
-                              type="number"
-                              placeholder="0"
-                              class="w-11 h-7 text-center text-xs p-1 bg-white border-neutral-300 rounded focus-visible:ring-1 focus-visible:ring-neutral-800"
-                              min="0"
-                            />
-                            <!-- Displays calculated physical plies quantity for this size -->
-                            <span class="text-[9px] text-neutral-400 font-medium font-mono min-w-8">
-                              ({{ Math.round((parseFloat(sz.ratio_plan) || 0) * (parseFloat(ratio.plan_spreading_gelaran) || 0)) }} pcs)
-                            </span>
-                          </div>
+                      <!-- Dynamic Size Inputs -->
+                      <td v-for="(sz, szIdx) in ratio.sizes" :key="szIdx" class="p-3 text-center border-r border-neutral-100 bg-neutral-50/20">
+                        <div class="flex flex-col items-center gap-1 min-w-[50px]">
+                          <Input
+                            v-model="sz.ratio_plan"
+                            type="number"
+                            placeholder="0"
+                            class="w-12 h-8 text-center text-xs p-1 bg-white border-neutral-300 rounded focus-visible:ring-1 focus-visible:ring-neutral-800"
+                            min="0"
+                          />
+                          <span class="text-[9px] text-neutral-400 font-mono">
+                            ({{ Math.round((parseFloat(sz.ratio_plan) || 0) * (parseFloat(ratio.plan_spreading_gelaran) || 0)) }} pcs)
+                          </span>
                         </div>
                       </td>
 
@@ -637,23 +599,9 @@ onMounted(async () => {
                         <Input v-model="ratio.plan_spreading_gelaran" type="number" placeholder="0" class="h-8 text-xs min-w-16 border-neutral-300" min="0" required />
                       </td>
 
-                      <!-- Panjang Marker -->
+                      <!-- Cons -->
                       <td class="p-3">
-                        <Input v-model="ratio.panjang_marker" type="number" step="any" placeholder="0" class="h-8 text-xs min-w-16 border-neutral-300" min="0" required />
-                      </td>
-
-                      <!-- Unit -->
-                      <td class="p-3">
-                        <select v-model="ratio.panjang_marker_unit" class="h-8 rounded-md border border-neutral-300 bg-white px-2 text-xs shadow-2xs outline-none focus-visible:ring-1 focus-visible:ring-neutral-800 min-w-20 cursor-pointer">
-                          <option value="yard">Yard</option>
-                          <option value="meter">Meter</option>
-                          <option value="inch">Inch</option>
-                        </select>
-                      </td>
-
-                      <!-- Efficiency -->
-                      <td class="p-3">
-                        <Input v-model="ratio.efficiency_marker" type="number" step="any" placeholder="0" class="h-8 text-xs min-w-16 border-neutral-300" min="0" max="100" required />
+                        <Input v-model="ratio.cons" type="number" step="any" placeholder="0" class="h-8 text-xs min-w-16 border-neutral-300" min="0" required />
                       </td>
 
                       <!-- Allowance -->
@@ -676,19 +624,9 @@ onMounted(async () => {
                         <Input v-model="ratio.reject" type="number" step="any" placeholder="0" class="h-8 text-xs min-w-16 border-neutral-300" min="0" required />
                       </td>
 
-                      <!-- Plot -->
-                      <td class="p-3">
-                        <Input v-model="ratio.plot" type="number" placeholder="1" class="h-8 text-xs min-w-14 border-neutral-300" min="1" required />
-                      </td>
-
                       <!-- Lebar Kain -->
                       <td class="p-3">
                         <Input v-model="ratio.lebar_kain" type="number" step="any" placeholder="0" class="h-8 text-xs min-w-16 border-neutral-300" min="0" required />
-                      </td>
-
-                      <!-- Cons Buyer -->
-                      <td class="p-3">
-                        <Input v-model="ratio.cons_buyer" type="number" step="any" placeholder="Optional" class="h-8 text-xs min-w-20 border-neutral-300" min="0" />
                       </td>
 
                       <!-- Sisa Qty (Pcs) -->
