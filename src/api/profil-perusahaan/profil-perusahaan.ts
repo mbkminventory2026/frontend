@@ -55,7 +55,7 @@ export const getProfilPerusahaan = async (params: {
     offset: number,
     search?: string
 }) => {
-    const response = await apiClient.get<ProfilPerusahaanResponseItem[]>('/api/v1/master/profil-perusahaan', {
+    const response = await apiClient.get<ProfilPerusahaanResponseItem[]>('/api/v1/profil-perusahaan', {
         params: {
             limit: params.limit,
             offset: params.offset,
@@ -74,24 +74,24 @@ export const getProfilPerusahaan = async (params: {
 export const createProfilPerusahaan = async (data: any) => {
     const payload = await processPayload(data);
     console.log('Final Create Payload:', payload);
-    return await apiClient.post('/api/v1/master/profil-perusahaan', payload);
+    return await apiClient.post('/api/v1/profil-perusahaan', payload);
 }
 
 export const updateProfilPerusahaan = async (id: string | number, data: any) => {
     const payload = await processPayload(data);
-    return await apiClient.put(`/api/v1/master/profil-perusahaan/${id}`, payload);
+    return await apiClient.put(`/api/v1/profil-perusahaan/${id}`, payload);
 }
 
 export const deleteProfilPerusahaan = async (id: string | number) => {
     if (!id) throw new Error("ID is required for deletion");
 
-    return await apiClient.delete(`/api/v1/master/profil-perusahaan/${id}`);
+    return await apiClient.delete(`/api/v1/profil-perusahaan/${id}`);
 }
 
 export const getProfilPerusahaanById = async (id: string | number) => {
     if (!id) throw new Error("ID is required");
 
-    const response = await apiClient.get<ProfilPerusahaanResponseItem[]>(`/api/v1/master/profil-perusahaan/${id}`);
+    const response = await apiClient.get<ProfilPerusahaanResponseItem[]>(`/api/v1/profil-perusahaan/${id}`);
     const data = response.data;
     return Array.isArray(data) ? data[0] : data;
 }
