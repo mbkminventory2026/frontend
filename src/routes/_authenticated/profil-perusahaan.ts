@@ -13,7 +13,11 @@ const ProfilPerusahaanSearchKeys = [
     'id_profil_perusahaan',
     'logo',
     'nama',
-    'no_telp'
+    'no_telp',
+    'background_login',
+    'text_footer',
+    'link_website',
+    'medsos'
 ] as const
 
 export const profilPerusahaanSchema = createTableParamsSchema([...ProfilPerusahaanSearchKeys])

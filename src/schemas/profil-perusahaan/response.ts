@@ -6,7 +6,11 @@ export const ProfilPerusahaanResponseKeys = [
     "id_profil_perusahaan",
     "logo",
     "nama",
-    "no_telp"
+    "no_telp",
+    "background_login",
+    "text_footer",
+    "link_website",
+    "medsos"
 ] as const
 
 export type ProfilPerusahaanResponseKey = (typeof ProfilPerusahaanResponseKeys)[number]
@@ -19,7 +23,11 @@ export interface ProfilPerusahaanResponseItem {
     id_profil_perusahaan: number,
     logo: string,
     nama: string,
-    no_telp: string
+    no_telp: string,
+    background_login: string,
+    text_footer: string,
+    link_website: string,
+    medsos: string
 }
 
 export const ProfilPerusahaanLabels: Partial<Record<ProfilPerusahaanResponseKey, string>> = {
@@ -30,5 +38,9 @@ export const ProfilPerusahaanLabels: Partial<Record<ProfilPerusahaanResponseKey,
     id_profil_perusahaan: 'ID Profil Perusahaan',
     logo: 'Logo',
     nama: 'Nama',
-    no_telp: 'No. Telp'
+    no_telp: 'No. Telp',
+    background_login: 'Background Login',
+    text_footer: 'Text Footer',
+    link_website: 'Link Website',
+    medsos: 'Media Sosial'
 }
