@@ -492,7 +492,7 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div class="container mx-auto py-8 max-w-3xl">
+  <div class="container mx-auto py-8 max-w-7xl">
     <!-- No Permission State -->
     <div v-if="!hasPermission('WO_CREATE')" class="flex flex-col items-center justify-center min-h-[400px] gap-4">
       <div class="bg-muted p-4 rounded-full">
@@ -580,7 +580,7 @@ const handleSubmit = async () => {
               </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div class="space-y-1.5">
                 <label class="text-xs font-semibold text-neutral-700">Buyer <span class="text-red-500">*</span></label>
                 <input v-model="step1.buyer" type="text" placeholder="cth: ADIDAS"
@@ -651,7 +651,7 @@ const handleSubmit = async () => {
               </div>
 
               <!-- Shell Fields -->
-              <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
                 <div class="space-y-1">
                   <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Material Type *</label>
                   <select v-model="shell.material_type"
@@ -815,8 +815,8 @@ const handleSubmit = async () => {
                     </button>
                   </div>
                 </div>
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  <div class="space-y-1 col-span-2 sm:col-span-1">
+                <div class="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-9 gap-3">
+                  <div class="space-y-1 col-span-2 sm:col-span-1 lg:col-span-1">
                     <label class="text-[10px] font-bold text-neutral-500 uppercase">Item</label>
                     <input v-model="trim.item" type="text" placeholder="cth: Zipper"
                       class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition" />
@@ -867,7 +867,7 @@ const handleSubmit = async () => {
                       <option value="permata">Permatatex</option>
                     </select>
                   </div>
-                  <div class="space-y-1 col-span-2 sm:col-span-3">
+                  <div class="space-y-1 col-span-2 sm:col-span-5 lg:col-span-9">
                     <label class="text-[10px] font-bold text-neutral-500 uppercase">Description</label>
                     <input v-model="trim.description" type="text" placeholder="Deskripsi singkat trim"
                       class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition" />
@@ -896,7 +896,7 @@ const handleSubmit = async () => {
                     <Trash2Icon class="w-4 h-4" />
                   </button>
                 </div>
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
                   <div class="space-y-1 col-span-2">
                     <label class="text-[10px] font-bold text-neutral-500 uppercase">Description</label>
                     <input v-model="mat.description" type="text" placeholder="cth: Kain Lining"
