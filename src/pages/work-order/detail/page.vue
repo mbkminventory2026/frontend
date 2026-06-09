@@ -1114,19 +1114,23 @@ onMounted(fetchDetail);
                                             <tr>
                                                 <th class="px-4 py-2 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Item</th>
                                                 <th class="px-4 py-2 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Description</th>
-                                                <th class="px-4 py-2 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Qty</th>
+                                                <th class="px-4 py-2 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Qty WO</th>
+                                                <th class="px-4 py-2 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Qty SJ</th>
+                                                <th class="px-4 py-2 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Qty Received</th>
                                                 <th class="px-4 py-2 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Unit</th>
                                                 <th class="px-4 py-2 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Est. Harga</th>
                                             </tr>
                                         </thead>
                                         <tbody class="divide-y divide-neutral-100">
                                             <tr v-if="!ml.items || ml.items.length === 0">
-                                                <td colspan="5" class="px-4 py-3 text-center text-neutral-400">Tidak ada item.</td>
+                                                <td colspan="7" class="px-4 py-3 text-center text-neutral-400">Tidak ada item.</td>
                                             </tr>
                                             <tr v-for="mli in ml.items" :key="mli.id_material_list_item" class="hover:bg-neutral-50/40">
                                                 <td class="px-4 py-2.5 font-medium text-neutral-800">{{ mli.item }}</td>
                                                 <td class="px-4 py-2.5 text-neutral-600">{{ mli.description }}</td>
                                                 <td class="px-4 py-2.5 text-neutral-700">{{ mli.qty }}</td>
+                                                <td class="px-4 py-2.5 text-neutral-700">{{ mli.qty_surat_jalan }}</td>
+                                                <td class="px-4 py-2.5 text-neutral-700">{{ mli.qty_received }}</td>
                                                 <td class="px-4 py-2.5 text-neutral-600">{{ mli.unit }}</td>
                                                 <td class="px-4 py-2.5 text-neutral-600">{{ mli.est_price > 0 ? `Rp ${mli.est_price.toLocaleString('id-ID')}` : '-' }}</td>
                                             </tr>
