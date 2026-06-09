@@ -235,7 +235,7 @@ const onMaterialSourceChange = (mi: number, val: string) => {
     return;
   }
   const [type, idxStr] = val.split(':');
-  const idx = parseInt(idxStr);
+  const idx = parseInt(idxStr || '0');
   if (type === 'shell') {
     const s = shells.value[idx];
     mat.source = { type: 'shell', index: idx };

@@ -96,6 +96,16 @@ const filteredWoList = computed(() => {
   return woList.value.filter((wo) => wo.po_number === selectedPo.value?.po_number);
 });
 
+const fabricShells = computed(() => {
+  if (!woDetail.value?.shells) return [];
+  return woDetail.value.shells.filter((s) => s.material_type?.toLowerCase() === 'fabric');
+});
+
+const interliningShells = computed(() => {
+  if (!woDetail.value?.shells) return [];
+  return woDetail.value.shells.filter((s) => s.material_type?.toLowerCase() === 'interlining');
+});
+
 // Watch PO reset
 watch(selectedPoId, () => {
   selectedWoId.value = '';
@@ -540,7 +550,7 @@ onMounted(async () => {
                 class="w-full h-9 rounded-md border border-neutral-200 bg-white pl-3 pr-9 py-1 text-sm shadow-xs transition-colors outline-none focus-visible:ring-2 focus-visible:ring-neutral-800 disabled:cursor-not-allowed disabled:opacity-60 appearance-none cursor-pointer"
               >
                 <option value="" disabled>Pilih Fabric / Shell</option>
-                <option v-for="shell in woDetail?.shells" :key="shell.id_wo_shell" :value="shell.id_wo_shell">
+                <option v-for="shell in fabricShells" :key="shell.id_wo_shell" :value="shell.id_wo_shell">
                   {{ shell.deskripsi }} ({{ shell.color }})
                 </option>
               </select>
@@ -601,7 +611,7 @@ onMounted(async () => {
                     required
                   >
                     <option value="" disabled>Pilih Fabric / Shell</option>
-                    <option v-for="shell in woDetail?.shells" :key="shell.id_wo_shell" :value="shell.id_wo_shell">
+                    <option v-for="shell in (compIdx === 0 ? woDetail?.shells : interliningShells)" :key="shell.id_wo_shell" :value="shell.id_wo_shell">
                       {{ shell.deskripsi }} ({{ shell.color }})
                     </option>
                   </select>
