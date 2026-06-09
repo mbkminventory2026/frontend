@@ -13,9 +13,9 @@ const formSchema = [
     rules: 'required'
   },
   {
-    name: 'id_material_list',
-    label: 'ID Material List',
-    placeholder: 'Masukkan ID Material List',
+    name: 'id_material_list_item',
+    label: 'ID Material List Item',
+    placeholder: 'Masukkan ID Material List Item',
     type: 'number',
     required: true,
     rules: 'required'

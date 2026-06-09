@@ -9,7 +9,7 @@ export const getReportPenerimaan = async (params: {
     offset: number,
     search?: string
 }) => {
-    const response = await apiClient.get<ReportPenerimaanItem[]>('/api/v1/received', {
+    const response = await apiClient.get<any>('/api/v1/received', {
         params: {
             limit: params.limit,
             offset: params.offset,
@@ -17,9 +17,12 @@ export const getReportPenerimaan = async (params: {
         }
     });
 
+    const listData = response.data;
+    const items = listData?.items ?? listData;
+    const total = listData?.pagination?.total_items ?? Number(response.headers['x-total-count']) ?? items?.length ?? 0;
     return {
-        results: response.data,
-        count: Number(response.headers['x-total-count']) || response.data?.length || 0
+        results: items,
+        count: total
     }
 }
 
