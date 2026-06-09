@@ -7,7 +7,7 @@ import { toast } from 'vue-sonner'
 
 import DataTable from '@/components/DataTable.vue'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import {
   Dialog,
@@ -189,7 +189,7 @@ const fetchData = async () => {
     totalCount.value = response.count
   } catch (error) {
     console.error('Gagal memuat history log:', error)
-    toast.error('Gagal memuat history log operator')
+    toast.error('Riwayat aktivitas gagal dimuat')
   } finally {
     isLoading.value = false
   }
@@ -204,7 +204,7 @@ const openDetail = async (id: number) => {
     selectedDetail.value = await getActivityLogById(id)
   } catch (error) {
     console.error('Gagal memuat detail history log:', error)
-    toast.error('Gagal memuat detail history log')
+    toast.error('Detail aktivitas gagal dimuat')
     isDetailOpen.value = false
   } finally {
     isDetailLoading.value = false
@@ -361,7 +361,7 @@ onMounted(() => {
         <div>
           <h1 class="text-2xl font-bold text-slate-900">History Log Operator</h1>
           <p class="mt-1 text-sm text-slate-500">
-            Pantau jejak perubahan data `create`, `update`, dan `delete` dari modul prioritas sistem.
+            Daftar perubahan data yang tercatat dari aksi create, update, dan delete.
           </p>
         </div>
       </div>
@@ -373,18 +373,13 @@ onMounted(() => {
           <CardDescription>{{ card.label }}</CardDescription>
           <CardTitle class="text-3xl font-bold text-slate-900">{{ card.value }}</CardTitle>
         </CardHeader>
-        <CardContent>
-          <span :class="['inline-flex rounded-full px-3 py-1 text-xs font-semibold', card.tone]">
-            Snapshot halaman saat ini
-          </span>
-        </CardContent>
       </Card>
     </div>
 
     <Card class="border-slate-200 shadow-sm">
       <CardHeader>
-        <CardTitle>Filter Audit Log</CardTitle>
-        <CardDescription>Gunakan filter ini untuk mempersempit log berdasarkan aksi, modul, entity, dan rentang tanggal.</CardDescription>
+        <CardTitle>Filter Riwayat Aktivitas</CardTitle>
+        <CardDescription>Gunakan filter untuk mencari aktivitas berdasarkan aksi, modul, entity, dan tanggal.</CardDescription>
       </CardHeader>
       <CardContent class="space-y-4">
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
@@ -472,8 +467,8 @@ onMounted(() => {
 
     <Card class="border-slate-200 shadow-sm">
       <CardHeader>
-        <CardTitle>Daftar History Log</CardTitle>
-        <CardDescription>Klik detail untuk melihat perubahan field sebelum dan sesudah proses berlangsung.</CardDescription>
+        <CardTitle>Daftar Aktivitas</CardTitle>
+        <CardDescription>Buka detail untuk melihat perubahan field sebelum dan sesudah proses berlangsung.</CardDescription>
       </CardHeader>
       <CardContent class="p-0">
         <DataTable
@@ -488,14 +483,14 @@ onMounted(() => {
     <Dialog v-model:open="isDetailOpen">
       <DialogContent class="max-h-[85vh] overflow-y-auto sm:max-w-4xl">
         <DialogHeader>
-          <DialogTitle>Detail History Log</DialogTitle>
+          <DialogTitle>Detail Aktivitas</DialogTitle>
           <DialogDescription v-if="selectedDetail">
-            {{ formatActionLabel(selectedDetail.action) }} · {{ formatEntityTypeLabel(selectedDetail.entity_type) }} · {{ selectedDetail.entity_label || selectedDetail.entity_id }}
+            {{ formatActionLabel(selectedDetail.action) }} | {{ formatEntityTypeLabel(selectedDetail.entity_type) }} | {{ selectedDetail.entity_label || selectedDetail.entity_id }}
           </DialogDescription>
         </DialogHeader>
 
         <div v-if="isDetailLoading" class="py-10 text-center text-sm text-slate-500">
-          Memuat detail history log...
+          Memuat detail aktivitas...
         </div>
 
         <div v-else-if="selectedDetail" class="space-y-6">
@@ -527,7 +522,7 @@ onMounted(() => {
 
           <div class="space-y-3">
             <div class="flex items-center justify-between gap-3">
-              <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-600">Changed Fields</h3>
+              <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-600">Perubahan Field</h3>
               <span class="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
                 {{ selectedDetail.changed_fields?.length || 0 }} field berubah
               </span>
@@ -541,28 +536,28 @@ onMounted(() => {
                 <p class="text-sm font-semibold text-slate-900">{{ formatFieldLabel(field.field) }}</p>
                 <div class="mt-3 grid gap-3 md:grid-cols-2">
                   <div class="rounded-xl border border-rose-100 bg-rose-50 p-3">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-rose-600">Before</p>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-rose-600">Sebelum</p>
                     <pre class="mt-2 whitespace-pre-wrap break-words text-xs text-slate-700">{{ formatValue(field.before) }}</pre>
                   </div>
                   <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-3">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">After</p>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Sesudah</p>
                     <pre class="mt-2 whitespace-pre-wrap break-words text-xs text-slate-700">{{ formatValue(field.after) }}</pre>
                   </div>
                 </div>
               </div>
             </div>
             <div v-else class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
-              Tidak ada diff field yang tercatat untuk log ini.
+              Tidak ada perubahan field yang tercatat untuk log ini.
             </div>
           </div>
 
           <div class="grid gap-4 lg:grid-cols-2">
             <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p class="text-sm font-semibold text-slate-900">Before Data</p>
+              <p class="text-sm font-semibold text-slate-900">Data Sebelum</p>
               <pre class="mt-3 whitespace-pre-wrap break-words text-xs text-slate-700">{{ formatSnapshotBlock(selectedDetail.before_data) }}</pre>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p class="text-sm font-semibold text-slate-900">After Data</p>
+              <p class="text-sm font-semibold text-slate-900">Data Sesudah</p>
               <pre class="mt-3 whitespace-pre-wrap break-words text-xs text-slate-700">{{ formatSnapshotBlock(selectedDetail.after_data) }}</pre>
             </div>
           </div>
