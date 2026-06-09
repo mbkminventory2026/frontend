@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import OperatorDashboard from './OperatorDashboard.vue';
 import FinanceDashboard from './FinanceDashboard.vue';
 import AdminProduksiDashboard from './AdminProduksiDashboard.vue';
+import AdminGudangDashboard from './AdminGudangDashboard.vue';
 import ManagerDashboard from './ManagerDashboard.vue';
 import ClientDashboard from './ClientDashboard.vue';
 const props = defineProps<{
@@ -55,6 +56,7 @@ const roleLabel = computed(() => normalizedRole.value.replace(/_/g, ' ') || 'ADM
     
     <FinanceDashboard v-else-if="normalizedRole === 'ADMIN_KEUANGAN'" />
     <AdminProduksiDashboard v-else-if="normalizedRole === 'ADMIN_PRODUKSI'" />
+    <AdminGudangDashboard v-else-if="normalizedRole === 'ADMIN_GUDANG'" />
     <ManagerDashboard v-else-if="normalizedRole === 'MANAGER'" />
     <ClientDashboard v-else-if="normalizedRole === 'CLIENT'" />
 
