@@ -99,11 +99,6 @@ const fabricShells = computed(() => {
   return woDetail.value.shells.filter((s) => s.material_type?.toLowerCase() === 'fabric');
 });
 
-const interliningShells = computed(() => {
-  if (!woDetail.value?.shells) return [];
-  return woDetail.value.shells.filter((s) => s.material_type?.toLowerCase() === 'interlining');
-});
-
 // Watch PO reset
 watch(selectedPoId, () => {
   selectedWoId.value = '';
@@ -282,7 +277,7 @@ const autoFillRatioFromMarkerPlan = async (compIdx: number) => {
     if (matchingMarker) {
       const markerDetail = await getMarkerPlanById(matchingMarker.id_marker_plan);
       if (markerDetail.components && markerDetail.components.length > 0) {
-        const markerComp = markerDetail.components.find(c => c.ratios && c.ratios.length > 0 && c.ratios[0].id_wo_shell === shell.id_wo_shell) || markerDetail.components[0];
+        const markerComp = markerDetail.components.find(c => c.ratios?.[0]?.id_wo_shell === shell.id_wo_shell) || markerDetail.components[0];
         if (markerComp && markerComp.ratios.length > 0) {
           
           comp.ratios = markerComp.ratios.map(sourceRatio => {
@@ -649,7 +644,7 @@ onMounted(async () => {
                     required
                   >
                     <option value="" disabled>Pilih Fabric / Shell Rujukan</option>
-                    <option v-for="shell in (compIdx === 0 ? fabricShells : interliningShells)" :key="shell.id_wo_shell" :value="shell.id_wo_shell">
+                    <option v-for="shell in fabricShells" :key="shell.id_wo_shell" :value="shell.id_wo_shell">
                       {{ shell.deskripsi }} ({{ shell.color }})
                     </option>
                   </select>
