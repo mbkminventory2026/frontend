@@ -44,7 +44,7 @@ const stats = computed(() => {
     { title: 'PR Internal (Bulan Ini)', value: '0', icon: DollarSign, color: 'text-indigo-600', bg: 'bg-indigo-100' }
   ];
   return [
-    { title: 'Menunggu Approval (PR/PO)', value: pendingApprovals.value.length.toLocaleString(), icon: ClipboardCheck, color: 'text-amber-600', bg: 'bg-amber-100' },
+    { title: 'Menunggu Approval (PR/PO)', value: (pendingApprovals.value?.length || 0).toLocaleString(), icon: ClipboardCheck, color: 'text-amber-600', bg: 'bg-amber-100' },
     { title: 'Total PO Client (Bulan Ini)', value: metrics.value.total_po_client_this_month.toLocaleString(), icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-100' },
     { title: 'PO Internal (Bulan Ini)', value: metrics.value.total_po_internal_this_month.toLocaleString(), icon: ShoppingCart, color: 'text-blue-600', bg: 'bg-blue-100' },
     { title: 'PR Internal (Bulan Ini)', value: metrics.value.total_pr_internal_this_month.toLocaleString(), icon: DollarSign, color: 'text-indigo-600', bg: 'bg-indigo-100' }
@@ -91,7 +91,7 @@ const stats = computed(() => {
             Lihat Semua <ArrowRight class="w-4 h-4 ml-1" />
           </router-link>
         </div>
-        <div v-if="pendingApprovals.length === 0" class="text-center py-8 text-slate-500 flex-1 flex items-center justify-center">
+        <div v-if="!pendingApprovals || pendingApprovals.length === 0" class="text-center py-8 text-slate-500 flex-1 flex items-center justify-center">
           Tidak ada dokumen yang menunggu persetujuan.
         </div>
         <div v-else class="space-y-4 flex-1">
@@ -117,7 +117,7 @@ const stats = computed(() => {
         <div class="space-y-6 flex-1" v-if="metrics">
           <div>
             <h4 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">PO Client Masuk</h4>
-            <div v-if="metrics.recent_po_clients.length === 0" class="text-sm text-slate-400">Belum ada PO Client terbaru.</div>
+            <div v-if="!metrics.recent_po_clients || metrics.recent_po_clients.length === 0" class="text-sm text-slate-400">Belum ada PO Client terbaru.</div>
             <div v-else class="space-y-2">
               <div v-for="po in metrics.recent_po_clients" :key="po.id_po_client" class="flex justify-between items-center text-sm border-b border-slate-50 pb-2">
                 <span class="font-medium text-slate-700">{{ po.po_number }} <span class="text-slate-400 font-normal">({{ po.mitra_name }})</span></span>
@@ -128,7 +128,7 @@ const stats = computed(() => {
 
           <div>
             <h4 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3">PO Internal Dibuat</h4>
-            <div v-if="metrics.recent_po_internals.length === 0" class="text-sm text-slate-400">Belum ada PO Internal terbaru.</div>
+            <div v-if="!metrics.recent_po_internals || metrics.recent_po_internals.length === 0" class="text-sm text-slate-400">Belum ada PO Internal terbaru.</div>
             <div v-else class="space-y-2">
               <div v-for="poi in metrics.recent_po_internals" :key="poi.id_po_internal" class="flex justify-between items-center text-sm border-b border-slate-50 pb-2">
                 <span class="font-medium text-slate-700">{{ poi.nama_po }} <span class="text-slate-400 font-normal">({{ poi.supplier_name }})</span></span>

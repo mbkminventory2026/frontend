@@ -24,7 +24,7 @@ export interface FinanceDashboardMetrics {
 
 export const getFinanceMetrics = async (): Promise<FinanceDashboardMetrics> => {
   const response = await apiClient.get('/api/v1/dashboard/finance');
-  return response.data.data;
+  return response.data;
 };
 
 export interface PendingApproval {
@@ -35,5 +35,5 @@ export interface PendingApproval {
 
 export const getPendingApprovals = async (): Promise<PendingApproval[]> => {
   const response = await apiClient.get('/api/v1/approvals/pending');
-  return response.data.data;
+  return response.data;
 };
