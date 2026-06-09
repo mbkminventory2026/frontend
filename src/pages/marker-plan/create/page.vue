@@ -96,16 +96,6 @@ const filteredWoList = computed(() => {
   return woList.value.filter((wo) => wo.po_number === selectedPo.value?.po_number);
 });
 
-const fabricShells = computed(() => {
-  if (!woDetail.value?.shells) return [];
-  return woDetail.value.shells.filter((s) => s.material_type?.toLowerCase() === 'fabric');
-});
-
-const interliningShells = computed(() => {
-  if (!woDetail.value?.shells) return [];
-  return woDetail.value.shells.filter((s) => s.material_type?.toLowerCase() === 'interlining');
-});
-
 // Watch PO reset
 watch(selectedPoId, () => {
   selectedWoId.value = '';
@@ -238,7 +228,7 @@ const addRatioRow = (compIdx: number) => {
   if (!comp) return;
 
   if (comp.id_wo_shell === '') {
-    toast.error('Harap pilih Fabric / Shell Rujukan untuk komponen ini terlebih dahulu.');
+    toast.error('Harap pilih Fabric / Interlining Shell Rujukan untuk komponen ini terlebih dahulu.');
     return;
   }
 
@@ -335,7 +325,7 @@ const handleSubmit = async () => {
     return;
   }
   if (!selectedShellId.value) {
-    toast.error('Harap pilih Fabric/Shell Rujukan.');
+    toast.error('Harap pilih Fabric / Interlining Shell Rujukan.');
     return;
   }
   if (components.value.length === 0) {
@@ -351,7 +341,7 @@ const handleSubmit = async () => {
       return;
     }
     if (!comp.id_wo_shell) {
-      toast.error(`Harap pilih Fabric / Shell Rujukan pada Komponen "${comp.nama_komponen || cIdx + 1}"`);
+      toast.error(`Harap pilih Fabric / Interlining Shell Rujukan pada Komponen "${comp.nama_komponen || cIdx + 1}"`);
       return;
     }
     let rIdx = 0;
@@ -542,15 +532,15 @@ onMounted(async () => {
           </div>
 
           <div class="space-y-1.5">
-            <Label class="text-xs font-semibold text-neutral-700">Pilih Fabric / Shell Rujukan <span class="text-red-500">*</span></Label>
+            <Label class="text-xs font-semibold text-neutral-700">Pilih Fabric / Interlining Shell Rujukan <span class="text-red-500">*</span></Label>
             <div class="relative">
               <select
                 v-model="selectedShellId"
                 :disabled="!selectedWoId || isLoadingWoDetail"
                 class="w-full h-9 rounded-md border border-neutral-200 bg-white pl-3 pr-9 py-1 text-sm shadow-xs transition-colors outline-none focus-visible:ring-2 focus-visible:ring-neutral-800 disabled:cursor-not-allowed disabled:opacity-60 appearance-none cursor-pointer"
               >
-                <option value="" disabled>Pilih Fabric / Shell</option>
-                <option v-for="shell in fabricShells" :key="shell.id_wo_shell" :value="shell.id_wo_shell">
+                <option value="" disabled>Pilih Fabric / Interlining Shell</option>
+                <option v-for="shell in woDetail?.shells" :key="shell.id_wo_shell" :value="shell.id_wo_shell">
                   {{ shell.deskripsi }} ({{ shell.color }})
                 </option>
               </select>
@@ -601,7 +591,7 @@ onMounted(async () => {
               </div>
 
               <div class="space-y-1.5">
-                <Label class="text-xs font-semibold text-neutral-700">Fabric / Shell Rujukan <span class="text-red-500">*</span></Label>
+                <Label class="text-xs font-semibold text-neutral-700">Fabric / Interlining Shell Rujukan <span class="text-red-500">*</span></Label>
                 <div class="relative">
                   <select
                     v-model="comp.id_wo_shell"
@@ -610,8 +600,8 @@ onMounted(async () => {
                     class="w-full h-9 rounded-md border border-neutral-200 bg-white pl-3 pr-9 py-1 text-sm shadow-xs transition-colors outline-none focus-visible:ring-2 focus-visible:ring-neutral-800 disabled:cursor-not-allowed disabled:opacity-60 appearance-none cursor-pointer"
                     required
                   >
-                    <option value="" disabled>Pilih Fabric / Shell</option>
-                    <option v-for="shell in (compIdx === 0 ? woDetail?.shells : interliningShells)" :key="shell.id_wo_shell" :value="shell.id_wo_shell">
+                    <option value="" disabled>Pilih Fabric / Interlining Shell</option>
+                    <option v-for="shell in woDetail?.shells" :key="shell.id_wo_shell" :value="shell.id_wo_shell">
                       {{ shell.deskripsi }} ({{ shell.color }})
                     </option>
                   </select>
