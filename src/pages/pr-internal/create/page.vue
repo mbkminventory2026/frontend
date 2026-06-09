@@ -59,19 +59,25 @@ watch(() => values.value.idWo, async (newVal) => {
         const detail = await getWorkOrderById(Number(newVal));
         console.log("Work Order yang dipilih ID:", newVal);
         console.log("Work Order detail response:", detail);
-        console.log("Isi material list dari Work Order:", detail.material_lists);
-        const materials = detail.material_lists || [];
-        woMaterials.value = materials;
+        // Flatten ML groups → individual MLI rows. woMaterials stores MLI objects.
+        const mlGroups = detail.material_lists || [];
+        const flatItems: any[] = [];
+        for (const ml of mlGroups) {
+            for (const mli of (ml.items || [])) {
+                flatItems.push({ ...mli, _ml_name: ml.name, _is_locked: ml.is_locked });
+            }
+        }
+        woMaterials.value = flatItems;
 
-        if (materials.length > 0) {
-            values.value.items = materials.map((mat: any) => ({
-                materialId: mat.id_material_list,
+        if (flatItems.length > 0) {
+            values.value.items = flatItems.map((mli: any) => ({
+                materialId: mli.id_material_list_item,
                 isCustom: false,
-                item: mat.description,
-                unit: mat.uom,
-                qty: 1,
-                estPrice: 'Rp 0',
-                description: [mat.size, mat.color].filter(Boolean).join(' - ')
+                item: mli.item || mli.description,
+                unit: mli.unit,
+                qty: mli.qty > 0 ? mli.qty : 1,
+                estPrice: mli.est_price > 0 ? formatRupiah(mli.est_price) : 'Rp 0',
+                description: mli.description,
             }));
         } else {
             values.value.items = [{ item: '', description: '', qty: 1, unit: '', estPrice: 'Rp 0', materialId: null, isCustom: true }];
@@ -125,7 +131,7 @@ const selectedMaterialIds = computed(() => {
 
 const filteredWoMaterials = (rowItem: any) => {
     const others = selectedMaterialIds.value.filter((id: any) => id !== rowItem.materialId);
-    return woMaterials.value.filter((mat) => !others.includes(mat.id_material_list));
+    return woMaterials.value.filter((mli) => !others.includes(mli.id_material_list_item));
 };
 
 const onMaterialSelect = (event: Event, rowItem: any) => {
@@ -141,15 +147,15 @@ const onMaterialSelect = (event: Event, rowItem: any) => {
         rowItem.estPrice = 'Rp 0';
     } else if (val) {
         const matId = Number(val);
-        const mat = woMaterials.value.find((m) => m.id_material_list === matId);
-        if (mat) {
-            rowItem.materialId = mat.id_material_list;
+        const mli = woMaterials.value.find((m) => m.id_material_list_item === matId);
+        if (mli) {
+            rowItem.materialId = mli.id_material_list_item;
             rowItem.isCustom = false;
-            rowItem.item = mat.description;
-            rowItem.unit = mat.uom;
-            rowItem.qty = 1;
-            rowItem.estPrice = 'Rp 0';
-            rowItem.description = [mat.size, mat.color].filter(Boolean).join(' - ');
+            rowItem.item = mli.item || mli.description;
+            rowItem.unit = mli.unit;
+            rowItem.qty = mli.qty > 0 ? mli.qty : 1;
+            rowItem.estPrice = mli.est_price > 0 ? formatRupiah(mli.est_price) : 'Rp 0';
+            rowItem.description = mli.description;
         }
     } else {
         resetRowSelection(rowItem);
@@ -406,11 +412,11 @@ onMounted(async () => {
                                                     <option value="">{{ isLoadingMaterials ? 'Memuat material WO...' : 'Pilih Material / Custom...' }}</option>
                                                     <option value="custom">-- Custom Item --</option>
                                                     <option
-                                                        v-for="mat in filteredWoMaterials(item)"
-                                                        :key="mat.id_material_list"
-                                                        :value="mat.id_material_list"
+                                                        v-for="mli in filteredWoMaterials(item)"
+                                                        :key="mli.id_material_list_item"
+                                                        :value="mli.id_material_list_item"
                                                     >
-                                                        {{ mat.description }} ({{ [mat.size, mat.color, mat.uom].filter(Boolean).join(' / ') }})
+                                                        {{ mli.item || mli.description }} ({{ [mli.unit, mli._ml_name].filter(Boolean).join(' · ') }})
                                                     </option>
                                                 </select>
                                             </div>
