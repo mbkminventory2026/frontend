@@ -3,6 +3,7 @@ import { createPinia } from 'pinia'
 import PrimeVue from 'primevue/config'
 import Aura from '@primeuix/themes/aura'
 import './style.css'
+import 'vue-sonner/style.css'
 import App from './App.vue'
 
 // Global patch to resolve [Violation] Added non-passive event listener to a scroll-blocking 'touchstart' event
