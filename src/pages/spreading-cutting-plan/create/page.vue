@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, computed, ref, watch } from 'vue';
 import { useRouter, useSearch } from '@tanstack/vue-router';
-import { PlusIcon, Trash2Icon, ArrowLeftIcon, SaveIcon, ChevronDownIcon, ScissorsIcon, RefreshCw } from 'lucide-vue-next';
+import { PlusIcon, Trash2Icon, ArrowLeftIcon, SaveIcon, ChevronDownIcon, ScissorsIcon, RefreshCw, FileDownIcon } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
 import { getPOClients, type POClientListItem } from '@/api/po-clients/po-clients';
@@ -90,8 +90,18 @@ const selectedPo = computed(() =>
 );
 
 const filteredWoList = computed(() => {
-  if (!selectedPo.value) return [];
+  if (!selectedPo.value) return woList.value;
   return woList.value.filter((wo) => wo.po_number === selectedPo.value?.po_number);
+});
+
+const fabricShells = computed(() => {
+  if (!woDetail.value?.shells) return [];
+  return woDetail.value.shells.filter((s) => s.material_type?.toLowerCase() === 'fabric');
+});
+
+const interliningShells = computed(() => {
+  if (!woDetail.value?.shells) return [];
+  return woDetail.value.shells.filter((s) => s.material_type?.toLowerCase() === 'interlining');
 });
 
 // Watch PO reset
@@ -192,8 +202,7 @@ const initDefaultComponent = async (shell: WorkOrderShell) => {
   };
   components.value = [initialComp];
   
-  // Try to autofill the first component
-  await autoFillRatioFromMarkerPlan(0, shell);
+  // Mencegah auto-fill berjalan saat inisialisasi awal, sesuai permintaan agar menggunakan tombol saja.
 };
 
 const createEmptyRatio = (shell: WorkOrderShell): RatioInput => {
@@ -256,15 +265,14 @@ const handleComponentShellChange = async (compIdx: number) => {
         };
       });
     }
-
-    // Auto-fill ratio from existing Marker Plan
-    await autoFillRatioFromMarkerPlan(compIdx, shell);
   }
 };
 
-const autoFillRatioFromMarkerPlan = async (compIdx: number, shell: WorkOrderShell) => {
+const autoFillRatioFromMarkerPlan = async (compIdx: number) => {
   const comp = components.value[compIdx];
-  if (!comp) return;
+  if (!comp || !comp.id_wo_shell) return;
+  const shell = getComponentShell(comp);
+  if (!shell) return;
 
   isFetchingRatio.value = true;
   try {
@@ -274,34 +282,42 @@ const autoFillRatioFromMarkerPlan = async (compIdx: number, shell: WorkOrderShel
     if (matchingMarker) {
       const markerDetail = await getMarkerPlanById(matchingMarker.id_marker_plan);
       if (markerDetail.components && markerDetail.components.length > 0) {
-        const firstMarkerComp = markerDetail.components[0];
-        if (firstMarkerComp && firstMarkerComp.ratios.length > 0) {
-          const sourceRatio = firstMarkerComp.ratios[0];
+        const markerComp = markerDetail.components.find(c => c.ratios && c.ratios.length > 0 && c.ratios[0].id_wo_shell === shell.id_wo_shell) || markerDetail.components[0];
+        if (markerComp && markerComp.ratios.length > 0) {
           
-          if (comp.ratios.length > 0) {
-            const targetRatioRow = comp.ratios[0];
-            if (targetRatioRow && sourceRatio) {
-              targetRatioRow.sizes = targetRatioRow.sizes.map(sz => {
+          comp.ratios = markerComp.ratios.map(sourceRatio => {
+            return {
+              id_wo_shell: shell.id_wo_shell,
+              cons: String(sourceRatio.cons || ''),
+              plan_spreading_gelaran: String(sourceRatio.plan_spreading_gelaran || ''),
+              allowance: String(sourceRatio.allowance || ''),
+              roll_qty: '0',
+              sambungan_roll: '0',
+              reject: '0',
+              lebar_kain: String(sourceRatio.lebar_kain || ''),
+              ket: sourceRatio.ket || '',
+              sizes: (shell.sizes ?? []).map(sz => {
                 const sourceSize = sourceRatio.sizes?.find(s => s.id_wo_shell_size === sz.id_wo_shell_size || s.size === sz.size);
                 return {
-                  ...sz,
-                  ratio_plan: sourceSize ? String(sourceSize.ratio_plan) : sz.ratio_plan
+                  id_wo_shell_size: sz.id_wo_shell_size,
+                  size: sz.size,
+                  ratio_plan: sourceSize ? String(sourceSize.ratio_plan) : ''
                 };
-              });
-              
-              // Also autofill gelaran layer, cons, allowance from marker plan if possible
-              targetRatioRow.plan_spreading_gelaran = String(sourceRatio.plan_spreading_gelaran || targetRatioRow.plan_spreading_gelaran);
-              targetRatioRow.cons = String(sourceRatio.cons || targetRatioRow.cons);
-              targetRatioRow.allowance = String(sourceRatio.allowance || targetRatioRow.allowance);
-              
-              toast.success(`Auto-fill Ratio Plan berhasil disalin dari Dokumen Marker Plan: ${matchingMarker.no_dokumen}`);
-            }
-          }
+              })
+            };
+          });
+          
+          toast.success(`Berhasil menyalin ${markerComp.ratios.length} baris Ratio dari Marker Plan: ${matchingMarker.no_dokumen}`);
+        } else {
+          toast.info(`Marker Plan ${matchingMarker.no_dokumen} tidak memiliki data ratio.`);
         }
       }
+    } else {
+      toast.info('Belum ada Marker Plan untuk Fabric / Shell ini.');
     }
   } catch (error) {
     console.warn("Gagal menyalin ratio dari marker plan:", error);
+    toast.error('Gagal menyalin ratio dari Marker Plan.');
   } finally {
     isFetchingRatio.value = false;
   }
@@ -633,13 +649,12 @@ onMounted(async () => {
                     required
                   >
                     <option value="" disabled>Pilih Fabric / Shell Rujukan</option>
-                    <option v-for="shell in woDetail?.shells" :key="shell.id_wo_shell" :value="shell.id_wo_shell">
+                    <option v-for="shell in (compIdx === 0 ? fabricShells : interliningShells)" :key="shell.id_wo_shell" :value="shell.id_wo_shell">
                       {{ shell.deskripsi }} ({{ shell.color }})
                     </option>
                   </select>
                   <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5">
-                    <RefreshCw v-if="isFetchingRatio" class="w-4 h-4 text-emerald-500 animate-spin" />
-                    <ChevronDownIcon v-else class="w-4 h-4 text-neutral-400" />
+                    <ChevronDownIcon class="w-4 h-4 text-neutral-400" />
                   </div>
                 </div>
               </div>
@@ -649,9 +664,15 @@ onMounted(async () => {
             <div v-if="comp.id_wo_shell && getComponentShell(comp)" class="space-y-4 pt-2">
               <div class="flex items-center justify-between border-b border-neutral-100 pb-1.5">
                 <h3 class="text-xs font-semibold text-neutral-600">Ratio Breakdown & Size Spreading</h3>
-                <Button type="button" @click="addRatioRow(compIdx)" size="sm" variant="ghost" class="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 h-7 text-xs px-2.5">
-                  <PlusIcon class="w-3.5 h-3.5 mr-1" /> Tambah Baris Ratio
-                </Button>
+                <div class="flex space-x-2">
+                  <Button type="button" @click="autoFillRatioFromMarkerPlan(compIdx)" :disabled="isFetchingRatio" size="sm" variant="outline" class="text-blue-600 border-blue-200 hover:bg-blue-50 h-7 text-xs px-2.5">
+                    <RefreshCw v-if="isFetchingRatio" class="w-3.5 h-3.5 mr-1 animate-spin" />
+                    <FileDownIcon v-else class="w-3.5 h-3.5 mr-1" /> Salin dari Marker Plan
+                  </Button>
+                  <Button type="button" @click="addRatioRow(compIdx)" size="sm" variant="ghost" class="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 h-7 text-xs px-2.5">
+                    <PlusIcon class="w-3.5 h-3.5 mr-1" /> Tambah Baris Ratio
+                  </Button>
+                </div>
               </div>
 
               <!-- Responsive table wrapper -->
