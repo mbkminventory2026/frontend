@@ -62,6 +62,8 @@ const moduleLabels: Record<string, string> = {
   'user-management': 'User Management',
   'role-management': 'Role Management',
   'master-data': 'Master Data',
+  'transaction-documents': 'Transaction Documents',
+  'work-order-production': 'Work Order Production',
 }
 
 const entityTypeLabels: Record<string, string> = {
@@ -74,6 +76,10 @@ const entityTypeLabels: Record<string, string> = {
   barang: 'Barang',
   warna: 'Warna',
   password_reset_requests: 'Password Reset Requests',
+  po_clients: 'PO Clients',
+  pr_internals: 'PR Internals',
+  po_internals: 'PO Internals',
+  work_orders: 'Work Orders',
 }
 
 const moduleOptions = [
@@ -81,6 +87,8 @@ const moduleOptions = [
   { label: 'User Management', value: 'user-management' },
   { label: 'Role Management', value: 'role-management' },
   { label: 'Master Data', value: 'master-data' },
+  { label: 'Transaction Documents', value: 'transaction-documents' },
+  { label: 'Work Order Production', value: 'work-order-production' },
 ]
 
 const entityTypeOptions = [
@@ -93,6 +101,10 @@ const entityTypeOptions = [
   { label: 'Mitra', value: 'mitra' },
   { label: 'Barang', value: 'barang' },
   { label: 'Warna', value: 'warna' },
+  { label: 'PO Clients', value: 'po_clients' },
+  { label: 'PR Internals', value: 'pr_internals' },
+  { label: 'PO Internals', value: 'po_internals' },
+  { label: 'Work Orders', value: 'work_orders' },
 ]
 
 const actionTone = (action: string) => {
