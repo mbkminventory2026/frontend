@@ -6,7 +6,6 @@ import FinanceDashboard from './FinanceDashboard.vue';
 import AdminProduksiDashboard from './AdminProduksiDashboard.vue';
 import ManagerDashboard from './ManagerDashboard.vue';
 import ClientDashboard from './ClientDashboard.vue';
-
 const props = defineProps<{
     username?: string;
     role?: string;
@@ -51,7 +50,9 @@ const roleLabel = computed(() => normalizedRole.value.replace(/_/g, ' ') || 'ADM
     </div>
 
     <!-- Role-Specific Dashboard Views -->
-    <OperatorDashboard v-if="normalizedRole === 'OPERATOR'" />
+    <!-- Menampilkan Operator Dashboard khusus untuk Operator -->
+    <OperatorDashboard v-if="normalizedRole === 'OPERATOR' || !normalizedRole" />
+    
     <FinanceDashboard v-else-if="normalizedRole === 'ADMIN_KEUANGAN'" />
     <AdminProduksiDashboard v-else-if="normalizedRole === 'ADMIN_PRODUKSI'" />
     <ManagerDashboard v-else-if="normalizedRole === 'MANAGER'" />
