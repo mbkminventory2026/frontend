@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { getActivityLogById, getActivityLogs, type ActivityLogDetail, type ActivityLogListItem } from '@/api/activity-logs/activity-logs'
-import { historyLogSchema } from '@/pages/history-log/schema'
+import { historyLogSchema, stripHistoryLogDefaults } from '@/pages/history-log/schema'
 import { useTable } from '@/composables/useTable'
 
 const search = useSearch({ strict: false }) as any
@@ -107,6 +107,11 @@ const fetchData = async () => {
     const filter = search.value?.filter ?? ''
     const sortBy = search.value?.sortBy
     const sortDesc = search.value?.sortDesc ?? false
+    const action = search.value?.action ?? 'all'
+    const module = search.value?.module ?? 'all'
+    const entityType = search.value?.entityType ?? 'all'
+    const appliedDateFrom = search.value?.dateFrom ?? ''
+    const appliedDateTo = search.value?.dateTo ?? ''
 
     const response = await getActivityLogs({
       page,
@@ -114,11 +119,11 @@ const fetchData = async () => {
       search: filter,
       sortBy,
       sortDesc,
-      action: selectedAction.value === 'all' ? undefined : selectedAction.value,
-      module: selectedModule.value === 'all' ? undefined : selectedModule.value,
-      entityType: selectedEntityType.value === 'all' ? undefined : selectedEntityType.value,
-      dateFrom: dateFrom.value || undefined,
-      dateTo: dateTo.value || undefined,
+      action: action === 'all' ? undefined : action,
+      module: module === 'all' ? undefined : module,
+      entityType: entityType === 'all' ? undefined : entityType,
+      dateFrom: appliedDateFrom || undefined,
+      dateTo: appliedDateTo || undefined,
     })
 
     rows.value = response.results
@@ -231,12 +236,17 @@ const summaryCards = computed(() => {
 const applyFilters = async () => {
   await navigate({
     to: '.',
-    search: (prev: Record<string, unknown>) => ({
-      ...prev,
-      page: 1,
-    }),
+    search: (prev: Record<string, unknown>) =>
+      stripHistoryLogDefaults({
+        ...prev,
+        page: 1,
+        action: selectedAction.value,
+        module: selectedModule.value,
+        entityType: selectedEntityType.value,
+        dateFrom: dateFrom.value,
+        dateTo: dateTo.value,
+      }),
   })
-  await fetchData()
 }
 
 const resetFilters = async () => {
@@ -251,12 +261,16 @@ const resetFilters = async () => {
     to: '.',
     search: () => ({}),
   })
-  await fetchData()
 }
 
 watch(
   () => search.value,
   () => {
+    selectedAction.value = search.value?.action ?? 'all'
+    selectedModule.value = search.value?.module ?? 'all'
+    selectedEntityType.value = search.value?.entityType ?? 'all'
+    dateFrom.value = search.value?.dateFrom ?? ''
+    dateTo.value = search.value?.dateTo ?? ''
     fetchData()
   },
   { deep: true },
