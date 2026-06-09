@@ -67,6 +67,8 @@ export interface MaterialListItem {
   id_wo_shell?: number;
   id_wo_trim?: number;
   created_at: string;
+  qty_surat_jalan: number;
+  qty_received: number;
 }
 
 export interface MaterialList {
