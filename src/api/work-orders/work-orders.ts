@@ -56,13 +56,26 @@ export interface WorkOrderTrim {
   provided_by: string;
 }
 
+export interface MaterialListItem {
+  id_material_list_item: number;
+  id_material_list: number;
+  item: string;
+  description: string;
+  qty: number;
+  unit: string;
+  est_price: number;
+  id_wo_shell?: number;
+  id_wo_trim?: number;
+  created_at: string;
+}
+
 export interface MaterialList {
   id_material_list: number;
-  description: string;
-  size: string;
-  color: string;
-  uom: string;
+  id_wo: number;
+  name: string;
+  is_locked: boolean;
   created_at: string;
+  items: MaterialListItem[];
 }
 
 export interface ReturClientResponse {

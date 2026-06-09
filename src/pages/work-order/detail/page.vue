@@ -1097,31 +1097,42 @@ onMounted(fetchDetail);
                             <div class="bg-neutral-50 border-b border-neutral-200 px-5 py-3.5">
                                 <h2 class="text-xs font-bold text-neutral-700 uppercase tracking-wider flex items-center gap-2">
                                     <ClipboardListIcon class="w-3.5 h-3.5 text-neutral-500" />
-                                    Material List ({{ detail.material_lists?.length || 0 }})
+                                    Material List ({{ (detail.material_lists || []).reduce((acc: number, ml: any) => acc + (ml.items?.length || 0), 0) }} item)
                                 </h2>
                             </div>
                             <div v-if="!detail.material_lists || detail.material_lists.length === 0" class="text-center py-8 text-neutral-400 text-sm">
                                 Tidak ada data material list.
                             </div>
                             <div v-else class="overflow-x-auto">
-                                <table class="w-full text-left border-collapse text-xs">
-                                    <thead class="bg-neutral-50/50 border-b border-neutral-200">
-                                        <tr>
-                                            <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Description</th>
-                                            <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Size</th>
-                                            <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Color</th>
-                                            <th class="px-4 py-3 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">UOM</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-neutral-100">
-                                        <tr v-for="mat in detail.material_lists" :key="mat.id_material_list" class="hover:bg-neutral-50/40">
-                                            <td class="px-4 py-3 font-medium text-neutral-800">{{ mat.description }}</td>
-                                            <td class="px-4 py-3 text-neutral-600">{{ mat.size }}</td>
-                                            <td class="px-4 py-3 text-neutral-700">{{ mat.color }}</td>
-                                            <td class="px-4 py-3 text-neutral-600">{{ mat.uom }}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                <template v-for="ml in detail.material_lists" :key="ml.id_material_list">
+                                    <div class="px-4 py-2 bg-neutral-50 border-b border-neutral-100 flex items-center gap-2">
+                                        <span class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">{{ ml.name }}</span>
+                                        <span v-if="ml.is_locked" class="text-[9px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">LOCKED</span>
+                                    </div>
+                                    <table class="w-full text-left border-collapse text-xs">
+                                        <thead class="bg-neutral-50/50 border-b border-neutral-200">
+                                            <tr>
+                                                <th class="px-4 py-2 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Item</th>
+                                                <th class="px-4 py-2 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Description</th>
+                                                <th class="px-4 py-2 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Qty</th>
+                                                <th class="px-4 py-2 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Unit</th>
+                                                <th class="px-4 py-2 text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Est. Harga</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-neutral-100">
+                                            <tr v-if="!ml.items || ml.items.length === 0">
+                                                <td colspan="5" class="px-4 py-3 text-center text-neutral-400">Tidak ada item.</td>
+                                            </tr>
+                                            <tr v-for="mli in ml.items" :key="mli.id_material_list_item" class="hover:bg-neutral-50/40">
+                                                <td class="px-4 py-2.5 font-medium text-neutral-800">{{ mli.item }}</td>
+                                                <td class="px-4 py-2.5 text-neutral-600">{{ mli.description }}</td>
+                                                <td class="px-4 py-2.5 text-neutral-700">{{ mli.qty }}</td>
+                                                <td class="px-4 py-2.5 text-neutral-600">{{ mli.unit }}</td>
+                                                <td class="px-4 py-2.5 text-neutral-600">{{ mli.est_price > 0 ? `Rp ${mli.est_price.toLocaleString('id-ID')}` : '-' }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </template>
                             </div>
                         </div>
                     </div>
