@@ -2,6 +2,7 @@
 import { Button } from '@/components/ui/button';
 import OperatorDashboard from './OperatorDashboard.vue';
 import FinanceDashboard from './FinanceDashboard.vue';
+import AdminProduksiDashboard from './AdminProduksiDashboard.vue';
 // import { useDashboard } from '@/composables/dashboard/useDashboard';
 // Mendefinisikan props dengan benar
 const props = defineProps<{
@@ -46,11 +47,14 @@ const emit = defineEmits<{
     </div>
 
     <!-- Role-Specific Dashboard Views -->
-    <!-- Menampilkan Operator Dashboard khusus untuk Admin Produksi atau Operator -->
-    <OperatorDashboard v-if="props.role === 'Admin Produksi' || props.role === 'Operator' || props.username === 'operator' || !props.role" />
+    <!-- Menampilkan Operator Dashboard khusus untuk Operator -->
+    <OperatorDashboard v-if="props.role === 'Operator' || props.username === 'operator' || (!props.role && props.username !== 'admin-keuangan' && props.username !== 'admin-produksi')" />
     
     <!-- Menampilkan Finance Dashboard khusus untuk Admin Keuangan -->
     <FinanceDashboard v-else-if="props.role === 'Admin Keuangan' || props.username === 'admin-keuangan'" />
+
+    <!-- Menampilkan Production Dashboard khusus untuk Admin Produksi -->
+    <AdminProduksiDashboard v-else-if="props.role === 'Admin Produksi' || props.username === 'admin-produksi'" />
 
     <!-- Placeholder untuk Role Lain -->
     <div v-else class="bg-white p-12 rounded-xl shadow-sm border text-center">
