@@ -7,6 +7,7 @@ import AdminProduksiDashboard from './AdminProduksiDashboard.vue';
 import AdminGudangDashboard from './AdminGudangDashboard.vue';
 import ManagerDashboard from './ManagerDashboard.vue';
 import ClientDashboard from './ClientDashboard.vue';
+import trollImage from '@/assets/images/troll_superadmin.png';
 const props = defineProps<{
     username?: string;
     role?: string;
@@ -59,6 +60,15 @@ const roleLabel = computed(() => normalizedRole.value.replace(/_/g, ' ') || 'ADM
     <AdminGudangDashboard v-else-if="normalizedRole === 'ADMIN_GUDANG'" />
     <ManagerDashboard v-else-if="normalizedRole === 'MANAGER'" />
     <ClientDashboard v-else-if="normalizedRole === 'CLIENT'" />
+
+    <!-- Troll untuk Super Admin -->
+    <div v-else-if="normalizedRole === 'SUPER_ADMIN'" class="bg-white p-12 rounded-xl shadow-sm border text-center animate-in fade-in zoom-in duration-500">
+      <h3 class="text-2xl font-bold text-slate-800 mb-6">😎 Dashboard {{ roleLabel }} 😎</h3>
+      <div class="mx-auto w-64 h-64 md:w-80 md:h-80 rounded-2xl overflow-hidden shadow-2xl border-4 border-indigo-500 transform hover:scale-105 transition-transform duration-300">
+        <img :src="trollImage" alt="Super Admin Mastermind" class="w-full h-full object-cover" />
+      </div>
+      <p class="text-slate-600 mt-6 font-medium text-lg">"The system is fully under your control. Proceed with caution."</p>
+    </div>
 
     <!-- Placeholder untuk Role Lain -->
     <div v-else class="bg-white p-12 rounded-xl shadow-sm border text-center">
