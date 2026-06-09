@@ -7,7 +7,8 @@ import {
   PlusCircleIcon,
   Trash2Icon,
   ChevronRightIcon,
-  ChevronLeftIcon
+  ChevronLeftIcon,
+  CopyIcon
 } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
@@ -136,35 +137,27 @@ watch(() => step1.id_po_client_item, (newVal) => {
 });
 
 // Step 2: Shells
-interface ShellSize { size: string; qty: any; ratio: any; }
-interface Shell { fabric: string; color: string; cons: any; allow: any; berat_1_yd: any; sizes: ShellSize[]; }
+interface ShellSize { size: string; ratio: any; }
+interface Shell { material_type: string; deskripsi: string; provided_by: string; color: string; cons: any; allow: any; berat_1_yd: any; qty_per_ratio: any; sizes: ShellSize[]; }
 
 const shells = ref<Shell[]>([
-  { fabric: '', color: '', cons: 0, allow: 0, berat_1_yd: 0, sizes: [{ size: '', qty: 0, ratio: 1 }] }
+  { material_type: 'fabric', deskripsi: '', provided_by: 'permatatex', color: '', cons: 0, allow: 0, berat_1_yd: 0, qty_per_ratio: 0, sizes: [{ size: '', ratio: 1 }] }
 ]);
 
 const addShell = () => {
-  shells.value.push({ fabric: '', color: '', cons: 0, allow: 0, berat_1_yd: 0, sizes: [] });
+  shells.value.push({ material_type: 'fabric', deskripsi: '', provided_by: 'permatatex', color: '', cons: 0, allow: 0, berat_1_yd: 0, qty_per_ratio: 0, sizes: [] });
 };
 const removeShell = (i: number) => shells.value.splice(i, 1);
 const addSize = (shellIdx: number) => {
   const shell = shells.value[shellIdx];
   if (shell) {
-    shell.sizes.push({ size: '', qty: 0, ratio: 1 });
+    shell.sizes.push({ size: '', ratio: 1 });
   }
 };
 const removeSize = (shellIdx: number, sizeIdx: number) => {
   const shell = shells.value[shellIdx];
   if (shell) {
     shell.sizes.splice(sizeIdx, 1);
-  }
-};
-
-const handleQtyChange = (shellIdx: number, sizeIdx: number, val: string) => {
-  const shell = shells.value[shellIdx];
-  if (shell && shell.sizes[sizeIdx]) {
-    const size = shell.sizes[sizeIdx];
-    size.qty = val;
   }
 };
 
@@ -177,16 +170,16 @@ const handleRatioChange = (shellIdx: number, sizeIdx: number, val: string) => {
   }
 };
 
-const getSizeCalculatedQty = (size: ShellSize) => {
-  const qty = parseInteger(size.qty) || 0;
+const getSizeCalculatedQty = (shell: Shell, size: ShellSize) => {
+  const qtyPerRatio = parseInteger(shell.qty_per_ratio) || 0;
   const ratio = parseToFloat(size.ratio) || 0;
-  return Math.round(qty * ratio);
+  return Math.round(qtyPerRatio * ratio);
 };
 
 const getShellTotalQty = (shellIdx: number) => {
   const shell = shells.value[shellIdx];
   if (!shell || !shell.sizes) return 0;
-  return shell.sizes.reduce((acc, curr) => acc + getSizeCalculatedQty(curr), 0);
+  return shell.sizes.reduce((acc, curr) => acc + getSizeCalculatedQty(shell, curr), 0);
 };
 
 // Sync step1.qty with the sum of all shell sizes' quantity
@@ -196,21 +189,103 @@ const calculatedTotalQty = computed(() => {
 
 
 // Step 3: Trims & Materials
-interface Trim { item: string; description: string; color: string; code: string; cons: number; qty: number; uom: string; position: string; allow: number; }
-interface Material { description: string; size: string; color: string; uom: string; }
+interface Trim { item: string; description: string; color: string; code: string; cons: number; qty: number; uom: string; position: string; allow: number; provided_by: string; }
+type MaterialSource = { type: 'shell'; index: number } | { type: 'trim'; index: number } | null;
+interface Material { item: string; description: string; qty: any; unit: string; est_price: any; source: MaterialSource; }
 
 const trims = ref<Trim[]>([
-  { item: '', description: '', color: '', code: '', cons: 0, qty: 0, uom: 'PCS', position: '', allow: 1 }
+  { item: '', description: '', color: '', code: '', cons: 0, qty: 0, uom: 'PCS', position: '', allow: 1, provided_by: 'permata' }
 ]);
 const materials = ref<Material[]>([]);
 
 const addTrim = () => {
-  trims.value.push({ item: '', description: '', color: '', code: '', cons: 0, qty: 0, uom: 'PCS', position: '', allow: 1 });
+  trims.value.push({ item: '', description: '', color: '', code: '', cons: 0, qty: 0, uom: 'PCS', position: '', allow: 1, provided_by: 'permata' });
 };
 const removeTrim = (i: number) => trims.value.splice(i, 1);
-const addMaterial = () => {
-  materials.value.push({ description: '', size: '', color: '', uom: '' });
+
+const duplicateTrim = (i: number) => {
+  const t = trims.value[i];
+  if (t) {
+    trims.value.splice(i + 1, 0, { ...t });
+    toast.success('Trim berhasil diduplikasi.');
+  }
 };
+
+const addMaterial = () => {
+  materials.value.push({ item: '', description: '', qty: 0, unit: '', est_price: 0, source: null });
+};
+
+// Indices already used in other material rows (prevent duplicate linking)
+const usedShellIndices = computed(() =>
+  materials.value.map(m => m.source?.type === 'shell' ? m.source.index : -1).filter(i => i >= 0)
+);
+const usedTrimIndices = computed(() =>
+  materials.value.map(m => m.source?.type === 'trim' ? m.source.index : -1).filter(i => i >= 0)
+);
+
+// Pilih source (shell/trim) → prefill item, unit, qty
+const onMaterialSourceChange = (mi: number, val: string) => {
+  const mat = materials.value[mi];
+  if (!mat) return;
+  if (!val) {
+    mat.source = null;
+    mat.item = '';
+    mat.unit = '';
+    mat.qty = 0;
+    return;
+  }
+  const [type, idxStr] = val.split(':');
+  const idx = parseInt(idxStr);
+  if (type === 'shell') {
+    const s = shells.value[idx];
+    mat.source = { type: 'shell', index: idx };
+    mat.item = s?.deskripsi || '';
+    mat.unit = 'yds';
+    mat.qty = getShellTotalQty(idx);
+  } else if (type === 'trim') {
+    const t = trims.value[idx];
+    mat.source = { type: 'trim', index: idx };
+    mat.item = t?.item || '';
+    mat.unit = t?.uom || '';
+    mat.qty = parseInteger(t?.qty) || 0;
+  }
+};
+
+// Auto-generate material items dari semua shell dan trim yang belum ditautkan
+const autoGenerateMaterials = () => {
+  const newItems: typeof materials.value = [];
+  shells.value.forEach((s, si) => {
+    if (!usedShellIndices.value.includes(si)) {
+      newItems.push({
+        item: s.deskripsi,
+        description: '',
+        qty: getShellTotalQty(si),
+        unit: 'yds',
+        est_price: 0,
+        source: { type: 'shell', index: si },
+      });
+    }
+  });
+  trims.value.forEach((t, ti) => {
+    if (t.item.trim() && !usedTrimIndices.value.includes(ti)) {
+      newItems.push({
+        item: t.item,
+        description: t.description || '',
+        qty: parseInteger(t.qty) || 0,
+        unit: t.uom || 'PCS',
+        est_price: 0,
+        source: { type: 'trim', index: ti },
+      });
+    }
+  });
+  if (newItems.length === 0) {
+    toast.info('Semua Shell dan Trim sudah ditautkan ke Material List.');
+    return;
+  }
+  materials.value.push(...newItems);
+  toast.success(`${newItems.length} item material ditambahkan otomatis.`);
+};
+
 const removeMaterial = (i: number) => materials.value.splice(i, 1);
 
 
@@ -233,13 +308,16 @@ const step1Valid = computed(() =>
 const step2Valid = computed(() =>
   shells.value.length > 0 &&
   shells.value.every((s) =>
-    s.fabric.trim() &&
+    s.material_type.trim() &&
+    s.deskripsi.trim() &&
+    s.provided_by.trim() &&
     s.color.trim() &&
     parseNumber(s.cons) > 0 &&
     parseInteger(s.allow) >= 1 &&
     parseNumber(s.berat_1_yd) > 0 &&
+    parseInteger(s.qty_per_ratio) > 0 &&
     s.sizes.length > 0 &&
-    s.sizes.every(sz => sz.size.trim() && parseInteger(sz.qty) > 0 && parseToFloat(sz.ratio) > 0)
+    s.sizes.every(sz => sz.size.trim() && parseToFloat(sz.ratio) > 0)
   ) &&
   calculatedTotalQty.value <= (parseInteger(step1.qty) || 0)
 );
@@ -248,15 +326,14 @@ const step3Valid = computed(() =>
   trims.value.length >= 1 &&
   trims.value.every(t =>
     t.item.trim() &&
-    t.color.trim() &&
-    t.code.trim() &&
     parseNumber(t.cons) > 0 &&
     parseInteger(t.qty) > 0 &&
     t.uom.trim() &&
-    parseInteger(t.allow) >= 1
+    parseInteger(t.allow) >= 1 &&
+    t.provided_by.trim()
   ) &&
-  // materials are optional (omitempty) but if added, must have size, color, uom
-  materials.value.every(m => m.size.trim() && m.color.trim() && m.uom.trim())
+  // materials are optional (omitempty) but if added, must have item and unit
+  materials.value.every(m => m.item.trim() && m.unit.trim())
 );
 
 const handleSubmit = async () => {
@@ -271,14 +348,16 @@ const handleSubmit = async () => {
       delivery: step1.delivery,
       id_po_client_item: parseInteger(step1.id_po_client_item),
       shells: shells.value.map(s => ({
-        fabric: s.fabric,
+        material_type: s.material_type,
+        deskripsi: s.deskripsi,
+        provided_by: s.provided_by,
         color: s.color,
         cons: parseNumber(s.cons),
         allow: parseInteger(s.allow),
         berat_1_yd: parseNumber(s.berat_1_yd),
         sizes: s.sizes.map(sz => ({
           size: sz.size,
-          qty: getSizeCalculatedQty(sz),
+          qty: getSizeCalculatedQty(s, sz),
           ratio: parseInteger(sz.ratio),
         })),
       })),
@@ -292,12 +371,16 @@ const handleSubmit = async () => {
         uom: t.uom,
         position: t.position,
         allow: parseInteger(t.allow),
+        provided_by: t.provided_by,
       })),
-      material_lists: materials.value.map(m => ({
+      material_list_items: materials.value.map(m => ({
+        item: m.item,
         description: m.description,
-        size: m.size,
-        color: m.color,
-        uom: m.uom,
+        qty: parseInteger(m.qty),
+        unit: m.unit,
+        est_price: parseNumber(m.est_price),
+        shell_index: m.source?.type === 'shell' ? m.source.index : undefined,
+        trim_index: m.source?.type === 'trim' ? m.source.index : undefined,
       })),
     };
 
@@ -329,7 +412,7 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div class="container mx-auto py-8 max-w-3xl">
+  <div class="container mx-auto py-8 max-w-7xl">
     <!-- No Permission State -->
     <div v-if="!hasPermission('WO_CREATE')" class="flex flex-col items-center justify-center min-h-[400px] gap-4">
       <div class="bg-muted p-4 rounded-full">
@@ -417,7 +500,7 @@ const handleSubmit = async () => {
               </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div class="space-y-1.5">
                 <label class="text-xs font-semibold text-neutral-700">Buyer <span class="text-red-500">*</span></label>
                 <input v-model="step1.buyer" type="text" placeholder="cth: ADIDAS"
@@ -488,11 +571,27 @@ const handleSubmit = async () => {
               </div>
 
               <!-- Shell Fields -->
-              <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <div class="space-y-1 col-span-2 sm:col-span-1">
-                  <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Fabric *</label>
-                  <input v-model="shell.fabric" type="text" placeholder="cth: Ripstop Nylon"
+              <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
+                <div class="space-y-1">
+                  <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Material Type *</label>
+                  <select v-model="shell.material_type"
+                    class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition cursor-pointer h-9">
+                    <option value="fabric">Fabric</option>
+                    <option value="interlining">Interlining</option>
+                  </select>
+                </div>
+                <div class="space-y-1">
+                  <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Deskripsi *</label>
+                  <input v-model="shell.deskripsi" type="text" placeholder="cth: Ripstop Nylon, 2016F"
                     class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition" />
+                </div>
+                <div class="space-y-1">
+                  <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Provided By *</label>
+                  <select v-model="shell.provided_by"
+                    class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition cursor-pointer h-9">
+                    <option value="client">Client</option>
+                    <option value="permata">Permatatex</option>
+                  </select>
                 </div>
                 <div class="space-y-1">
                   <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Color *</label>
@@ -512,6 +611,11 @@ const handleSubmit = async () => {
                 <div class="space-y-1">
                   <label class="text-[10px] font-bold text-neutral-500 uppercase">Berat/yd (kg) *</label>
                   <input v-model="shell.berat_1_yd" @input="shell.berat_1_yd = ($event.target as HTMLInputElement).value.replace(/,/g, '.')" type="text" placeholder="0.8"
+                    class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition" />
+                </div>
+                <div class="space-y-1">
+                  <label class="text-[10px] font-bold text-neutral-500 uppercase">Qty / Ratio *</label>
+                  <input v-model="shell.qty_per_ratio" type="text" placeholder="cth: 42"
                     class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition" />
                 </div>
               </div>
@@ -539,7 +643,6 @@ const handleSubmit = async () => {
                       <thead class="bg-neutral-50 border-b border-neutral-200">
                         <tr>
                           <th class="px-3 py-2 text-left text-[10px] font-bold text-neutral-500 uppercase">Size</th>
-                          <th class="px-3 py-2 text-left text-[10px] font-bold text-neutral-500 uppercase">Qty (pcs)</th>
                           <th class="px-3 py-2 text-left text-[10px] font-bold text-neutral-500 uppercase">Ratio</th>
                           <th class="px-3 py-2 text-left text-[10px] font-bold text-neutral-500 uppercase">Total Qty Size</th>
                           <th class="px-3 py-2 w-10"></th>
@@ -552,15 +655,11 @@ const handleSubmit = async () => {
                               class="w-full rounded border border-neutral-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-neutral-400 bg-white" />
                           </td>
                           <td class="px-3 py-2">
-                            <input :value="size.qty" @input="handleQtyChange(si, zi, ($event.target as HTMLInputElement).value)" type="text" placeholder="200"
-                              class="w-full rounded border border-neutral-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-neutral-400" />
-                          </td>
-                          <td class="px-3 py-2">
                             <input :value="size.ratio" @input="handleRatioChange(si, zi, ($event.target as HTMLInputElement).value)" type="text" placeholder="1"
                               class="w-full rounded border border-neutral-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-neutral-400" />
                           </td>
                           <td class="px-3 py-2 font-medium text-neutral-700">
-                            {{ getSizeCalculatedQty(size) }} pcs
+                            {{ getSizeCalculatedQty(shell, size) }} pcs
                           </td>
                           <td class="px-3 py-2">
                             <button @click="removeSize(si, zi)" type="button" class="text-neutral-300 hover:text-red-400 transition">
@@ -599,14 +698,16 @@ const handleSubmit = async () => {
           <div v-if="wizardStep === 3" class="p-6 space-y-6">
             <!-- Trims Section -->
             <div class="space-y-3">
-              <div class="flex items-center justify-between">
+              <div class="flex items-center justify-between flex-wrap gap-2">
                 <div>
                   <h3 class="text-sm font-bold text-neutral-700">Trims / Aksesoris <span class="text-red-500">*</span></h3>
                   <p class="text-[10px] text-neutral-400 mt-0.5">Minimal 1 trim wajib diisi (syarat backend).</p>
                 </div>
-                <Button variant="outline" size="sm" class="border-neutral-300 shadow-xs" @click="addTrim">
-                  <PlusCircleIcon class="w-4 h-4 mr-1.5" /> Tambah Trim
-                </Button>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <Button variant="outline" size="sm" class="border-neutral-300 shadow-xs text-xs" @click="addTrim">
+                    <PlusCircleIcon class="w-4 h-4 mr-1.5" /> Tambah Trim
+                  </Button>
+                </div>
               </div>
 
               <div v-if="trims.length === 0" class="text-center py-6 border-2 border-dashed border-red-200 rounded-xl text-red-400 text-sm">
@@ -616,12 +717,17 @@ const handleSubmit = async () => {
               <div v-for="(trim, ti) in trims" :key="ti" class="border border-neutral-200 rounded-xl p-4 bg-neutral-50/40 space-y-3">
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-bold text-neutral-500 uppercase tracking-wider">Trim #{{ ti + 1 }}</span>
-                  <button @click="removeTrim(ti)" type="button" class="text-neutral-400 hover:text-red-500 transition">
-                    <Trash2Icon class="w-4 h-4" />
-                  </button>
+                  <div class="flex items-center gap-2">
+                    <button @click="duplicateTrim(ti)" type="button" class="text-neutral-400 hover:text-neutral-700 transition" title="Duplikasi Trim">
+                      <CopyIcon class="w-4 h-4" />
+                    </button>
+                    <button @click="removeTrim(ti)" type="button" class="text-neutral-400 hover:text-red-500 transition" title="Hapus Trim">
+                      <Trash2Icon class="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  <div class="space-y-1 col-span-2 sm:col-span-1">
+                <div class="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-9 gap-3">
+                  <div class="space-y-1 col-span-2 sm:col-span-1 lg:col-span-1">
                     <label class="text-[10px] font-bold text-neutral-500 uppercase">Item</label>
                     <input v-model="trim.item" type="text" placeholder="cth: Zipper"
                       class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition" />
@@ -654,11 +760,6 @@ const handleSubmit = async () => {
                     <input v-model="trim.uom" type="text" placeholder="PCS / SET"
                       class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition" />
                   </div>
-                  <div class="space-y-1 col-span-2">
-                    <label class="text-[10px] font-bold text-neutral-500 uppercase">Description</label>
-                    <input v-model="trim.description" type="text" placeholder="Deskripsi singkat trim"
-                      class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition" />
-                  </div>
                   <div class="space-y-1">
                     <label class="text-[10px] font-bold text-neutral-500 uppercase">Allow (%) *</label>
                     <input v-model="trim.allow" type="text" placeholder="3"
@@ -669,6 +770,19 @@ const handleSubmit = async () => {
                     <input v-model="trim.position" type="text" placeholder="cth: Front"
                       class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition" />
                   </div>
+                  <div class="space-y-1">
+                    <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Provided By *</label>
+                    <select v-model="trim.provided_by"
+                      class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition cursor-pointer h-9">
+                      <option value="client">Client</option>
+                      <option value="permata">Permatatex</option>
+                    </select>
+                  </div>
+                  <div class="space-y-1 col-span-2 sm:col-span-5 lg:col-span-9">
+                    <label class="text-[10px] font-bold text-neutral-500 uppercase">Description</label>
+                    <input v-model="trim.description" type="text" placeholder="Deskripsi singkat trim"
+                      class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition" />
+                  </div>
                 </div>
               </div>
             </div>
@@ -676,14 +790,25 @@ const handleSubmit = async () => {
             <!-- Materials Section -->
             <div class="space-y-3 border-t border-neutral-100 pt-5">
               <div class="flex items-center justify-between">
-                <h3 class="text-sm font-bold text-neutral-700">Material List</h3>
-                <Button variant="outline" size="sm" class="border-neutral-300 shadow-xs" @click="addMaterial">
-                  <PlusCircleIcon class="w-4 h-4 mr-1.5" /> Tambah Material
-                </Button>
+                <div>
+                  <h3 class="text-sm font-bold text-neutral-700">Material List <span class="text-neutral-400 font-normal">(Opsional)</span></h3>
+                  <p class="text-[10px] text-neutral-400 mt-0.5">
+                    Shell diisi: {{ usedShellIndices.length }}/{{ shells.length }} &nbsp;·&nbsp;
+                    Trim diisi: {{ usedTrimIndices.length }}/{{ trims.length }}
+                  </p>
+                </div>
+                <div class="flex gap-2">
+                  <Button variant="outline" size="sm" class="border-emerald-300 text-emerald-700 hover:bg-emerald-50 shadow-xs" @click="autoGenerateMaterials">
+                    <PlusCircleIcon class="w-4 h-4 mr-1.5" /> Auto-Generate
+                  </Button>
+                  <Button variant="outline" size="sm" class="border-neutral-300 shadow-xs" @click="addMaterial">
+                    <PlusCircleIcon class="w-4 h-4 mr-1.5" /> Tambah Manual
+                  </Button>
+                </div>
               </div>
 
               <div v-if="materials.length === 0" class="text-center py-6 border-2 border-dashed border-neutral-200 rounded-xl text-neutral-400 text-sm">
-                Belum ada material. (Opsional)
+                Klik <strong>Auto-Generate</strong> untuk mengisi otomatis dari Shell &amp; Trim, atau tambah manual.
               </div>
 
               <div v-for="(mat, mi) in materials" :key="mi" class="border border-neutral-200 rounded-xl p-4 bg-neutral-50/40 space-y-3">
@@ -693,25 +818,63 @@ const handleSubmit = async () => {
                     <Trash2Icon class="w-4 h-4" />
                   </button>
                 </div>
-                <div class="grid grid-cols-2 gap-3">
+
+                <!-- Source picker -->
+                <div class="space-y-1">
+                  <label class="text-[10px] font-bold text-neutral-500 uppercase">Tautkan ke Shell / Trim (Opsional)</label>
+                  <select
+                    :value="mat.source ? `${mat.source.type}:${mat.source.index}` : ''"
+                    @change="onMaterialSourceChange(mi, ($event.target as HTMLSelectElement).value)"
+                    class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition"
+                  >
+                    <option value="">-- Tidak ditautkan / Isi manual --</option>
+                    <optgroup label="Shell (Kain)">
+                      <option
+                        v-for="(s, si) in shells" :key="`shell:${si}`" :value="`shell:${si}`"
+                        :disabled="usedShellIndices.includes(si) && mat.source?.index !== si"
+                      >
+                        Shell #{{ si + 1 }} — {{ s.deskripsi }} ({{ s.color }}){{ usedShellIndices.includes(si) && mat.source?.index !== si ? ' ✓ sudah dipakai' : '' }}
+                      </option>
+                    </optgroup>
+                    <optgroup label="Trim / Aksesoris">
+                      <option
+                        v-for="(t, ti) in trims" :key="`trim:${ti}`" :value="`trim:${ti}`"
+                        :disabled="usedTrimIndices.includes(ti) && mat.source?.index !== ti"
+                      >
+                        Trim #{{ ti + 1 }} — {{ t.item }} ({{ t.color }}){{ usedTrimIndices.includes(ti) && mat.source?.index !== ti ? ' ✓ sudah dipakai' : '' }}
+                      </option>
+                    </optgroup>
+                  </select>
+                  <p v-if="mat.source" class="text-[10px] text-emerald-600 font-semibold">
+                    ✓ Ditautkan ke {{ mat.source.type === 'shell' ? 'Shell' : 'Trim' }} #{{ mat.source.index + 1 }}
+                    — item & unit diisi otomatis
+                  </p>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div class="space-y-1 col-span-2">
+                    <label class="text-[10px] font-bold text-neutral-500 uppercase">Item / Nama Material *</label>
+                    <input v-model="mat.item" type="text" placeholder="cth: Kain Lining"
+                      class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition" />
+                  </div>
                   <div class="space-y-1 col-span-2">
                     <label class="text-[10px] font-bold text-neutral-500 uppercase">Description</label>
-                    <input v-model="mat.description" type="text" placeholder="cth: Kain Lining"
+                    <input v-model="mat.description" type="text" placeholder="Deskripsi singkat"
                       class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition" />
                   </div>
                   <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-neutral-500 uppercase">Size</label>
-                    <input v-model="mat.size" type="text" placeholder="cth: All / M / L"
+                    <label class="text-[10px] font-bold text-neutral-500 uppercase">Qty</label>
+                    <input v-model="mat.qty" type="number" min="0" placeholder="0"
                       class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition" />
                   </div>
                   <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-neutral-500 uppercase">Color</label>
-                    <input v-model="mat.color" type="text" placeholder="cth: White"
+                    <label class="text-[10px] font-bold text-neutral-500 uppercase">Unit *</label>
+                    <input v-model="mat.unit" type="text" placeholder="PCS / YD / M"
                       class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition" />
                   </div>
-                  <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-neutral-500 uppercase">UOM</label>
-                    <input v-model="mat.uom" type="text" placeholder="PCS / M / YD"
+                  <div class="space-y-1 col-span-2">
+                    <label class="text-[10px] font-bold text-neutral-500 uppercase">Est. Harga (Rp)</label>
+                    <input v-model="mat.est_price" type="number" min="0" placeholder="0"
                       class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition" />
                   </div>
                 </div>

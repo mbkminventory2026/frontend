@@ -233,7 +233,7 @@ const submitForm = async () => {
                 <Label class="text-xs font-semibold text-neutral-700">WO Shell Rujukan <span class="text-red-500">*</span></Label>
                 <Input list="wo-shells-list" type="text" v-model="sp.idWoShell" required placeholder="Ketik atau pilih WO Shell..." class="h-9 text-xs border-neutral-200 bg-white" :disabled="isLoadingOptions" />
                 <datalist id="wo-shells-list">
-                    <option v-for="s in availableShells" :key="s.shell.id_wo_shell" :value="s.shell.id_wo_shell + ' - WO: ' + s.wo + ' | ' + s.shell.fabric + ' (' + s.shell.color + ')'" />
+                    <option v-for="s in availableShells" :key="s.shell.id_wo_shell" :value="s.shell.id_wo_shell + ' - WO: ' + s.wo + ' | ' + s.shell.deskripsi + ' (' + s.shell.color + ')'" />
                 </datalist>
               </div>
 

@@ -29,12 +29,14 @@ export interface WorkOrderShellSize {
 
 export interface WorkOrderShell {
   id_wo_shell: number;
-  fabric: string;
+  deskripsi: string;
   cons: number;
   color: string;
   allow: number;
   berat_1_yd: number;
   created_at: string;
+  provided_by: string;
+  material_type: string;
   sizes: WorkOrderShellSize[];
 }
 
@@ -51,15 +53,29 @@ export interface WorkOrderTrim {
   created_by: string;
   allow: number;
   created_at: string;
+  provided_by: string;
+}
+
+export interface MaterialListItem {
+  id_material_list_item: number;
+  id_material_list: number;
+  item: string;
+  description: string;
+  qty: number;
+  unit: string;
+  est_price: number;
+  id_wo_shell?: number;
+  id_wo_trim?: number;
+  created_at: string;
 }
 
 export interface MaterialList {
   id_material_list: number;
-  description: string;
-  size: string;
-  color: string;
-  uom: string;
+  id_wo: number;
+  name: string;
+  is_locked: boolean;
   created_at: string;
+  items: MaterialListItem[];
 }
 
 export interface ReturClientResponse {

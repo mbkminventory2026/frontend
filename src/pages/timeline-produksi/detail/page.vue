@@ -130,7 +130,7 @@ onMounted(() => {
                     <tr v-for="sp in timelinePlan.shell_plans" :key="sp.id_wo_shell_plan" class="hover:bg-neutral-50/30 transition-colors">
                       <td class="px-4 py-4 font-mono text-neutral-500">#{{ sp.id_wo_shell_plan }}</td>
                       <td class="px-4 py-4">
-                        <div class="font-semibold text-neutral-900">{{ sp.fabric }}</div>
+                        <div class="font-semibold text-neutral-900">{{ sp.deskripsi }}</div>
                         <div class="text-neutral-500">{{ sp.color }}</div>
                         <div class="text-[10px] text-neutral-400 mt-1">WO ID: {{ sp.id_wo_shell }}</div>
                       </td>
