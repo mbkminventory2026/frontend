@@ -8,7 +8,6 @@ import {
   Trash2Icon,
   ChevronRightIcon,
   ChevronLeftIcon,
-  SparklesIcon,
   CopyIcon
 } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
@@ -191,7 +190,8 @@ const calculatedTotalQty = computed(() => {
 
 // Step 3: Trims & Materials
 interface Trim { item: string; description: string; color: string; code: string; cons: number; qty: number; uom: string; position: string; allow: number; provided_by: string; }
-interface Material { description: string; size: string; color: string; uom: string; }
+type MaterialSource = { type: 'shell'; index: number } | { type: 'trim'; index: number } | null;
+interface Material { item: string; description: string; qty: any; unit: string; est_price: any; source: MaterialSource; }
 
 const trims = ref<Trim[]>([
   { item: '', description: '', color: '', code: '', cons: 0, qty: 0, uom: 'PCS', position: '', allow: 1, provided_by: 'permata' }
@@ -211,157 +211,81 @@ const duplicateTrim = (i: number) => {
   }
 };
 
-const generateThreadsFromColors = () => {
-  const colors = Array.from(new Set(shells.value.map(s => s.color.trim()).filter(Boolean)));
-  if (colors.length === 0) {
-    toast.error('Tidak ada warna kain di Shell yang bisa dijadikan rujukan.');
-    return;
-  }
-  
-  let addedCount = 0;
-  colors.forEach(color => {
-    const exists = trims.value.some(t => t.item.toLowerCase() === 'thread' && t.color.toLowerCase() === color.toLowerCase());
-    if (!exists) {
-      const totalColorQty = shells.value
-        .filter(s => s.color.toLowerCase() === color.toLowerCase() && s.material_type === 'fabric')
-        .reduce((sum, s) => {
-          return sum + s.sizes.reduce((szSum, sz) => szSum + getSizeCalculatedQty(s, sz), 0);
-        }, 0);
-
-      trims.value.push({
-        item: 'Thread',
-        description: `Thread ${color}`,
-        color: color,
-        code: `THR-${color.toUpperCase().replace(/\s+/g, '-')}`,
-        cons: 0.1,
-        qty: totalColorQty || 1000,
-        uom: 'CON',
-        position: 'Sewing',
-        allow: 3,
-        provided_by: 'permata'
-      });
-      addedCount++;
-    }
-  });
-
-  if (addedCount > 0) {
-    toast.success(`Berhasil menambahkan ${addedCount} Thread berdasarkan warna shell.`);
-  } else {
-    toast.info('Semua Thread untuk warna shell yang ada sudah diinput.');
-  }
-};
-
-const generateLabelsFromSizes = () => {
-  const sizesList: { size: string; qty: number }[] = [];
-  shells.value.forEach(s => {
-    s.sizes.forEach(sz => {
-      if (sz.size.trim()) {
-        const sizeName = sz.size.trim();
-        const calculatedQty = getSizeCalculatedQty(s, sz);
-        const existing = sizesList.find(item => item.size.toLowerCase() === sizeName.toLowerCase());
-        if (existing) {
-          existing.qty += calculatedQty;
-        } else {
-          sizesList.push({ size: sizeName, qty: calculatedQty });
-        }
-      }
-    });
-  });
-
-  if (sizesList.length === 0) {
-    toast.error('Tidak ada ukuran di Shell yang bisa dijadikan rujukan.');
-    return;
-  }
-
-  let addedCount = 0;
-  sizesList.forEach(item => {
-    const labelDesc = `Main Size Label - ${item.size}`;
-    const exists = trims.value.some(t => t.description === labelDesc);
-    if (!exists) {
-      trims.value.push({
-        item: 'Main Size Label',
-        description: labelDesc,
-        color: '',
-        code: '',
-        cons: 1,
-        qty: item.qty,
-        uom: 'PCS',
-        position: 'Labeling',
-        allow: 3,
-        provided_by: 'permata'
-      });
-      addedCount++;
-    }
-  });
-
-  if (addedCount > 0) {
-    toast.success(`Berhasil menambahkan ${addedCount} Main Size Label berdasarkan ukuran shell.`);
-  } else {
-    toast.info('Semua Main Size Label untuk ukuran shell yang ada sudah diinput.');
-  }
-};
-
-const generateBarcodes = () => {
-  const colors = Array.from(new Set(shells.value.map(s => s.color.trim()).filter(Boolean)));
-  const sizesList: string[] = [];
-  shells.value.forEach(s => {
-    s.sizes.forEach(sz => {
-      if (sz.size.trim() && !sizesList.includes(sz.size.trim())) {
-        sizesList.push(sz.size.trim());
-      }
-    });
-  });
-
-  if (colors.length === 0 || sizesList.length === 0) {
-    toast.error('Tidak ada warna atau ukuran di Shell yang bisa dijadikan rujukan.');
-    return;
-  }
-
-  let addedCount = 0;
-  colors.forEach(color => {
-    sizesList.forEach(size => {
-      const barcodeDesc = size; // Hanya [size] saja
-      const exists = trims.value.some(t => 
-        t.item.toLowerCase() === 'barcode' && 
-        t.color.toLowerCase() === color.toLowerCase() && 
-        t.description.toLowerCase() === barcodeDesc.toLowerCase()
-      );
-
-      if (!exists) {
-        const qty = shells.value
-          .filter(s => s.color.toLowerCase() === color.toLowerCase() && s.material_type === 'fabric')
-          .reduce((sum, s) => {
-            const sz = s.sizes.find(sz => sz.size.trim().toLowerCase() === size.toLowerCase());
-            return sum + (sz ? getSizeCalculatedQty(s, sz) : 0);
-          }, 0);
-
-        trims.value.push({
-          item: 'Barcode',
-          description: barcodeDesc,
-          color: color,
-          code: '', // Code kosong
-          cons: 1,
-          qty: qty || 0,
-          uom: 'PCS',
-          position: 'digantung di hangtag', // Position "digantung di hangtag"
-          allow: 1,
-          provided_by: 'permata'
-        });
-        addedCount++;
-      }
-    });
-  });
-
-  if (addedCount > 0) {
-    toast.success(`Berhasil menambahkan ${addedCount} Barcode berdasarkan warna dan ukuran shell.`);
-  } else {
-    toast.info('Semua Barcode untuk kombinasi warna dan ukuran shell yang ada sudah diinput.');
-  }
-};
-
 const addMaterial = () => {
-  materials.value.push({ description: '', size: '', color: '', uom: '' });
+  materials.value.push({ item: '', description: '', qty: 0, unit: '', est_price: 0, source: null });
 };
+
+// Indices already used in other material rows (prevent duplicate linking)
+const usedShellIndices = computed(() =>
+  materials.value.map(m => m.source?.type === 'shell' ? m.source.index : -1).filter(i => i >= 0)
+);
+const usedTrimIndices = computed(() =>
+  materials.value.map(m => m.source?.type === 'trim' ? m.source.index : -1).filter(i => i >= 0)
+);
+
+// Pilih source (shell/trim) → prefill item, unit, qty
+const onMaterialSourceChange = (mi: number, val: string) => {
+  const mat = materials.value[mi];
+  if (!mat) return;
+  if (!val) {
+    mat.source = null;
+    mat.item = '';
+    mat.unit = '';
+    mat.qty = 0;
+    return;
+  }
+  const [type, idxStr] = val.split(':');
+  const idx = parseInt(idxStr);
+  if (type === 'shell') {
+    const s = shells.value[idx];
+    mat.source = { type: 'shell', index: idx };
+    mat.item = s?.deskripsi || '';
+    mat.unit = 'yds';
+    mat.qty = getShellTotalQty(idx);
+  } else if (type === 'trim') {
+    const t = trims.value[idx];
+    mat.source = { type: 'trim', index: idx };
+    mat.item = t?.item || '';
+    mat.unit = t?.uom || '';
+    mat.qty = parseInteger(t?.qty) || 0;
+  }
+};
+
+// Auto-generate material items dari semua shell dan trim yang belum ditautkan
+const autoGenerateMaterials = () => {
+  const newItems: typeof materials.value = [];
+  shells.value.forEach((s, si) => {
+    if (!usedShellIndices.value.includes(si)) {
+      newItems.push({
+        item: s.deskripsi,
+        description: '',
+        qty: getShellTotalQty(si),
+        unit: 'yds',
+        est_price: 0,
+        source: { type: 'shell', index: si },
+      });
+    }
+  });
+  trims.value.forEach((t, ti) => {
+    if (t.item.trim() && !usedTrimIndices.value.includes(ti)) {
+      newItems.push({
+        item: t.item,
+        description: t.description || '',
+        qty: parseInteger(t.qty) || 0,
+        unit: t.uom || 'PCS',
+        est_price: 0,
+        source: { type: 'trim', index: ti },
+      });
+    }
+  });
+  if (newItems.length === 0) {
+    toast.info('Semua Shell dan Trim sudah ditautkan ke Material List.');
+    return;
+  }
+  materials.value.push(...newItems);
+  toast.success(`${newItems.length} item material ditambahkan otomatis.`);
+};
+
 const removeMaterial = (i: number) => materials.value.splice(i, 1);
 
 
@@ -408,8 +332,8 @@ const step3Valid = computed(() =>
     parseInteger(t.allow) >= 1 &&
     t.provided_by.trim()
   ) &&
-  // materials are optional (omitempty) but if added, must have size, color, uom
-  materials.value.every(m => m.size.trim() && m.color.trim() && m.uom.trim())
+  // materials are optional (omitempty) but if added, must have item and unit
+  materials.value.every(m => m.item.trim() && m.unit.trim())
 );
 
 const handleSubmit = async () => {
@@ -449,11 +373,14 @@ const handleSubmit = async () => {
         allow: parseInteger(t.allow),
         provided_by: t.provided_by,
       })),
-      material_lists: materials.value.map(m => ({
+      material_list_items: materials.value.map(m => ({
+        item: m.item,
         description: m.description,
-        size: m.size,
-        color: m.color,
-        uom: m.uom,
+        qty: parseInteger(m.qty),
+        unit: m.unit,
+        est_price: parseNumber(m.est_price),
+        shell_index: m.source?.type === 'shell' ? m.source.index : undefined,
+        trim_index: m.source?.type === 'trim' ? m.source.index : undefined,
       })),
     };
 
@@ -777,15 +704,6 @@ const handleSubmit = async () => {
                   <p class="text-[10px] text-neutral-400 mt-0.5">Minimal 1 trim wajib diisi (syarat backend).</p>
                 </div>
                 <div class="flex items-center gap-2 flex-wrap">
-                  <Button type="button" variant="outline" size="sm" class="border-neutral-300 text-neutral-600 hover:text-neutral-900 shadow-xs text-xs" @click="generateThreadsFromColors">
-                    <SparklesIcon class="w-3.5 h-3.5 mr-1" /> Auto Thread (Warna)
-                  </Button>
-                  <Button type="button" variant="outline" size="sm" class="border-neutral-300 text-neutral-600 hover:text-neutral-900 shadow-xs text-xs" @click="generateLabelsFromSizes">
-                    <SparklesIcon class="w-3.5 h-3.5 mr-1" /> Auto Label (Size)
-                  </Button>
-                  <Button type="button" variant="outline" size="sm" class="border-neutral-300 text-neutral-600 hover:text-neutral-900 shadow-xs text-xs" @click="generateBarcodes">
-                    <SparklesIcon class="w-3.5 h-3.5 mr-1" /> Auto Barcode (Warna & Size)
-                  </Button>
                   <Button variant="outline" size="sm" class="border-neutral-300 shadow-xs text-xs" @click="addTrim">
                     <PlusCircleIcon class="w-4 h-4 mr-1.5" /> Tambah Trim
                   </Button>
@@ -872,14 +790,25 @@ const handleSubmit = async () => {
             <!-- Materials Section -->
             <div class="space-y-3 border-t border-neutral-100 pt-5">
               <div class="flex items-center justify-between">
-                <h3 class="text-sm font-bold text-neutral-700">Material List</h3>
-                <Button variant="outline" size="sm" class="border-neutral-300 shadow-xs" @click="addMaterial">
-                  <PlusCircleIcon class="w-4 h-4 mr-1.5" /> Tambah Material
-                </Button>
+                <div>
+                  <h3 class="text-sm font-bold text-neutral-700">Material List <span class="text-neutral-400 font-normal">(Opsional)</span></h3>
+                  <p class="text-[10px] text-neutral-400 mt-0.5">
+                    Shell diisi: {{ usedShellIndices.length }}/{{ shells.length }} &nbsp;·&nbsp;
+                    Trim diisi: {{ usedTrimIndices.length }}/{{ trims.length }}
+                  </p>
+                </div>
+                <div class="flex gap-2">
+                  <Button variant="outline" size="sm" class="border-emerald-300 text-emerald-700 hover:bg-emerald-50 shadow-xs" @click="autoGenerateMaterials">
+                    <PlusCircleIcon class="w-4 h-4 mr-1.5" /> Auto-Generate
+                  </Button>
+                  <Button variant="outline" size="sm" class="border-neutral-300 shadow-xs" @click="addMaterial">
+                    <PlusCircleIcon class="w-4 h-4 mr-1.5" /> Tambah Manual
+                  </Button>
+                </div>
               </div>
 
               <div v-if="materials.length === 0" class="text-center py-6 border-2 border-dashed border-neutral-200 rounded-xl text-neutral-400 text-sm">
-                Belum ada material. (Opsional)
+                Klik <strong>Auto-Generate</strong> untuk mengisi otomatis dari Shell &amp; Trim, atau tambah manual.
               </div>
 
               <div v-for="(mat, mi) in materials" :key="mi" class="border border-neutral-200 rounded-xl p-4 bg-neutral-50/40 space-y-3">
@@ -889,25 +818,63 @@ const handleSubmit = async () => {
                     <Trash2Icon class="w-4 h-4" />
                   </button>
                 </div>
-                <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+
+                <!-- Source picker -->
+                <div class="space-y-1">
+                  <label class="text-[10px] font-bold text-neutral-500 uppercase">Tautkan ke Shell / Trim (Opsional)</label>
+                  <select
+                    :value="mat.source ? `${mat.source.type}:${mat.source.index}` : ''"
+                    @change="onMaterialSourceChange(mi, ($event.target as HTMLSelectElement).value)"
+                    class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition"
+                  >
+                    <option value="">-- Tidak ditautkan / Isi manual --</option>
+                    <optgroup label="Shell (Kain)">
+                      <option
+                        v-for="(s, si) in shells" :key="`shell:${si}`" :value="`shell:${si}`"
+                        :disabled="usedShellIndices.includes(si) && mat.source?.index !== si"
+                      >
+                        Shell #{{ si + 1 }} — {{ s.deskripsi }} ({{ s.color }}){{ usedShellIndices.includes(si) && mat.source?.index !== si ? ' ✓ sudah dipakai' : '' }}
+                      </option>
+                    </optgroup>
+                    <optgroup label="Trim / Aksesoris">
+                      <option
+                        v-for="(t, ti) in trims" :key="`trim:${ti}`" :value="`trim:${ti}`"
+                        :disabled="usedTrimIndices.includes(ti) && mat.source?.index !== ti"
+                      >
+                        Trim #{{ ti + 1 }} — {{ t.item }} ({{ t.color }}){{ usedTrimIndices.includes(ti) && mat.source?.index !== ti ? ' ✓ sudah dipakai' : '' }}
+                      </option>
+                    </optgroup>
+                  </select>
+                  <p v-if="mat.source" class="text-[10px] text-emerald-600 font-semibold">
+                    ✓ Ditautkan ke {{ mat.source.type === 'shell' ? 'Shell' : 'Trim' }} #{{ mat.source.index + 1 }}
+                    — item & unit diisi otomatis
+                  </p>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div class="space-y-1 col-span-2">
+                    <label class="text-[10px] font-bold text-neutral-500 uppercase">Item / Nama Material *</label>
+                    <input v-model="mat.item" type="text" placeholder="cth: Kain Lining"
+                      class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition" />
+                  </div>
                   <div class="space-y-1 col-span-2">
                     <label class="text-[10px] font-bold text-neutral-500 uppercase">Description</label>
-                    <input v-model="mat.description" type="text" placeholder="cth: Kain Lining"
+                    <input v-model="mat.description" type="text" placeholder="Deskripsi singkat"
                       class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition" />
                   </div>
                   <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-neutral-500 uppercase">Size</label>
-                    <input v-model="mat.size" type="text" placeholder="cth: All / M / L"
+                    <label class="text-[10px] font-bold text-neutral-500 uppercase">Qty</label>
+                    <input v-model="mat.qty" type="number" min="0" placeholder="0"
                       class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition" />
                   </div>
                   <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-neutral-500 uppercase">Color</label>
-                    <input v-model="mat.color" type="text" placeholder="cth: White"
+                    <label class="text-[10px] font-bold text-neutral-500 uppercase">Unit *</label>
+                    <input v-model="mat.unit" type="text" placeholder="PCS / YD / M"
                       class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition" />
                   </div>
-                  <div class="space-y-1">
-                    <label class="text-[10px] font-bold text-neutral-500 uppercase">UOM</label>
-                    <input v-model="mat.uom" type="text" placeholder="PCS / M / YD"
+                  <div class="space-y-1 col-span-2">
+                    <label class="text-[10px] font-bold text-neutral-500 uppercase">Est. Harga (Rp)</label>
+                    <input v-model="mat.est_price" type="number" min="0" placeholder="0"
                       class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition" />
                   </div>
                 </div>
