@@ -1,19 +1,23 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { Button } from '@/components/ui/button';
 import OperatorDashboard from './OperatorDashboard.vue';
 import FinanceDashboard from './FinanceDashboard.vue';
 import AdminProduksiDashboard from './AdminProduksiDashboard.vue';
-// import { useDashboard } from '@/composables/dashboard/useDashboard';
-// Mendefinisikan props dengan benar
+import ManagerDashboard from './ManagerDashboard.vue';
+import ClientDashboard from './ClientDashboard.vue';
+
 const props = defineProps<{
     username?: string;
     role?: string;
 }>();
 
-// Mendefinisikan emits
 const emit = defineEmits<{
     (e: 'logout'): void;
 }>();
+
+const normalizedRole = computed(() => (props.role || '').toUpperCase());
+const roleLabel = computed(() => normalizedRole.value.replace(/_/g, ' ') || 'ADMIN');
 
 </script>
 
@@ -34,7 +38,7 @@ const emit = defineEmits<{
       
       <div class="mt-4 md:mt-0 flex items-center space-x-4">
         <div class="px-4 py-1.5 bg-indigo-50 text-indigo-700 rounded-full text-sm font-semibold tracking-wide border border-indigo-100">
-          ROLE: {{ props.username === 'operator' ? 'OPERATOR' : (props.role?.toUpperCase() || 'ADMIN') }}
+          ROLE: {{ roleLabel }}
         </div>
         <Button
             variant="destructive"
@@ -47,14 +51,11 @@ const emit = defineEmits<{
     </div>
 
     <!-- Role-Specific Dashboard Views -->
-    <!-- Menampilkan Operator Dashboard khusus untuk Operator -->
-    <OperatorDashboard v-if="props.role === 'Operator' || props.username === 'operator' || (!props.role && props.username !== 'admin-keuangan' && props.username !== 'admin-produksi')" />
-    
-    <!-- Menampilkan Finance Dashboard khusus untuk Admin Keuangan -->
-    <FinanceDashboard v-else-if="props.role === 'Admin Keuangan' || props.username === 'admin-keuangan'" />
-
-    <!-- Menampilkan Production Dashboard khusus untuk Admin Produksi -->
-    <AdminProduksiDashboard v-else-if="props.role === 'Admin Produksi' || props.username === 'admin-produksi'" />
+    <OperatorDashboard v-if="normalizedRole === 'OPERATOR'" />
+    <FinanceDashboard v-else-if="normalizedRole === 'ADMIN_KEUANGAN'" />
+    <AdminProduksiDashboard v-else-if="normalizedRole === 'ADMIN_PRODUKSI'" />
+    <ManagerDashboard v-else-if="normalizedRole === 'MANAGER'" />
+    <ClientDashboard v-else-if="normalizedRole === 'CLIENT'" />
 
     <!-- Placeholder untuk Role Lain -->
     <div v-else class="bg-white p-12 rounded-xl shadow-sm border text-center">
@@ -63,7 +64,7 @@ const emit = defineEmits<{
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
         </svg>
       </div>
-      <h3 class="text-lg font-medium text-slate-800">Dashboard {{ props.role }} Belum Tersedia</h3>
+      <h3 class="text-lg font-medium text-slate-800">Dashboard {{ roleLabel }} Belum Tersedia</h3>
       <p class="text-slate-500 mt-1">Modul dashboard untuk role ini sedang dalam tahap pengembangan.</p>
     </div>
 
