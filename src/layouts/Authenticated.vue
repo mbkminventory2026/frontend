@@ -223,6 +223,14 @@ const navMainItems = computed(() => {
           url: "/warna",
           permission: "MASTER_WARNA_READ",
         },
+        {
+          title: "Line Produksi",
+          url: "/production-line",
+        },
+        {
+          title: "Status Plan Produksi",
+          url: "/production-status-plan",
+        },
       ],
     },
     {
