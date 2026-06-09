@@ -10,6 +10,7 @@ export interface RatioMarkerResponse {
   id_ratio_marker: number;
   id_komponen_marker: number;
   id_wo_shell: number;
+  qty_fabric_received: number;
   cons: number;
   plan_spreading_gelaran: number;
   panjang_marker: number;
@@ -37,6 +38,11 @@ export interface MarkerPlanResponse {
   no_dokumen: string;
   tanggal_efektif: string;
   id_wo_shell: number;
+  color: string;
+  fabric_description: string;
+  style: string;
+  model: string;
+  qty_fabric_received: number;
   created_at: string;
   components: KomponenMarkerPlanResponse[];
 }
