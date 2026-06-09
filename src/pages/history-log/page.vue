@@ -52,6 +52,30 @@ const actionOptions = [
   { label: 'Delete', value: 'DELETE' },
 ]
 
+const actionLabels: Record<string, string> = {
+  CREATE: 'Create',
+  UPDATE: 'Update',
+  DELETE: 'Delete',
+}
+
+const moduleLabels: Record<string, string> = {
+  'user-management': 'User Management',
+  'role-management': 'Role Management',
+  'master-data': 'Master Data',
+}
+
+const entityTypeLabels: Record<string, string> = {
+  users: 'Users',
+  roles: 'Roles',
+  hak_akses: 'Permissions',
+  departemen: 'Departemen',
+  jenis_barang: 'Jenis Barang',
+  mitra: 'Mitra',
+  barang: 'Barang',
+  warna: 'Warna',
+  password_reset_requests: 'Password Reset Requests',
+}
+
 const moduleOptions = [
   { label: 'Semua Modul', value: 'all' },
   { label: 'User Management', value: 'user-management' },
@@ -92,11 +116,34 @@ const formatDateTime = (value?: string) => {
 
 const formatFieldLabel = (value: string) => value.split('_').join(' ')
 
+const formatActionLabel = (value?: string) => {
+  if (!value) return '-'
+  return actionLabels[value] ?? value
+}
+
+const formatModuleLabel = (value?: string) => {
+  if (!value) return '-'
+  return moduleLabels[value] ?? value
+}
+
+const formatEntityTypeLabel = (value?: string) => {
+  if (!value) return '-'
+  return entityTypeLabels[value] ?? value
+}
+
 const formatValue = (value: unknown) => {
   if (value == null || value === '') return '-'
   if (typeof value === 'boolean') return value ? 'Ya' : 'Tidak'
   if (typeof value === 'object') return JSON.stringify(value, null, 2)
   return String(value)
+}
+
+const formatSnapshotBlock = (value: unknown) => {
+  if (value == null) return 'Tidak ada snapshot data.'
+  if (typeof value === 'object' && !Array.isArray(value) && Object.keys(value as Record<string, unknown>).length === 0) {
+    return 'Tidak ada snapshot data.'
+  }
+  return JSON.stringify(value, null, 2)
 }
 
 const fetchData = async () => {
@@ -176,20 +223,20 @@ const columns: ColumnDef<ActivityLogListItem>[] = [
         {
           class: `inline-flex rounded-full px-3 py-1 text-xs font-semibold tracking-wide ${actionTone(row.original.action)}`,
         },
-        row.original.action,
+        formatActionLabel(row.original.action),
       ),
   },
   {
     accessorKey: 'module',
     header: 'Modul',
-    cell: ({ row }) => h('div', { class: 'text-left text-sm text-slate-700' }, row.original.module),
+    cell: ({ row }) => h('div', { class: 'text-left text-sm text-slate-700' }, formatModuleLabel(row.original.module)),
   },
   {
     accessorKey: 'entity_type',
     header: 'Entity',
     cell: ({ row }) =>
       h('div', { class: 'text-left' }, [
-        h('p', { class: 'font-medium text-slate-800' }, row.original.entity_type),
+        h('p', { class: 'font-medium text-slate-800' }, formatEntityTypeLabel(row.original.entity_type)),
         h('p', { class: 'text-xs text-slate-500' }, row.original.entity_label || row.original.entity_id || '-'),
       ]),
   },
@@ -231,6 +278,19 @@ const summaryCards = computed(() => {
     { label: 'Update', value: updateCount.toLocaleString(), tone: 'bg-amber-100 text-amber-700' },
     { label: 'Delete', value: deleteCount.toLocaleString(), tone: 'bg-rose-100 text-rose-700' },
   ]
+})
+
+const appliedFilterChips = computed(() => {
+  const chips: string[] = []
+
+  if (selectedAction.value !== 'all') chips.push(`Aksi: ${formatActionLabel(selectedAction.value)}`)
+  if (selectedModule.value !== 'all') chips.push(`Modul: ${formatModuleLabel(selectedModule.value)}`)
+  if (selectedEntityType.value !== 'all') chips.push(`Entity: ${formatEntityTypeLabel(selectedEntityType.value)}`)
+  if (dateFrom.value) chips.push(`Dari: ${dateFrom.value}`)
+  if (dateTo.value) chips.push(`Sampai: ${dateTo.value}`)
+  if (searchTerm.value) chips.push(`Cari: ${searchTerm.value}`)
+
+  return chips
 })
 
 const applyFilters = async () => {
@@ -385,6 +445,16 @@ onMounted(() => {
             Reset
           </Button>
         </div>
+
+        <div v-if="appliedFilterChips.length" class="flex flex-wrap gap-2">
+          <span
+            v-for="chip in appliedFilterChips"
+            :key="chip"
+            class="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600"
+          >
+            {{ chip }}
+          </span>
+        </div>
       </CardContent>
     </Card>
 
@@ -408,7 +478,7 @@ onMounted(() => {
         <DialogHeader>
           <DialogTitle>Detail History Log</DialogTitle>
           <DialogDescription v-if="selectedDetail">
-            {{ selectedDetail.action }} · {{ selectedDetail.entity_type }} · {{ selectedDetail.entity_label || selectedDetail.entity_id }}
+            {{ formatActionLabel(selectedDetail.action) }} · {{ formatEntityTypeLabel(selectedDetail.entity_type) }} · {{ selectedDetail.entity_label || selectedDetail.entity_id }}
           </DialogDescription>
         </DialogHeader>
 
@@ -417,7 +487,20 @@ onMounted(() => {
         </div>
 
         <div v-else-if="selectedDetail" class="space-y-6">
-          <div class="grid gap-4 md:grid-cols-2">
+          <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Aksi</p>
+              <div class="mt-2">
+                <span :class="['inline-flex rounded-full px-3 py-1 text-xs font-semibold tracking-wide', actionTone(selectedDetail.action)]">
+                  {{ formatActionLabel(selectedDetail.action) }}
+                </span>
+              </div>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Modul</p>
+              <p class="mt-1 text-base font-semibold text-slate-900">{{ formatModuleLabel(selectedDetail.module) }}</p>
+              <p class="text-sm text-slate-500">{{ formatEntityTypeLabel(selectedDetail.entity_type) }}</p>
+            </div>
             <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Aktor</p>
               <p class="mt-1 text-base font-semibold text-slate-900">{{ selectedDetail.actor_username }}</p>
@@ -431,7 +514,12 @@ onMounted(() => {
           </div>
 
           <div class="space-y-3">
-            <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-600">Changed Fields</h3>
+            <div class="flex items-center justify-between gap-3">
+              <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-600">Changed Fields</h3>
+              <span class="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
+                {{ selectedDetail.changed_fields?.length || 0 }} field berubah
+              </span>
+            </div>
             <div v-if="selectedDetail.changed_fields?.length" class="space-y-3">
               <div
                 v-for="field in selectedDetail.changed_fields"
@@ -459,11 +547,11 @@ onMounted(() => {
           <div class="grid gap-4 lg:grid-cols-2">
             <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <p class="text-sm font-semibold text-slate-900">Before Data</p>
-              <pre class="mt-3 whitespace-pre-wrap break-words text-xs text-slate-700">{{ JSON.stringify(selectedDetail.before_data ?? {}, null, 2) }}</pre>
+              <pre class="mt-3 whitespace-pre-wrap break-words text-xs text-slate-700">{{ formatSnapshotBlock(selectedDetail.before_data) }}</pre>
             </div>
             <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
               <p class="text-sm font-semibold text-slate-900">After Data</p>
-              <pre class="mt-3 whitespace-pre-wrap break-words text-xs text-slate-700">{{ JSON.stringify(selectedDetail.after_data ?? {}, null, 2) }}</pre>
+              <pre class="mt-3 whitespace-pre-wrap break-words text-xs text-slate-700">{{ formatSnapshotBlock(selectedDetail.after_data) }}</pre>
             </div>
           </div>
         </div>
