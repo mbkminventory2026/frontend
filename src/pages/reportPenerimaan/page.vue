@@ -57,7 +57,7 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
         { header: 'Created At', accessorKey: 'created_at', cell: ({ row }) => formatDate(row.getValue('created_at')) },
         { header: 'Tanggal Penerimaan', accessorKey: 'tanggal', cell: ({ row }) => formatDate(row.getValue('tanggal')) },
         { header: 'ID Received', accessorKey: 'id_received' },
-        { header: 'ID Material List', accessorKey: 'id_material_list' },
+        { header: 'ID Material List Item', accessorKey: 'id_material_list_item' },
         { header: 'Quantity (Qty)', accessorKey: 'qty' },
         { header: 'Keterangan', accessorKey: 'keterangan' },
         { header: 'Actions', id: 'actions', cell:({ row }) => {

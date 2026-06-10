@@ -315,6 +315,11 @@ const navMainItems = computed(() => {
           permission: "REPORT_READ",
         },
         {
+          title: "Material List",
+          url: "/material-list",
+          permission: "WO_READ",
+        },
+        {
           title: "Laporan Penerimaan",
           url: "/report-penerimaan",
           permission: "REPORT_READ",

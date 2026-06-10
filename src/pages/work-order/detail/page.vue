@@ -43,7 +43,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { parseToInt } from '@/lib/number';
-
 const router = useRouter();
 const search = useSearch({ strict: false }) as any;
 const navigate = useNavigate();
@@ -1105,9 +1104,17 @@ onMounted(fetchDetail);
                             </div>
                             <div v-else class="overflow-x-auto">
                                 <template v-for="ml in detail.material_lists" :key="ml.id_material_list">
-                                    <div class="px-4 py-2 bg-neutral-50 border-b border-neutral-100 flex items-center gap-2">
-                                        <span class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">{{ ml.name }}</span>
-                                        <span v-if="ml.is_locked" class="text-[9px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">LOCKED</span>
+                                    <div class="px-4 py-2 bg-neutral-50 border-b border-neutral-100 flex items-center justify-between gap-2">
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">{{ ml.name }}</span>
+                                            <span v-if="ml.is_locked" class="text-[9px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">LOCKED</span>
+                                        </div>
+                                        <button
+                                            class="text-[10px] text-blue-600 hover:text-blue-800 font-medium flex items-center gap-0.5"
+                                            @click="router.navigate({ to: '/material-list' })"
+                                        >
+                                            Lihat di Material List →
+                                        </button>
                                     </div>
                                     <table class="w-full text-left border-collapse text-xs">
                                         <thead class="bg-neutral-50/50 border-b border-neutral-200">
@@ -1125,7 +1132,12 @@ onMounted(fetchDetail);
                                             <tr v-if="!ml.items || ml.items.length === 0">
                                                 <td colspan="7" class="px-4 py-3 text-center text-neutral-400">Tidak ada item.</td>
                                             </tr>
-                                            <tr v-for="mli in ml.items" :key="mli.id_material_list_item" class="hover:bg-neutral-50/40">
+                                            <tr
+                                                v-for="mli in ml.items"
+                                                :key="mli.id_material_list_item"
+                                                class="hover:bg-blue-50/40 cursor-pointer"
+                                                @click="router.navigate({ to: '/material-list/$id', params: { id: String(mli.id_material_list_item) } })"
+                                            >
                                                 <td class="px-4 py-2.5 font-medium text-neutral-800">{{ mli.item }}</td>
                                                 <td class="px-4 py-2.5 text-neutral-600">{{ mli.description }}</td>
                                                 <td class="px-4 py-2.5 text-neutral-700">{{ mli.qty }}</td>
@@ -1270,5 +1282,6 @@ onMounted(fetchDetail);
                 </form>
             </DialogContent>
         </Dialog>
+
     </div>
 </template>

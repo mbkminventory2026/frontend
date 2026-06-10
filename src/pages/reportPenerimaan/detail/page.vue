@@ -36,7 +36,7 @@ const form = useForm({
         update: (_id, payload) => {
             const { created_at, id_received, ...data } = payload;
             if (data.qty !== undefined) data.qty = parseToInt(data.qty);
-            if (data.id_material_list !== undefined) data.id_material_list = parseToInt(data.id_material_list);
+            if (data.id_material_list_item !== undefined) data.id_material_list_item = parseToInt(data.id_material_list_item);
             return updateReportPenerimaan(id_received || id, data);
         }
     },
@@ -117,10 +117,10 @@ const { values, isLoading, isSaving, isEditing } = form;
                                     </div>
                                 </div>
                                 <div class="space-y-1">
-                                    <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">ID Material List</p>
+                                    <p class="text-xs font-medium text-muted-foreground uppercase tracking-wider">ID Material List Item</p>
                                     <div class="flex items-center gap-2">
                                         <Layers class="w-4 h-4 text-muted-foreground" />
-                                        <p class="font-medium text-lg font-mono">{{ values.id_material_list }}</p>
+                                        <p class="font-medium text-lg font-mono">{{ values.id_material_list_item }}</p>
                                     </div>
                                 </div>
                                 <div class="sm:col-span-2 space-y-1">
@@ -138,7 +138,7 @@ const { values, isLoading, isSaving, isEditing } = form;
                                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                                         <AppFormField name="tanggal" type="date" label="Tanggal Penerimaan" placeholder="Pilih tanggal penerimaan" />
                                         <AppFormField name="qty" type="number" label="Quantity (Qty)" placeholder="Masukkan quantity" />
-                                        <AppFormField name="id_material_list" type="number" label="ID Material List" placeholder="Masukkan ID Material List" />
+                                        <AppFormField name="id_material_list_item" type="number" label="ID Material List Item" placeholder="Masukkan ID Material List Item" />
                                         <div class="sm:col-span-2">
                                             <AppFormField name="keterangan" type="text" label="Keterangan" placeholder="Masukkan keterangan (opsional)" />
                                         </div>
