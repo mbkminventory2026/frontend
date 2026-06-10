@@ -8,7 +8,6 @@ type RouteTarget = {
 }
 
 const clientRouteTargets: RouteTarget[] = [
-  { path: '/dashboard', permission: 'DASHBOARD_READ' },
   { path: '/po-client', permission: 'PO_CLIENT_READ' },
   { path: '/work-order', permission: 'WO_READ' },
   { path: '/production-summary', permission: 'PRODUCTION_SUMMARY_READ' },

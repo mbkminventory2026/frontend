@@ -32,6 +32,7 @@ export interface ProductionStats {
 
 export interface ProductionAggregateResponse {
   id_wo_shell_size: number
+  id_size?: number | null
   model_name: string
   size: string
   target_qty: number

@@ -62,6 +62,34 @@ const sortSizes = <T extends { size: string } | string>(items: T[]): T[] => {
   });
 };
 
+interface SizeColumn {
+  key: string;
+  label: string;
+  idSize: number | null;
+}
+
+const getSizeColumnKey = (size: { id_size?: number | null; size: string }): string => {
+  if (size.id_size != null) {
+    return `id:${size.id_size}`;
+  }
+
+  return `label:${size.size.trim().toLowerCase()}`;
+};
+
+const toSizeColumn = (size: { id_size?: number | null; size: string }): SizeColumn => ({
+  key: getSizeColumnKey(size),
+  label: size.size,
+  idSize: size.id_size ?? null,
+});
+
+const sortSizeColumns = (items: SizeColumn[]): SizeColumn[] =>
+  [...items].sort((a, b) => {
+    const wA = getSizeWeight(a.label);
+    const wB = getSizeWeight(b.label);
+    if (wA !== wB) return wA - wB;
+    return a.label.localeCompare(b.label, undefined, { numeric: true, sensitivity: 'base' });
+  });
+
 // ─── API Lists ────────────────────────────────────────────────────────────────
 const poList = ref<POClientListItem[]>([]);
 const woList = ref<WorkOrderListItem[]>([]);
@@ -275,15 +303,20 @@ const handleSubmitReport = async () => {
 };
 
 // ─── BOTTOM SECTION: MULTI-COLOR MATRIX TABLE DATA ───────────────────────────────────────────────
-const uniqueSizes = computed(() => {
+const uniqueSizeColumns = computed<SizeColumn[]>(() => {
   if (!woDetail.value?.shells) return [];
-  const sizes = new Set<string>();
+  const columns = new Map<string, SizeColumn>();
   woDetail.value.shells.forEach((shell) => {
     if (shell.sizes) {
-      shell.sizes.forEach((s) => sizes.add(s.size));
+      shell.sizes.forEach((s) => {
+        const column = toSizeColumn(s);
+        if (!columns.has(column.key)) {
+          columns.set(column.key, column);
+        }
+      });
     }
   });
-  return sortSizes(Array.from(sizes));
+  return sortSizeColumns(Array.from(columns.values()));
 });
 
 interface SizeData {
@@ -324,8 +357,8 @@ const tableData = computed<ColorRow[]>(() => {
     let totalPacking = 0;
     let totalShipped = 0;
 
-    uniqueSizes.value.forEach((sizeName) => {
-      sizesData[sizeName] = {
+    uniqueSizeColumns.value.forEach((column) => {
+      sizesData[column.key] = {
         orderQty: 0,
         cuttingQty: 0,
         sewingQty: 0,
@@ -338,9 +371,9 @@ const tableData = computed<ColorRow[]>(() => {
     if (shell.sizes) {
       shell.sizes.forEach((s) => {
         const stats = prodMap.get(s.id_wo_shell_size);
-        const sizeName = s.size;
+        const sizeKey = getSizeColumnKey(s);
 
-        sizesData[sizeName] = {
+        sizesData[sizeKey] = {
           orderQty: s.qty,
           cuttingQty: stats?.cutting ?? 0,
           sewingQty: stats?.sewing ?? 0,
@@ -753,64 +786,64 @@ onMounted(() => {
               <th rowspan="2" class="px-4 py-3 text-left border-r border-neutral-200 min-w-[120px] sticky left-0 bg-neutral-100 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.05)]">
                 Color
               </th>
-              <th :colspan="uniqueSizes.length + 1" class="px-4 py-3 text-center border-r border-neutral-200 bg-indigo-50/50 text-indigo-900">
+              <th :colspan="uniqueSizeColumns.length + 1" class="px-4 py-3 text-center border-r border-neutral-200 bg-indigo-50/50 text-indigo-900">
                 QTY Order
               </th>
-              <th :colspan="uniqueSizes.length + 2" class="px-4 py-3 text-center border-r border-neutral-200 bg-blue-50/50 text-blue-900">
+              <th :colspan="uniqueSizeColumns.length + 2" class="px-4 py-3 text-center border-r border-neutral-200 bg-blue-50/50 text-blue-900">
                 QTY Cutting
               </th>
-              <th :colspan="uniqueSizes.length + 2" class="px-4 py-3 text-center border-r border-neutral-200 bg-emerald-50/50 text-emerald-900">
+              <th :colspan="uniqueSizeColumns.length + 2" class="px-4 py-3 text-center border-r border-neutral-200 bg-emerald-50/50 text-emerald-900">
                 QTY Sewing
               </th>
-              <th :colspan="uniqueSizes.length + 2" class="px-4 py-3 text-center border-r border-neutral-200 bg-amber-50/50 text-amber-900">
+              <th :colspan="uniqueSizeColumns.length + 2" class="px-4 py-3 text-center border-r border-neutral-200 bg-amber-50/50 text-amber-900">
                 QTY QC/Finishing
               </th>
-              <th :colspan="uniqueSizes.length + 2" class="px-4 py-3 text-center border-r border-neutral-200 bg-violet-50/50 text-violet-950">
+              <th :colspan="uniqueSizeColumns.length + 2" class="px-4 py-3 text-center border-r border-neutral-200 bg-violet-50/50 text-violet-950">
                 QTY Packing
               </th>
-              <th :colspan="uniqueSizes.length + 2" class="px-4 py-3 text-center bg-rose-50/50 text-rose-950">
+              <th :colspan="uniqueSizeColumns.length + 2" class="px-4 py-3 text-center bg-rose-50/50 text-rose-950">
                 QTY Pengiriman
               </th>
             </tr>
             <!-- Row 2: Size & Total Subheaders -->
             <tr class="border-t border-neutral-200 bg-neutral-50 text-[10px] uppercase tracking-wider text-neutral-500">
               <!-- QTY Order sizes + total -->
-              <th v-for="size in uniqueSizes" :key="'order-' + size" class="px-3 py-2 text-right border-r border-neutral-150">
-                {{ size }}
+              <th v-for="col in uniqueSizeColumns" :key="'order-' + col.key" class="px-3 py-2 text-right border-r border-neutral-150">
+                {{ col.label }}
               </th>
               <th class="px-3 py-2 text-right border-r border-neutral-200 font-bold bg-indigo-50/30 text-indigo-950">Total</th>
 
               <!-- QTY Cutting sizes + total + balance -->
-              <th v-for="size in uniqueSizes" :key="'cutting-' + size" class="px-3 py-2 text-right border-r border-neutral-150">
-                {{ size }}
+              <th v-for="col in uniqueSizeColumns" :key="'cutting-' + col.key" class="px-3 py-2 text-right border-r border-neutral-150">
+                {{ col.label }}
               </th>
               <th class="px-3 py-2 text-right border-r border-neutral-150 font-bold bg-blue-50/30 text-blue-950">Total</th>
               <th class="px-3 py-2 text-right border-r border-neutral-200 font-bold text-neutral-700 bg-red-50/20">Balance</th>
 
               <!-- QTY Sewing sizes + total + balance -->
-              <th v-for="size in uniqueSizes" :key="'sewing-' + size" class="px-3 py-2 text-right border-r border-neutral-150">
-                {{ size }}
+              <th v-for="col in uniqueSizeColumns" :key="'sewing-' + col.key" class="px-3 py-2 text-right border-r border-neutral-150">
+                {{ col.label }}
               </th>
               <th class="px-3 py-2 text-right border-r border-neutral-150 font-bold bg-emerald-50/30 text-emerald-950">Total</th>
               <th class="px-3 py-2 text-right border-r border-neutral-200 font-bold text-neutral-700 bg-red-50/20">Balance</th>
 
               <!-- QTY QC/Finishing sizes + total + balance -->
-              <th v-for="size in uniqueSizes" :key="'qc-' + size" class="px-3 py-2 text-right border-r border-neutral-150">
-                {{ size }}
+              <th v-for="col in uniqueSizeColumns" :key="'qc-' + col.key" class="px-3 py-2 text-right border-r border-neutral-150">
+                {{ col.label }}
               </th>
               <th class="px-3 py-2 text-right border-r border-neutral-150 font-bold bg-amber-50/30 text-amber-950">Total</th>
               <th class="px-3 py-2 text-right border-r border-neutral-200 font-bold text-neutral-700 bg-red-50/20">Balance</th>
 
               <!-- QTY Packing sizes + total + balance -->
-              <th v-for="size in uniqueSizes" :key="'packing-' + size" class="px-3 py-2 text-right border-r border-neutral-150">
-                {{ size }}
+              <th v-for="col in uniqueSizeColumns" :key="'packing-' + col.key" class="px-3 py-2 text-right border-r border-neutral-150">
+                {{ col.label }}
               </th>
               <th class="px-3 py-2 text-right border-r border-neutral-150 font-bold bg-violet-50/30 text-violet-950">Total</th>
               <th class="px-3 py-2 text-right border-r border-neutral-200 font-bold text-neutral-700 bg-red-50/20">Balance</th>
 
               <!-- QTY Pengiriman sizes + total + balance -->
-              <th v-for="size in uniqueSizes" :key="'shipped-' + size" class="px-3 py-2 text-right border-r border-neutral-150">
-                {{ size }}
+              <th v-for="col in uniqueSizeColumns" :key="'shipped-' + col.key" class="px-3 py-2 text-right border-r border-neutral-150">
+                {{ col.label }}
               </th>
               <th class="px-3 py-2 text-right border-r border-neutral-150 font-bold bg-rose-50/30 text-rose-950">Total</th>
               <th class="px-3 py-2 text-right font-bold text-neutral-700 bg-red-50/20">Balance</th>
@@ -824,16 +857,16 @@ onMounted(() => {
               </td>
 
               <!-- QTY Order -->
-              <td v-for="size in uniqueSizes" :key="'order-val-' + size" class="px-3 py-3 text-right border-r border-neutral-150 text-neutral-500">
-                {{ row.sizes[size]?.orderQty ? row.sizes[size]?.orderQty.toLocaleString('id-ID') : '—' }}
+              <td v-for="col in uniqueSizeColumns" :key="'order-val-' + col.key" class="px-3 py-3 text-right border-r border-neutral-150 text-neutral-500">
+                {{ row.sizes[col.key]?.orderQty ? row.sizes[col.key]?.orderQty.toLocaleString('id-ID') : '—' }}
               </td>
               <td class="px-3 py-3 text-right border-r border-neutral-200 font-bold bg-indigo-50/10 text-indigo-950">
                 {{ row.totalOrder.toLocaleString('id-ID') }}
               </td>
 
               <!-- QTY Cutting -->
-              <td v-for="size in uniqueSizes" :key="'cutting-val-' + size" class="px-3 py-3 text-right border-r border-neutral-150 text-neutral-500">
-                {{ row.sizes[size]?.cuttingQty ? row.sizes[size]?.cuttingQty.toLocaleString('id-ID') : '—' }}
+              <td v-for="col in uniqueSizeColumns" :key="'cutting-val-' + col.key" class="px-3 py-3 text-right border-r border-neutral-150 text-neutral-500">
+                {{ row.sizes[col.key]?.cuttingQty ? row.sizes[col.key]?.cuttingQty.toLocaleString('id-ID') : '—' }}
               </td>
               <td class="px-3 py-3 text-right border-r border-neutral-150 font-bold bg-blue-50/10 text-blue-950">
                 {{ row.totalCutting.toLocaleString('id-ID') }}
@@ -843,8 +876,8 @@ onMounted(() => {
               </td>
 
               <!-- QTY Sewing -->
-              <td v-for="size in uniqueSizes" :key="'sewing-val-' + size" class="px-3 py-3 text-right border-r border-neutral-150 text-neutral-500">
-                {{ row.sizes[size]?.sewingQty ? row.sizes[size]?.sewingQty.toLocaleString('id-ID') : '—' }}
+              <td v-for="col in uniqueSizeColumns" :key="'sewing-val-' + col.key" class="px-3 py-3 text-right border-r border-neutral-150 text-neutral-500">
+                {{ row.sizes[col.key]?.sewingQty ? row.sizes[col.key]?.sewingQty.toLocaleString('id-ID') : '—' }}
               </td>
               <td class="px-3 py-3 text-right border-r border-neutral-150 font-bold bg-emerald-50/10 text-emerald-950">
                 {{ row.totalSewing.toLocaleString('id-ID') }}
@@ -854,8 +887,8 @@ onMounted(() => {
               </td>
 
               <!-- QTY QC/Finishing -->
-              <td v-for="size in uniqueSizes" :key="'qc-val-' + size" class="px-3 py-3 text-right border-r border-neutral-150 text-neutral-500">
-                {{ row.sizes[size]?.qcQty ? row.sizes[size]?.qcQty.toLocaleString('id-ID') : '—' }}
+              <td v-for="col in uniqueSizeColumns" :key="'qc-val-' + col.key" class="px-3 py-3 text-right border-r border-neutral-150 text-neutral-500">
+                {{ row.sizes[col.key]?.qcQty ? row.sizes[col.key]?.qcQty.toLocaleString('id-ID') : '—' }}
               </td>
               <td class="px-3 py-3 text-right border-r border-neutral-150 font-bold bg-amber-50/10 text-amber-950">
                 {{ row.totalQc.toLocaleString('id-ID') }}
@@ -865,8 +898,8 @@ onMounted(() => {
               </td>
 
               <!-- QTY Packing -->
-              <td v-for="size in uniqueSizes" :key="'packing-val-' + size" class="px-3 py-3 text-right border-r border-neutral-150 text-neutral-500">
-                {{ row.sizes[size]?.packingQty ? row.sizes[size]?.packingQty.toLocaleString('id-ID') : '—' }}
+              <td v-for="col in uniqueSizeColumns" :key="'packing-val-' + col.key" class="px-3 py-3 text-right border-r border-neutral-150 text-neutral-500">
+                {{ row.sizes[col.key]?.packingQty ? row.sizes[col.key]?.packingQty.toLocaleString('id-ID') : '—' }}
               </td>
               <td class="px-3 py-3 text-right border-r border-neutral-150 font-bold bg-violet-50/10 text-violet-950">
                 {{ row.totalPacking.toLocaleString('id-ID') }}
@@ -876,8 +909,8 @@ onMounted(() => {
               </td>
 
               <!-- QTY Pengiriman -->
-              <td v-for="size in uniqueSizes" :key="'shipped-val-' + size" class="px-3 py-3 text-right border-r border-neutral-150 text-neutral-500">
-                {{ row.sizes[size]?.shippedQty ? row.sizes[size]?.shippedQty.toLocaleString('id-ID') : '—' }}
+              <td v-for="col in uniqueSizeColumns" :key="'shipped-val-' + col.key" class="px-3 py-3 text-right border-r border-neutral-150 text-neutral-500">
+                {{ row.sizes[col.key]?.shippedQty ? row.sizes[col.key]?.shippedQty.toLocaleString('id-ID') : '—' }}
               </td>
               <td class="px-3 py-3 text-right border-r border-neutral-150 font-bold bg-rose-50/10 text-rose-950">
                 {{ row.totalShipped.toLocaleString('id-ID') }}

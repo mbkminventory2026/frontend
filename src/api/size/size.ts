@@ -1,13 +1,13 @@
 import { apiClient } from "@/lib/apiClient";
 import { mapPayloadToSnakeCase, hasFile, prepareFormData } from "@/lib/utils";
-import type { WarnaResponseItem } from '@/schemas/warna/response';
+import type { SizeResponseItem } from "@/schemas/size/response";
 
-export const getWarna = async (params: {
+export const getSize = async (params: {
     limit: number,
     offset: number,
     search?: string
 }) => {
-    const response = await apiClient.get<WarnaResponseItem[]>('/api/v1/master/warna', {
+    const response = await apiClient.get<SizeResponseItem[]>('/api/v1/master/sizes', {
         params: {
             limit: params.limit,
             offset: params.offset,
@@ -21,35 +21,35 @@ export const getWarna = async (params: {
     }
 }
 
-export const createWarna = async (data: any) => {
+export const createSize = async (data: any) => {
     const snakeCaseValue = mapPayloadToSnakeCase(data)
     const containsFile = hasFile(snakeCaseValue)
 
     const payload = containsFile ? prepareFormData(snakeCaseValue) : snakeCaseValue
     const headers = containsFile ? { 'Content-Type': 'multipart/form-data' } : {}
 
-    return await apiClient.post('/api/v1/master/warna', payload, { headers });
+    return await apiClient.post('/api/v1/master/sizes', payload, { headers });
 }
 
-export const updateWarna = async (id: string | number, data: any) => {
+export const updateSize = async (id: string | number, data: any) => {
     const snakeCaseValue = mapPayloadToSnakeCase(data)
     const containsFile = hasFile(snakeCaseValue)
 
     const payload = containsFile ? prepareFormData(snakeCaseValue) : snakeCaseValue
     const headers = containsFile ? { 'Content-Type': 'multipart/form-data' } : {}
 
-    return await apiClient.put(`/api/v1/master/warna/${id}`, payload, { headers });
+    return await apiClient.put(`/api/v1/master/sizes/${id}`, payload, { headers });
 }
 
-export const deleteWarna = async (id: string | number) => {
+export const deleteSize = async (id: string | number) => {
     if (!id) throw new Error("ID is required for deletion");
 
-    return await apiClient.delete(`/api/v1/master/warna/${id}`);
+    return await apiClient.delete(`/api/v1/master/sizes/${id}`);
 }
 
-export const getWarnaById = async (id: string | number) => {
+export const getSizeById = async (id: string | number) => {
     if (!id) throw new Error("ID is required");
 
-    const response = await apiClient.get<WarnaResponseItem>(`/api/v1/master/warna/${id}`);
+    const response = await apiClient.get<SizeResponseItem>(`/api/v1/master/sizes/${id}`);
     return response.data;
 }
