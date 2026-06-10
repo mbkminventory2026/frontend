@@ -128,6 +128,11 @@ const navMainItems = computed(() => {
             url: "/password-reset-requests",
             permission: "PASSWORD_RESET_REQUEST_READ",
           },
+          {
+            title: "History Log",
+            url: "/history-log",
+            permission: "LOG_READ",
+          },
         ],
       },
       {

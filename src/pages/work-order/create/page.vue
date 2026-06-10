@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onMounted, computed, reactive } from 'vue';
+import { ref, watch, onMounted, computed, reactive, nextTick } from 'vue';
 import { useRouter } from '@tanstack/vue-router';
 import {
   Wrench,
@@ -11,9 +11,12 @@ import {
   CopyIcon
 } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
+import { onClickOutside } from '@vueuse/core';
 
 import { createWorkOrder } from '@/api/work-orders/work-orders';
 import { getPOClients, getPOClientById, type POClientListItem, type POClientItemResponse } from '@/api/po-clients/po-clients';
+import { getMitra } from '@/api/mitra/mitra';
+import { type MitraResponseItem } from '@/schemas/mitra/response';
 import { usePermission } from '@/composables/usePermission';
 import { getWarna } from '@/api/warna/warna';
 
@@ -34,6 +37,7 @@ onMounted(() => {
   }
   fetchPOList();
   fetchColorOptions();
+  fetchBuyerList();
 });
 
 // ─── Wizard State ──────────────────────────────────────
@@ -80,6 +84,66 @@ const fetchPOList = async () => {
   }
 };
 
+const buyerList = ref<MitraResponseItem[]>([]);
+const isLoadingBuyers = ref(false);
+
+const fetchBuyerList = async () => {
+  isLoadingBuyers.value = true;
+  try {
+    const res = await getMitra({ limit: 1000 });
+    buyerList.value = (res.results || []).filter(
+      (m: any) => m.tipe_perusahaan?.toUpperCase() === 'CLIENT'
+    );
+  } catch (e) {
+    console.error('Gagal fetch buyer list:', e);
+  } finally {
+    isLoadingBuyers.value = false;
+  }
+};
+
+const filteredPoList = computed(() => {
+  if (!step1.buyer) return [];
+  return poList.value.filter(po => po.mitra_name === step1.buyer);
+});
+
+const onBuyerChange = () => {
+  step1.selectedPOId = null;
+  step1.id_po_client_item = null;
+  poItemOptions.value = [];
+  poDeliveryDate.value = '';
+  maxQty.value = null;
+};
+
+// Searchable Buyer Select State & Logic
+const isBuyerDropdownOpen = ref(false);
+const buyerSearchQuery = ref('');
+const buyerDropdownRef = ref<HTMLElement | null>(null);
+const buyerSearchInput = ref<HTMLInputElement | null>(null);
+
+onClickOutside(buyerDropdownRef, () => {
+  isBuyerDropdownOpen.value = false;
+});
+
+const filteredBuyers = computed(() => {
+  const q = buyerSearchQuery.value.toLowerCase().trim();
+  if (!q) return buyerList.value;
+  return buyerList.value.filter(b => b.nama_perusahaan.toLowerCase().includes(q));
+});
+
+const selectBuyer = (buyerName: string) => {
+  step1.buyer = buyerName;
+  onBuyerChange();
+  isBuyerDropdownOpen.value = false;
+  buyerSearchQuery.value = '';
+};
+
+watch(isBuyerDropdownOpen, async (newVal) => {
+  if (newVal) {
+    await nextTick();
+    buyerSearchInput.value?.focus();
+  }
+});
+
 const onPOSelect = async (poId: number) => {
   step1.selectedPOId = poId;
   step1.id_po_client_item = null;
@@ -87,7 +151,6 @@ const onPOSelect = async (poId: number) => {
   poDeliveryDate.value = '';
   maxQty.value = null;
   if (!poId) {
-    step1.buyer = '';
     return;
   }
 
@@ -468,17 +531,74 @@ const handleSubmit = async () => {
           <!-- ── STEP 1: Info Dasar ─────────────────────── -->
           <div v-if="wizardStep === 1" class="p-6 space-y-5">
             <!-- Cascading PO Dropdown -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div class="space-y-1.5 relative" ref="buyerDropdownRef">
+                <label class="text-xs font-semibold text-neutral-700">Buyer <span class="text-red-500">*</span></label>
+                
+                <!-- Trigger Button -->
+                <button
+                  type="button"
+                  @click="isBuyerDropdownOpen = !isBuyerDropdownOpen"
+                  class="w-full flex items-center justify-between rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition text-left h-[38px]"
+                  :class="{'border-neutral-400 ring-2 ring-neutral-900/20': isBuyerDropdownOpen}"
+                >
+                  <span>{{ step1.buyer || 'Pilih Buyer...' }}</span>
+                  <svg class="w-4 h-4 text-neutral-500 pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                <!-- Dropdown Panel -->
+                <div
+                  v-if="isBuyerDropdownOpen"
+                  class="absolute z-50 left-0 right-0 mt-1 rounded-lg border border-neutral-200 bg-white shadow-lg overflow-hidden flex flex-col max-h-60"
+                >
+                  <!-- Search Input -->
+                  <div class="p-2 border-b border-neutral-100 bg-neutral-50/50">
+                    <input
+                      ref="buyerSearchInput"
+                      v-model="buyerSearchQuery"
+                      type="text"
+                      placeholder="Cari buyer..."
+                      class="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-800 placeholder-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-900/40 focus:border-neutral-400"
+                      @keydown.esc="isBuyerDropdownOpen = false"
+                    />
+                  </div>
+
+                  <!-- Options List -->
+                  <div class="overflow-y-auto py-1">
+                    <div v-if="filteredBuyers.length === 0" class="px-3 py-2 text-sm text-neutral-400 text-center">
+                      Tidak ada buyer ditemukan
+                    </div>
+                    <button
+                      v-else
+                      v-for="buyer in filteredBuyers"
+                      :key="buyer.id_mitra"
+                      type="button"
+                      @click="selectBuyer(buyer.nama_perusahaan)"
+                      class="w-full text-left px-3 py-2 text-sm text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900 focus:outline-none focus:bg-neutral-100 transition flex items-center justify-between"
+                      :class="{'bg-neutral-50 font-semibold': step1.buyer === buyer.nama_perusahaan}"
+                    >
+                      <span>{{ buyer.nama_perusahaan }}</span>
+                      <svg v-if="step1.buyer === buyer.nama_perusahaan" class="w-3.5 h-3.5 text-neutral-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               <div class="space-y-1.5">
                 <label class="text-xs font-semibold text-neutral-700">PO Client <span class="text-red-500">*</span></label>
                 <select
                   :value="step1.selectedPOId ?? ''"
+                  :disabled="!step1.buyer"
                   @change="onPOSelect(Number(($event.target as HTMLSelectElement).value))"
-                  class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition"
+                  class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm text-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition disabled:bg-neutral-50 disabled:text-neutral-400 disabled:cursor-not-allowed"
                 >
                   <option value="">Pilih PO Client...</option>
-                  <option v-for="po in poList" :key="po.id_po_client" :value="po.id_po_client">
-                    {{ po.po_number }} — {{ po.mitra_name }}
+                  <option v-for="po in filteredPoList" :key="po.id_po_client" :value="po.id_po_client">
+                    {{ po.po_number }}
                   </option>
                 </select>
               </div>
@@ -500,12 +620,7 @@ const handleSubmit = async () => {
               </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div class="space-y-1.5">
-                <label class="text-xs font-semibold text-neutral-700">Buyer <span class="text-red-500">*</span></label>
-                <input v-model="step1.buyer" type="text" placeholder="cth: ADIDAS"
-                  class="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition" />
-              </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div class="space-y-1.5">
                 <label class="text-xs font-semibold text-neutral-700">Model <span class="text-red-500">*</span></label>
                 <input v-model="step1.model" type="text" placeholder="cth: Running Jacket V2"

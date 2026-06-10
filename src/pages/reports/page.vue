@@ -8,6 +8,7 @@ import {
   ActivityIcon,
 } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
+import { useConfirmDialog } from '@/composables/useConfirmDialog';
 
 import { getPOClients, type POClientListItem } from '@/api/po-clients/po-clients';
 import { getWorkOrders, getWorkOrderById, getWorkOrderDailyReports, type WorkOrderListItem, type WorkOrderDetailResponse, type DailyReportListItem } from '@/api/work-orders/work-orders';
@@ -77,6 +78,7 @@ const sizeQuantities = ref<Record<number, string>>({});
 
 const isSaving = ref(false);
 const isLoadingWoDetail = ref(false);
+const { openConfirm } = useConfirmDialog();
 
 const woDetail = ref<WorkOrderDetailResponse | null>(null);
 const summaryItems = ref<ProductionAggregateResponse[]>([]);
@@ -166,6 +168,42 @@ watch(availableSizes, (newSizes) => {
 }, { immediate: true });
 
 // ─── Submitting Daily Output ───────────────────────────────────────────────
+const executeSubmit = async (updates: any[]) => {
+  isSaving.value = true;
+  try {
+    await Promise.all(
+      updates.map((up) =>
+        createFactoryReport(selectedReportType.value, {
+          id_wo_shell_size: up.id_wo_shell_size,
+          tanggal: tanggal.value,
+          qty: up.qty
+        })
+      )
+    );
+    toast.success(`Berhasil menyimpan laporan untuk ${updates.length} ukuran!`);
+
+    // Reset all inputs to empty string
+    availableSizes.value.forEach((sz) => {
+      sizeQuantities.value[sz.id_wo_shell_size] = '';
+    });
+
+    // Re-fetch data to update bottom table
+    if (selectedWoId.value) {
+      const [summaryRes, dailyRes] = await Promise.all([
+        getProductionSummary({ id_wo: selectedWoId.value, limit: 100 }),
+        getWorkOrderDailyReports(selectedWoId.value)
+      ]);
+      summaryItems.value = summaryRes?.items ?? [];
+      dailyReports.value = dailyRes?.items ?? [];
+    }
+  } catch (error: any) {
+    const msg = error?.response?.data?.message ?? 'Gagal menyimpan laporan.';
+    toast.error(msg);
+  } finally {
+    isSaving.value = false;
+  }
+};
+
 const handleSubmitReport = async () => {
   if (!selectedReportType.value) {
     toast.error('Harap pilih Bentuk Report terlebih dahulu.');
@@ -219,47 +257,20 @@ const handleSubmitReport = async () => {
 
   if (negativeBalanceWarnings.length > 0) {
     const confirmMessage =
-      `Peringatan: Laporan ini akan menyebabkan balance menjadi minus untuk:\n` +
+      `Laporan ini akan menyebabkan balance menjadi minus untuk:\n` +
       negativeBalanceWarnings.map((w) => `• ${w}`).join('\n') +
       `\n\nApakah Anda yakin ingin tetap menyimpan laporan ini?`;
 
-    if (!window.confirm(confirmMessage)) {
-      return;
-    }
-  }
-
-  isSaving.value = true;
-  try {
-    await Promise.all(
-      updates.map((up) =>
-        createFactoryReport(selectedReportType.value, {
-          id_wo_shell_size: up.id_wo_shell_size,
-          tanggal: tanggal.value,
-          qty: up.qty
-        })
-      )
-    );
-    toast.success(`Berhasil menyimpan laporan untuk ${updates.length} ukuran!`);
-
-    // Reset all inputs to empty string
-    availableSizes.value.forEach((sz) => {
-      sizeQuantities.value[sz.id_wo_shell_size] = '';
+    openConfirm({
+      title: 'Peringatan Balance Minus',
+      message: confirmMessage,
+      type: 'warning',
+      confirmLabel: 'Ya, Tetap Simpan',
+      cancelLabel: 'Batal',
+      onConfirm: () => executeSubmit(updates)
     });
-
-    // Re-fetch data to update bottom table
-    if (selectedWoId.value) {
-      const [summaryRes, dailyRes] = await Promise.all([
-        getProductionSummary({ id_wo: selectedWoId.value, limit: 100 }),
-        getWorkOrderDailyReports(selectedWoId.value)
-      ]);
-      summaryItems.value = summaryRes?.items ?? [];
-      dailyReports.value = dailyRes?.items ?? [];
-    }
-  } catch (error: any) {
-    const msg = error?.response?.data?.message ?? 'Gagal menyimpan laporan.';
-    toast.error(msg);
-  } finally {
-    isSaving.value = false;
+  } else {
+    await executeSubmit(updates);
   }
 };
 

@@ -32,10 +32,11 @@ export function stripTableDefaults(parsed: Record<string, any>): Record<string, 
 export function validateTableSearchRedirect(
     to: string,
     raw: Record<string, any>,
-    parsed: Record<string, any>
+    parsed: Record<string, any>,
+    allowedKeys: readonly string[] = tableParamKeys
 ) {
     const hasExtraKeys = Object.keys(raw).some(
-        (key) => !tableParamKeys.includes(key as any)
+        (key) => !allowedKeys.includes(key)
     )
 
     // Compare raw vs parsed (both may be sparse/stripped)
