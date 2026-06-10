@@ -36,6 +36,9 @@ export interface SpreadingCuttingPlanResponse {
   no_dokumen: string;
   tanggal_efektif: string;
   id_wo: number;
+  style: string;
+  model: string;
+  buyer: string;
   created_at: string;
   components: KomponenSpreadingResponse[];
 }
