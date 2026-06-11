@@ -128,6 +128,11 @@ const navMainItems = computed(() => {
             url: "/password-reset-requests",
             permission: "PASSWORD_RESET_REQUEST_READ",
           },
+          {
+            title: "History Log",
+            url: "/history-log",
+            permission: "LOG_READ",
+          },
         ],
       },
       {
@@ -313,6 +318,11 @@ const navMainItems = computed(() => {
           title: "Laporan Pengiriman",
           url: "/report-pengiriman",
           permission: "REPORT_READ",
+        },
+        {
+          title: "Material List",
+          url: "/material-list",
+          permission: "WO_READ",
         },
         {
           title: "Laporan Penerimaan",

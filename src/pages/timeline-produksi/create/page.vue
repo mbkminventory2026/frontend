@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useRouter } from '@tanstack/vue-router';
 import { createTimelinePlan } from '@/api/timeline-produksi/timeline-produksi';
-import { getPOClients, type POClientListItem } from '@/api/po-clients/po-clients';
-import { getWorkOrders, getWorkOrderById, type WorkOrderShell } from '@/api/work-orders/work-orders';
+import { getProductionLines, getProductionStatusPlans, type ProductionLine, type ProductionStatusPlan } from '@/api/production-master/production-master';
+import { getPOClients, getPOClientById, type POClientListItem } from '@/api/po-clients/po-clients';
+import { getWorkOrderById, type WorkOrderShell } from '@/api/work-orders/work-orders';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -11,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
-import { PlusIcon, Trash2Icon, ArrowLeftIcon, SaveIcon, CalendarIcon } from 'lucide-vue-next';
+import { ArrowLeftIcon, SaveIcon, CalendarIcon } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
 const router = useRouter();
@@ -19,80 +20,94 @@ const isLoading = ref(false);
 const isLoadingOptions = ref(true);
 
 const poClients = ref<POClientListItem[]>([]);
-const availableShells = ref<{ wo: string, shell: WorkOrderShell }[]>([]);
+const productionLines = ref<ProductionLine[]>([]);
+const productionStatusPlans = ref<ProductionStatusPlan[]>([]);
+
+const woGroups = ref<{
+    idWo: number;
+    woLabel: string;
+    availableShells: { shell: WorkOrderShell, label: string }[];
+    shellPlans: any[];
+}[]>([]);
+
+const isLoadingWOs = ref(false);
 
 const form = ref({
     idPoClient: '',
     tanggalDisusun: new Date().toISOString().split('T')[0],
     notes: '',
-    shellPlans: [
-        {
-            idWoShell: '',
-            inLine: '',
-            tglGelarCutting: '',
-            statusGelarCutting: '',
-            tglEmbroo: '',
-            statusEmbroo: '',
-            tglLoadingSewing: '',
-            statusLoadingSewing: '',
-            tglFinishingPacking: '',
-            statusFinishingPacking: ''
-        }
-    ]
 });
 
-const addShellPlan = () => {
-    form.value.shellPlans.push({
-        idWoShell: '',
-        inLine: '',
-        tglGelarCutting: '',
-        statusGelarCutting: '',
-        tglEmbroo: '',
-        statusEmbroo: '',
-        tglLoadingSewing: '',
-        statusLoadingSewing: '',
-        tglFinishingPacking: '',
-        statusFinishingPacking: ''
-    });
-};
-
-const removeShellPlan = (index: number) => {
-    if (form.value.shellPlans.length > 1) {
-        form.value.shellPlans.splice(index, 1);
-    } else {
-        toast.error('Minimal harus ada satu WO Shell Plan.');
-    }
-};
 
 const fetchOptions = async () => {
     try {
         isLoadingOptions.value = true;
-        // Fetch PO Clients
-        const poRes = await getPOClients({ limit: 1000 });
+        const [poRes, linesRes, statusRes] = await Promise.all([
+            getPOClients({ limit: 1000 }),
+            getProductionLines(),
+            getProductionStatusPlans()
+        ]);
         poClients.value = poRes.results;
-
-        // Fetch Work Orders and then their details to get Shells
-        const woRes = await getWorkOrders({ limit: 100 });
-        const shells: { wo: string, shell: WorkOrderShell }[] = [];
-        for (const wo of woRes.results) {
-            try {
-                const detail = await getWorkOrderById(wo.id_wo);
-                if (detail && detail.shells) {
-                    for (const sh of detail.shells) {
-                        shells.push({ wo: `${wo.id_wo} - ${wo.model}`, shell: sh });
-                    }
-                }
-            } catch (e) {
-                // ignore detail fetch error
-            }
-        }
-        availableShells.value = shells;
+        productionLines.value = linesRes.results;
+        productionStatusPlans.value = statusRes.results;
     } catch (error) {
         console.error("Failed to fetch options", error);
     } finally {
         isLoadingOptions.value = false;
     }
 };
+
+
+watch(() => form.value.idPoClient, async (newVal) => {
+    if (!newVal) {
+        woGroups.value = [];
+        return;
+    }
+    const parsedPoId = parseInt(newVal, 10);
+    if (isNaN(parsedPoId)) return;
+
+    isLoadingWOs.value = true;
+    try {
+        const poDetail = await getPOClientById(parsedPoId);
+        const woIds = Array.from(new Set((poDetail.items || []).map((i: any) => i.id_wo).filter(Boolean))) as number[];
+        
+        const groups = [];
+        for (const woId of woIds) {
+            try {
+                const woDetail = await getWorkOrderById(woId);
+                const fabricShells = (woDetail.shells || []).filter((s: any) => s.material_type?.toLowerCase() === 'fabric');
+                
+                groups.push({
+                    idWo: woId,
+                    woLabel: `${woId} - ${woDetail.model} (${woDetail.buyer})`,
+                    availableShells: fabricShells.map((s: any) => ({
+                        shell: s,
+                        label: `${s.id_wo_shell} | ${s.deskripsi} (${s.color})`
+                    })),
+                    shellPlans: fabricShells.map((s: any) => ({
+                        idWoShell: String(s.id_wo_shell),
+                        inLine: '',
+                        tglGelarCutting: '',
+                        statusGelarCutting: '',
+                        tglEmbroo: '',
+                        statusEmbroo: '',
+                        tglLoadingSewing: '',
+                        statusLoadingSewing: '',
+                        tglFinishingPacking: '',
+                        statusFinishingPacking: ''
+                    }))
+                });
+            } catch (e) {
+                console.error("Failed to fetch WO", woId);
+            }
+        }
+        woGroups.value = groups;
+    } catch (e) {
+        console.error("Failed to fetch PO details", e);
+    } finally {
+        isLoadingWOs.value = false;
+    }
+});
 
 onMounted(() => {
     fetchOptions();
@@ -113,18 +128,34 @@ const submitForm = async () => {
             return;
         }
 
+        const allShellPlans = woGroups.value.flatMap(g => g.shellPlans);
+
+        if (allShellPlans.length === 0) {
+            toast.error('Belum ada WO Shell Plan yang diisi.');
+            isLoading.value = false;
+            return;
+        }
+
+        const selectedShellIds = allShellPlans.map(sp => sp.idWoShell).filter(Boolean);
+        const uniqueShellIds = new Set(selectedShellIds);
+        if (selectedShellIds.length !== uniqueShellIds.size) {
+            toast.error('Terdapat WO Shell Rujukan yang dipilih lebih dari satu kali. Setiap WO Shell hanya boleh memiliki 1 plan.');
+            isLoading.value = false;
+            return;
+        }
+
         const payload = {
             idPoClient: parsedPoId,
             tanggalDisusun: form.value.tanggalDisusun,
             notes: form.value.notes,
-            shellPlans: form.value.shellPlans.map(sp => {
+            shellPlans: allShellPlans.map(sp => {
                 const parsedShellId = parseInt(sp.idWoShell, 10);
                 if (isNaN(parsedShellId)) {
                     throw new Error(`ID WO Shell "${sp.idWoShell}" tidak valid.`);
                 }
                 return {
-                    idWoShell: parsedShellId,
-                    inLine: sp.inLine,
+                    id_wo_shell: parsedShellId,
+                    in_line: sp.inLine,
                 tgl_gelar_cutting: sp.tglGelarCutting || undefined,
                 status_gelar_cutting: sp.statusGelarCutting || undefined,
                 tgl_embroo: sp.tglEmbroo || undefined,
@@ -182,10 +213,12 @@ const submitForm = async () => {
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div class="space-y-1.5 lg:col-span-1">
             <Label class="text-xs font-semibold text-neutral-700">PO Client <span class="text-red-500">*</span></Label>
-            <Input list="po-clients-list" type="text" v-model="form.idPoClient" required placeholder="Ketik atau pilih PO Client..." class="h-9 text-xs border-neutral-200" :disabled="isLoadingOptions" />
-            <datalist id="po-clients-list">
-                <option v-for="po in poClients" :key="po.id_po_client" :value="po.id_po_client + ' - ' + po.po_number + ' - ' + po.mitra_name" />
-            </datalist>
+            <select v-model="form.idPoClient" required class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition cursor-pointer h-9" :disabled="isLoadingOptions">
+              <option value="">Pilih PO Client...</option>
+              <option v-for="po in poClients" :key="po.id_po_client" :value="po.id_po_client">
+                {{ po.po_number }} - {{ po.mitra_name }}
+              </option>
+            </select>
           </div>
 
           <div class="space-y-1.5 lg:col-span-1">
@@ -201,47 +234,62 @@ const submitForm = async () => {
 
         <Separator class="bg-neutral-100" />
 
-        <!-- DYNAMIC WO SHELL PLANS SECTION -->
+        <!-- DYNAMIC WO GROUPS SECTION -->
         <div class="space-y-6 pt-2">
           <div class="flex items-center justify-between border-b pb-3 border-neutral-100">
             <h2 class="text-xs font-bold text-neutral-700 uppercase tracking-wider flex items-center gap-2">
               <span class="inline-block w-1.5 h-4 bg-emerald-600 rounded-full"></span>
               Pengaturan WO Shell Plan
             </h2>
-            <Button type="button" @click="addShellPlan" size="sm" variant="outline" class="h-8 border-dashed border-neutral-300 text-neutral-700 hover:bg-neutral-50">
-              <PlusIcon class="w-3.5 h-3.5 mr-1" /> Tambah WO Shell Plan
-            </Button>
+            <div v-if="isLoadingWOs" class="flex items-center text-xs text-neutral-500 gap-2">
+              <Spinner class="w-4 h-4" /> Memuat data Work Order...
+            </div>
           </div>
 
-          <!-- Shell Plans Loop -->
-          <div v-for="(sp, index) in form.shellPlans" :key="index" class="bg-neutral-50/45 border border-neutral-200 rounded-xl p-5 space-y-4 shadow-sm relative animate-fade-in">
-            <!-- Delete Button -->
-            <button
-              v-if="form.shellPlans.length > 1"
-              type="button"
-              @click="removeShellPlan(index)"
-              class="absolute top-4 right-4 text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50 transition-colors"
-              title="Hapus Shell Plan"
-            >
-              <Trash2Icon class="w-4 h-4" />
-            </button>
+          <div v-if="form.idPoClient && !isLoadingWOs && woGroups.length === 0" class="text-center p-6 bg-neutral-50 border border-neutral-200 rounded-xl text-neutral-500 text-sm">
+            Tidak ada Work Order yang ditemukan untuk PO Client ini.
+          </div>
 
-            <h3 class="text-xs font-bold text-neutral-500 uppercase tracking-wider">Shell Plan #{{ index + 1 }}</h3>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div class="space-y-1.5">
-                <Label class="text-xs font-semibold text-neutral-700">WO Shell Rujukan <span class="text-red-500">*</span></Label>
-                <Input list="wo-shells-list" type="text" v-model="sp.idWoShell" required placeholder="Ketik atau pilih WO Shell..." class="h-9 text-xs border-neutral-200 bg-white" :disabled="isLoadingOptions" />
-                <datalist id="wo-shells-list">
-                    <option v-for="s in availableShells" :key="s.shell.id_wo_shell" :value="s.shell.id_wo_shell + ' - WO: ' + s.wo + ' | ' + s.shell.deskripsi + ' (' + s.shell.color + ')'" />
-                </datalist>
-              </div>
-
-              <div class="space-y-1.5">
-                <Label class="text-xs font-semibold text-neutral-700">In Line <span class="text-red-500">*</span></Label>
-                <Input v-model="sp.inLine" type="text" placeholder="cth: Line 1" class="h-9 text-xs border-neutral-200 bg-white" required />
-              </div>
+          <!-- WO Groups Loop -->
+          <div v-for="group in woGroups" :key="group.idWo" class="border border-neutral-200 rounded-xl bg-white overflow-hidden shadow-sm animate-fade-in">
+            <!-- Group Header -->
+            <div class="bg-neutral-50 px-5 py-3.5 border-b border-neutral-200 flex justify-between items-center">
+              <h3 class="font-bold text-sm text-neutral-800 flex items-center gap-2">
+                <span class="p-1 bg-neutral-200 rounded-md text-neutral-600">WO</span>
+                {{ group.woLabel }}
+              </h3>
             </div>
+
+            <!-- Shell Plans Loop inside Group -->
+            <div class="p-5 space-y-6">
+              <div v-if="group.availableShells.length === 0" class="text-center p-4 bg-neutral-50 border border-neutral-200 rounded-lg text-neutral-500 text-sm">
+                Tidak ada WO Shell bertipe Fabric.
+              </div>
+              <div v-for="(sp, index) in group.shellPlans" :key="index" class="bg-neutral-50/45 border border-neutral-200 rounded-xl p-5 space-y-4">
+                
+                <h4 class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Plan #{{ index + 1 }}</h4>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="space-y-1.5">
+                    <Label class="text-xs font-semibold text-neutral-700">WO Shell Rujukan <span class="text-red-500">*</span></Label>
+                    <select v-model="sp.idWoShell" required disabled class="w-full rounded-lg border border-neutral-200 bg-neutral-100/70 text-neutral-500 px-3 py-2 text-xs focus:outline-none transition cursor-not-allowed h-9">
+                      <option value="">Pilih WO Shell...</option>
+                      <option v-for="s in group.availableShells" :key="s.shell.id_wo_shell" :value="s.shell.id_wo_shell">
+                        {{ s.shell.id_wo_shell }} | {{ s.shell.deskripsi }} ({{ s.shell.color }})
+                      </option>
+                    </select>
+                  </div>
+
+                  <div class="space-y-1.5">
+                    <Label class="text-xs font-semibold text-neutral-700">In Line <span class="text-red-500">*</span></Label>
+                    <select v-model="sp.inLine" required class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition cursor-pointer h-9">
+                      <option value="">Pilih Line...</option>
+                      <option v-for="l in productionLines" :key="l.id_production_line" :value="l.name">
+                        {{ l.name }}
+                      </option>
+                    </select>
+                  </div>
+                </div>
 
             <!-- Rencana Tanggal & Status Pengerjaan -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-2">
@@ -249,33 +297,49 @@ const submitForm = async () => {
                 <Label class="text-[10px] font-bold text-neutral-600 uppercase">Gelar Cutting</Label>
                 <div class="space-y-2 mt-2">
                   <Input v-model="sp.tglGelarCutting" type="date" class="h-8 text-[11px] border-neutral-200 bg-white" title="Tanggal Rencana" />
-                  <Input v-model="sp.statusGelarCutting" type="text" placeholder="Status..." class="h-8 text-[11px] border-neutral-200 bg-white" />
+                  <select v-model="sp.statusGelarCutting" class="w-full rounded-lg border border-neutral-200 bg-white px-2 py-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition cursor-pointer h-8">
+                    <option value="">Status...</option>
+                    <option v-for="s in productionStatusPlans" :key="s.id_production_status_plan" :value="s.name">{{ s.name }}</option>
+                  </select>
                 </div>
               </div>
               <div class="space-y-1.5 p-3 bg-neutral-100/50 rounded-lg border border-neutral-200">
                 <Label class="text-[10px] font-bold text-neutral-600 uppercase">Embro</Label>
                 <div class="space-y-2 mt-2">
                   <Input v-model="sp.tglEmbroo" type="date" class="h-8 text-[11px] border-neutral-200 bg-white" title="Tanggal Rencana" />
-                  <Input v-model="sp.statusEmbroo" type="text" placeholder="Status..." class="h-8 text-[11px] border-neutral-200 bg-white" />
+                  <select v-model="sp.statusEmbroo" class="w-full rounded-lg border border-neutral-200 bg-white px-2 py-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition cursor-pointer h-8">
+                    <option value="">Status...</option>
+                    <option v-for="s in productionStatusPlans" :key="s.id_production_status_plan" :value="s.name">{{ s.name }}</option>
+                  </select>
                 </div>
               </div>
               <div class="space-y-1.5 p-3 bg-neutral-100/50 rounded-lg border border-neutral-200">
                 <Label class="text-[10px] font-bold text-neutral-600 uppercase">Loading Sewing</Label>
                 <div class="space-y-2 mt-2">
                   <Input v-model="sp.tglLoadingSewing" type="date" class="h-8 text-[11px] border-neutral-200 bg-white" title="Tanggal Rencana" />
-                  <Input v-model="sp.statusLoadingSewing" type="text" placeholder="Status..." class="h-8 text-[11px] border-neutral-200 bg-white" />
+                  <select v-model="sp.statusLoadingSewing" class="w-full rounded-lg border border-neutral-200 bg-white px-2 py-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition cursor-pointer h-8">
+                    <option value="">Status...</option>
+                    <option v-for="s in productionStatusPlans" :key="s.id_production_status_plan" :value="s.name">{{ s.name }}</option>
+                  </select>
                 </div>
               </div>
               <div class="space-y-1.5 p-3 bg-neutral-100/50 rounded-lg border border-neutral-200">
                 <Label class="text-[10px] font-bold text-neutral-600 uppercase">Finishing</Label>
                 <div class="space-y-2 mt-2">
                   <Input v-model="sp.tglFinishingPacking" type="date" class="h-8 text-[11px] border-neutral-200 bg-white" title="Tanggal Rencana" />
-                  <Input v-model="sp.statusFinishingPacking" type="text" placeholder="Status..." class="h-8 text-[11px] border-neutral-200 bg-white" />
+                  <select v-model="sp.statusFinishingPacking" class="w-full rounded-lg border border-neutral-200 bg-white px-2 py-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition cursor-pointer h-8">
+                    <option value="">Status...</option>
+                    <option v-for="s in productionStatusPlans" :key="s.id_production_status_plan" :value="s.name">{{ s.name }}</option>
+                  </select>
                 </div>
               </div>
             </div>
           </div>
         </div>
+        </div>
+        </div>
+
+
 
         <!-- Form Submission Button -->
         <div class="flex justify-end pt-4 border-t border-neutral-100 gap-3">

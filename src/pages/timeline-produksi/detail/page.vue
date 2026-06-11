@@ -2,8 +2,8 @@
 import { ref, onMounted, computed } from 'vue';
 import { useParams, useRouter } from '@tanstack/vue-router';
 import { getTimelinePlanById, updateWOShellPlanStatus } from '@/api/timeline-produksi/timeline-produksi';
+import { getProductionStatusPlans, type ProductionStatusPlan, getProductionLines, type ProductionLine } from '@/api/production-master/production-master';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
@@ -18,6 +18,8 @@ const id = computed(() => params.value.id);
 const timelinePlan = ref<any>(null);
 const isLoading = ref(true);
 const isSaving = ref(false);
+const productionStatusPlans = ref<ProductionStatusPlan[]>([]);
+const productionLines = ref<ProductionLine[]>([]);
 
 const fetchDetail = async () => {
     isLoading.value = true;
@@ -36,6 +38,7 @@ const updateStatus = async (shellPlan: any) => {
     isSaving.value = true;
     try {
         await updateWOShellPlanStatus(shellPlan.id_wo_shell_plan, {
+            inLine: shellPlan.in_line,
             statusGelarCutting: shellPlan.status_gelar_cutting,
             statusEmbroo: shellPlan.status_embroo,
             statusLoadingSewing: shellPlan.status_loading_sewing,
@@ -51,8 +54,28 @@ const updateStatus = async (shellPlan: any) => {
     }
 };
 
+const fetchStatuses = async () => {
+    try {
+        const res = await getProductionStatusPlans();
+        productionStatusPlans.value = res.results;
+    } catch (e) {
+        console.error("Failed to fetch production status plans", e);
+    }
+};
+
+const fetchLines = async () => {
+    try {
+        const res = await getProductionLines();
+        productionLines.value = res.results;
+    } catch (e) {
+        console.error("Failed to fetch production lines", e);
+    }
+};
+
 onMounted(() => {
     fetchDetail();
+    fetchStatuses();
+    fetchLines();
 });
 </script>
 
@@ -134,12 +157,20 @@ onMounted(() => {
                         <div class="text-neutral-500">{{ sp.color }}</div>
                         <div class="text-[10px] text-neutral-400 mt-1">WO ID: {{ sp.id_wo_shell }}</div>
                       </td>
-                      <td class="px-4 py-4 font-medium">{{ sp.in_line }}</td>
+                      <td class="px-4 py-4">
+                        <select v-model="sp.in_line" @change="updateStatus(sp)" :disabled="isSaving" class="w-full rounded-lg border border-neutral-200 bg-white px-2 py-1.5 text-[11px] font-semibold focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition cursor-pointer shadow-xs h-8">
+                          <option value="">Pilih line...</option>
+                          <option v-for="l in productionLines" :key="l.id_production_line" :value="l.name">{{ l.name }}</option>
+                        </select>
+                      </td>
                       
                       <!-- Status Gelar Cutting -->
                       <td class="px-4 py-4">
                         <div class="space-y-1">
-                          <Input v-model="sp.status_gelar_cutting" @blur="updateStatus(sp)" @keyup.enter="updateStatus(sp)" :disabled="isSaving" class="h-8 text-[11px] font-semibold border-neutral-200 shadow-xs px-2" placeholder="Input status..." />
+                          <select v-model="sp.status_gelar_cutting" @change="updateStatus(sp)" :disabled="isSaving" class="w-full rounded-lg border border-neutral-200 bg-white px-2 py-1.5 text-[11px] font-semibold focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition cursor-pointer shadow-xs h-8">
+                            <option value="">Pilih status...</option>
+                            <option v-for="s in productionStatusPlans" :key="s.id_production_status_plan" :value="s.name">{{ s.name }}</option>
+                          </select>
                           <div class="text-[10px] text-neutral-400 flex justify-end" v-if="sp.tgl_gelar_cutting">{{ formatDate(sp.tgl_gelar_cutting) }}</div>
                         </div>
                       </td>
@@ -147,7 +178,10 @@ onMounted(() => {
                       <!-- Status Embro -->
                       <td class="px-4 py-4">
                         <div class="space-y-1">
-                          <Input v-model="sp.status_embroo" @blur="updateStatus(sp)" @keyup.enter="updateStatus(sp)" :disabled="isSaving" class="h-8 text-[11px] font-semibold border-neutral-200 shadow-xs px-2" placeholder="Input status..." />
+                          <select v-model="sp.status_embroo" @change="updateStatus(sp)" :disabled="isSaving" class="w-full rounded-lg border border-neutral-200 bg-white px-2 py-1.5 text-[11px] font-semibold focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition cursor-pointer shadow-xs h-8">
+                            <option value="">Pilih status...</option>
+                            <option v-for="s in productionStatusPlans" :key="s.id_production_status_plan" :value="s.name">{{ s.name }}</option>
+                          </select>
                           <div class="text-[10px] text-neutral-400 flex justify-end" v-if="sp.tgl_embroo">{{ formatDate(sp.tgl_embroo) }}</div>
                         </div>
                       </td>
@@ -155,7 +189,10 @@ onMounted(() => {
                       <!-- Status Loading Sewing -->
                       <td class="px-4 py-4">
                         <div class="space-y-1">
-                          <Input v-model="sp.status_loading_sewing" @blur="updateStatus(sp)" @keyup.enter="updateStatus(sp)" :disabled="isSaving" class="h-8 text-[11px] font-semibold border-neutral-200 shadow-xs px-2" placeholder="Input status..." />
+                          <select v-model="sp.status_loading_sewing" @change="updateStatus(sp)" :disabled="isSaving" class="w-full rounded-lg border border-neutral-200 bg-white px-2 py-1.5 text-[11px] font-semibold focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition cursor-pointer shadow-xs h-8">
+                            <option value="">Pilih status...</option>
+                            <option v-for="s in productionStatusPlans" :key="s.id_production_status_plan" :value="s.name">{{ s.name }}</option>
+                          </select>
                           <div class="text-[10px] text-neutral-400 flex justify-end" v-if="sp.tgl_loading_sewing">{{ formatDate(sp.tgl_loading_sewing) }}</div>
                         </div>
                       </td>
@@ -163,7 +200,10 @@ onMounted(() => {
                       <!-- Status Finishing Packing -->
                       <td class="px-4 py-4">
                         <div class="space-y-1">
-                          <Input v-model="sp.status_finishing_packing" @blur="updateStatus(sp)" @keyup.enter="updateStatus(sp)" :disabled="isSaving" class="h-8 text-[11px] font-semibold border-neutral-200 shadow-xs px-2" placeholder="Input status..." />
+                          <select v-model="sp.status_finishing_packing" @change="updateStatus(sp)" :disabled="isSaving" class="w-full rounded-lg border border-neutral-200 bg-white px-2 py-1.5 text-[11px] font-semibold focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition cursor-pointer shadow-xs h-8">
+                            <option value="">Pilih status...</option>
+                            <option v-for="s in productionStatusPlans" :key="s.id_production_status_plan" :value="s.name">{{ s.name }}</option>
+                          </select>
                           <div class="text-[10px] text-neutral-400 flex justify-end" v-if="sp.tgl_finishing_packing">{{ formatDate(sp.tgl_finishing_packing) }}</div>
                         </div>
                       </td>
@@ -171,6 +211,7 @@ onMounted(() => {
                     </tr>
                   </tbody>
                 </table>
+
               </div>
             </CardContent>
           </Card>
