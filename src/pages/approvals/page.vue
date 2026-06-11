@@ -19,7 +19,8 @@ import {
   Eye,
   History,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Scissors
 } from 'lucide-vue-next';
 
 import { 
@@ -144,7 +145,8 @@ const getDetailUrl = (tableName: string, id: number) => {
     'PO_INTERNAL': '/po-internal',
     'MARKER_PLAN': '/marker-plan',
     'TIMELINE_PRODUKSI': '/timeline-produksi',
-    'PACKING_LIST': '/packing-list'
+    'PACKING_LIST': '/packing-list',
+    'SPREADING_CUTTING_PLAN': '/spreading-cutting-plan'
   };
   const basePath = pathMap[tableName] || `/${tableName.toLowerCase().replace('_', '-')}`;
   return `${basePath}/${id}`;
@@ -224,6 +226,7 @@ const getDocTypeName = (tableName: string) => {
     case 'MARKER_PLAN': return 'Marker Plan';
     case 'TIMELINE_PRODUKSI': return 'Timeline Produksi';
     case 'PACKING_LIST': return 'Packing List';
+    case 'SPREADING_CUTTING_PLAN': return 'Spreading & Cutting Plan';
     default: return tableName;
   }
 };
@@ -242,6 +245,8 @@ const getDocTypeClass = (tableName: string) => {
       return 'bg-pink-50 text-pink-700 border-pink-200/60 dark:bg-pink-900/20 dark:text-pink-400 dark:border-pink-800/30';
     case 'PACKING_LIST': 
       return 'bg-teal-50 text-teal-700 border-teal-200/60 dark:bg-teal-900/20 dark:text-teal-400 dark:border-teal-800/30';
+    case 'SPREADING_CUTTING_PLAN':
+      return 'bg-emerald-50 text-emerald-700 border-emerald-200/60 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800/30';
     default: 
       return 'bg-neutral-50 text-neutral-700 border-neutral-200/60 dark:bg-neutral-900/20 dark:text-neutral-400 dark:border-neutral-800/30';
   }
@@ -255,6 +260,7 @@ const getDocTypeIcon = (tableName: string) => {
     case 'MARKER_PLAN': return ClipboardCheck;
     case 'TIMELINE_PRODUKSI': return CalendarDays;
     case 'PACKING_LIST': return PackageOpen;
+    case 'SPREADING_CUTTING_PLAN': return Scissors;
     default: return FileText;
   }
 };
@@ -406,6 +412,7 @@ onMounted(() => {
               <option value="MARKER_PLAN">Marker Plan</option>
               <option value="TIMELINE_PRODUKSI">Timeline Produksi</option>
               <option value="PACKING_LIST">Packing List</option>
+              <option value="SPREADING_CUTTING_PLAN">Spreading & Cutting Plan</option>
             </select>
           </div>
 
