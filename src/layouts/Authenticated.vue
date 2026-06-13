@@ -295,6 +295,11 @@ const navMainItems = computed(() => {
           permission: "CUTTING_PLAN_READ",
         },
         {
+          title: "Data Approve Cutting Plan",
+          url: "/data-approve-cutting-plan",
+          permission: "DATA_APPROVE_CUTTING_PLAN_READ",
+        },
+        {
           title: "Timeline Produksi",
           url: "/timeline-produksi",
           permission: "TIMELINE_PRODUKSI_READ",
