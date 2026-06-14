@@ -71,3 +71,16 @@ export const createSuratJalanClient = async (payload: CreateSuratJalanClientPayl
 export const createReceived = async (payload: CreateReceivedPayload) => {
   return await apiClient.post("/api/v1/received", payload);
 };
+
+export interface CreateMaterialListItemPayload {
+  item: string;
+  description?: string;
+  qty: number;
+  unit: string;
+  est_price?: number;
+}
+
+export const createMaterialListItem = async (idML: number, payload: CreateMaterialListItemPayload) => {
+  const response = await apiClient.post(`/api/v1/material-lists/${idML}/items`, payload);
+  return response.data;
+};

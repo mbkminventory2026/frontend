@@ -79,12 +79,6 @@ const navMainItems = computed(() => {
   if (authStore.isMitra) {
     return [
       {
-        title: "Dashboard",
-        url: "/dashboard",
-        icon: LayoutDashboard,
-        permission: "DASHBOARD_READ",
-      },
-      {
         title: "PO Client",
         url: "/po-client",
         icon: Truck,
@@ -228,6 +222,11 @@ const navMainItems = computed(() => {
           url: "/warna",
           permission: "MASTER_WARNA_READ",
         },
+        {
+          title: "Daftar Size",
+          url: "/size",
+          permission: "MASTER_SIZE_READ",
+        },
       ],
     },
     {
@@ -302,7 +301,7 @@ const navMainItems = computed(() => {
         {
           title: "Timeline Produksi",
           url: "/timeline-produksi",
-          permission: "TIMELINE_PRODUKSI_READ",
+          permission: "TIMELINE_READ",
         },
         {
           title: "Packing List",

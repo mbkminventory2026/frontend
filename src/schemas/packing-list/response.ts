@@ -1,6 +1,8 @@
 export interface PackingListItemSizeResponse {
   id_packing_list_item_size: number;
   id_wo_shell_size: number;
+  id_size?: number | null;
+  size: string;
   qty: number;
   created_at: string;
 }
@@ -20,6 +22,8 @@ export interface PackingListItemResponse {
 export interface PackingListRejectSizeResponse {
   id_packing_list_reject_size: number;
   id_wo_shell_size: number;
+  id_size?: number | null;
+  size: string;
   qty: number;
   created_at: string;
 }
