@@ -309,6 +309,11 @@ const navMainItems = computed(() => {
           permission: "PACKING_LIST_READ",
         },
         {
+          title: "Rekonsiliasi Material",
+          url: "/rekonsiliasi",
+          permission: "REKONSILIASI_READ",
+        },
+        {
           title: "PR Internal",
           url: "/pr-internal",
           permission: "PO_INTERNAL_READ",
