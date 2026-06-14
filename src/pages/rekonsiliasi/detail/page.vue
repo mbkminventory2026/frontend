@@ -223,17 +223,11 @@ onMounted(loadDetail)
               <ArrowLeftIcon class="mr-1 h-4 w-4" />
               Kembali
             </Button>
-            <span
-              class="inline-flex rounded-full border px-3 py-1 text-xs font-semibold tracking-wide"
-              :class="canEdit ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-slate-200 bg-slate-50 text-slate-600'"
-            >
-              {{ canEdit ? 'Editable oleh Admin Produksi' : 'Read Only' }}
-            </span>
           </div>
           <div>
             <h1 class="text-2xl font-bold text-slate-900">{{ pageTitle }}</h1>
             <p class="mt-1 text-sm text-slate-500">
-              Rekonsiliasi material campuran berbasis work order, material list, dan report pengiriman.
+              Dokumen ini merangkum kebutuhan material, pengiriman aktual, penerimaan, serta saldo akhir per item untuk satu work order.
             </p>
           </div>
         </div>
@@ -371,7 +365,7 @@ onMounted(loadDetail)
           <div>
             <h2 class="text-xl font-semibold text-slate-900">Detail Material Rekonsiliasi</h2>
             <p class="text-sm text-slate-500">
-              Isi manual ada di ratio input, qty/pcs, qty actual kirim manual, terima, reject, retur, dan keterangan.
+              Setiap baris menampilkan kebutuhan material per item beserta catatan penerimaan, pemakaian, dan hasil perhitungan akhirnya.
             </p>
           </div>
         </div>
@@ -518,7 +512,7 @@ onMounted(loadDetail)
                 <div>
                   <h3 class="text-base font-semibold text-slate-900">Input Terima</h3>
                   <p class="text-sm text-slate-500">
-                    `awal` dan `ambil` menambah total terima, sedangkan `untuk` mengurangi total terima.
+                    Bagian ini dipakai untuk mencatat arus material yang masuk, dipakai, atau ditambahkan kembali pada item terkait.
                   </p>
                 </div>
                 <Button v-if="canEdit" type="button" variant="outline" size="sm" @click="addTerimaEntry(row)">
