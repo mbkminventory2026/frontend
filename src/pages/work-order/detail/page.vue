@@ -22,6 +22,7 @@ import {
     submitWorkOrderReturn,
     type WorkOrderDetailResponse,
 } from '@/api/work-orders/work-orders';
+import { createMaterialListItem, type CreateMaterialListItemPayload } from '@/api/material-list/material-list';
 import { getProductionSummary, createFactoryReport } from '@/api/production/production';
 import type { ProductionAggregateResponse } from '@/schemas/production/production';
 import { Button } from '@/components/ui/button';
@@ -386,6 +387,43 @@ watch(currentStageOutput, (newVal) => {
         reportQty.value = '';
     }
 }, { immediate: true });
+
+// ─── Add Material List Item ───────────────────────────────────────────────────
+const addItemDialogOpen = ref(false);
+const addItemTargetMLId = ref<number | null>(null);
+const addItemForm = ref<CreateMaterialListItemPayload>({ item: '', description: '', qty: 0, unit: '', est_price: 0 });
+const isSubmittingAddItem = ref(false);
+
+const openAddItemDialog = (idML: number) => {
+    addItemTargetMLId.value = idML;
+    addItemForm.value = { item: '', description: '', qty: 0, unit: '', est_price: 0 };
+    addItemDialogOpen.value = true;
+};
+
+const submitAddItem = async () => {
+    if (!addItemTargetMLId.value) return;
+    if (!addItemForm.value.item || !addItemForm.value.unit) {
+        toast.error('Item dan unit wajib diisi.');
+        return;
+    }
+    isSubmittingAddItem.value = true;
+    try {
+        await createMaterialListItem(addItemTargetMLId.value, {
+            item: addItemForm.value.item,
+            description: addItemForm.value.description || '',
+            qty: Number(addItemForm.value.qty) || 0,
+            unit: addItemForm.value.unit,
+            est_price: Number(addItemForm.value.est_price) || 0,
+        });
+        toast.success('Item berhasil ditambahkan.');
+        addItemDialogOpen.value = false;
+        await fetchDetail();
+    } catch (error: any) {
+        toast.error(error?.response?.data?.message || 'Gagal menambahkan item.');
+    } finally {
+        isSubmittingAddItem.value = false;
+    }
+};
 
 onMounted(fetchDetail);
 </script>
@@ -1109,12 +1147,21 @@ onMounted(fetchDetail);
                                             <span class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">{{ ml.name }}</span>
                                             <span v-if="ml.is_locked" class="text-[9px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5">LOCKED</span>
                                         </div>
-                                        <button
-                                            class="text-[10px] text-blue-600 hover:text-blue-800 font-medium flex items-center gap-0.5"
-                                            @click="router.navigate({ to: '/material-list' })"
-                                        >
-                                            Lihat di Material List →
-                                        </button>
+                                        <div class="flex items-center gap-2">
+                                            <button
+                                                v-if="!ml.is_locked && hasPermission('WO_UPDATE')"
+                                                class="text-[10px] text-white bg-neutral-800 hover:bg-neutral-700 font-medium flex items-center gap-0.5 px-2 py-1 rounded"
+                                                @click="openAddItemDialog(ml.id_material_list)"
+                                            >
+                                                + Tambah Item
+                                            </button>
+                                            <button
+                                                class="text-[10px] text-blue-600 hover:text-blue-800 font-medium flex items-center gap-0.5"
+                                                @click="router.navigate({ to: '/material-list' })"
+                                            >
+                                                Lihat di Material List →
+                                            </button>
+                                        </div>
                                     </div>
                                     <table class="w-full text-left border-collapse text-xs">
                                         <thead class="bg-neutral-50/50 border-b border-neutral-200">
@@ -1284,4 +1331,47 @@ onMounted(fetchDetail);
         </Dialog>
 
     </div>
+
+    <!-- Add Material List Item Dialog -->
+    <Dialog :open="addItemDialogOpen" @update:open="addItemDialogOpen = $event">
+        <DialogContent class="max-w-md">
+            <DialogHeader>
+                <DialogTitle class="flex items-center gap-2">
+                    <ClipboardListIcon class="w-4 h-4 text-neutral-500" />
+                    Tambah Item Material List
+                </DialogTitle>
+                <DialogDescription>Isi detail item yang ingin ditambahkan ke material list ini.</DialogDescription>
+            </DialogHeader>
+            <div class="space-y-3 my-2">
+                <div>
+                    <Label class="text-xs">Item <span class="text-red-500">*</span></Label>
+                    <Input v-model="addItemForm.item" placeholder="Nama item" class="mt-1 text-sm" />
+                </div>
+                <div>
+                    <Label class="text-xs">Deskripsi</Label>
+                    <Input v-model="addItemForm.description" placeholder="Opsional" class="mt-1 text-sm" />
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <Label class="text-xs">Qty</Label>
+                        <Input v-model="addItemForm.qty" type="number" min="0" placeholder="0" class="mt-1 text-sm" />
+                    </div>
+                    <div>
+                        <Label class="text-xs">Unit <span class="text-red-500">*</span></Label>
+                        <Input v-model="addItemForm.unit" placeholder="pcs, meter, kg..." class="mt-1 text-sm" />
+                    </div>
+                </div>
+                <div>
+                    <Label class="text-xs">Est. Harga (Rp)</Label>
+                    <Input v-model="addItemForm.est_price" type="number" min="0" placeholder="0" class="mt-1 text-sm" />
+                </div>
+            </div>
+            <DialogFooter class="gap-2">
+                <Button variant="outline" @click="addItemDialogOpen = false" :disabled="isSubmittingAddItem">Batal</Button>
+                <Button @click="submitAddItem" :disabled="isSubmittingAddItem" class="bg-neutral-900 hover:bg-neutral-800 text-white">
+                    {{ isSubmittingAddItem ? 'Menyimpan...' : 'Simpan Item' }}
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
 </template>

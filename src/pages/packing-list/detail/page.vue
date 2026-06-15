@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { computed, onMounted } from 'vue';
 import { useParams, useRouter } from '@tanstack/vue-router';
 import {
     ArrowLeftIcon,
@@ -10,7 +10,6 @@ import {
 import { toast } from 'vue-sonner';
 
 import { usePackingList } from '@/composables/usePackingList';
-import { getWorkOrderById, type WorkOrderDetailResponse } from '@/api/work-orders/work-orders';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { formatDate } from '@/lib/formatter';
@@ -20,29 +19,46 @@ const params = useParams({ from: '/_authenticated/packing-list/$id' });
 const id = computed(() => params.value.id);
 
 const { isLoading: isLoadingPl, detail, fetchDetail: loadPlDetail } = usePackingList();
-const woDetail = ref<WorkOrderDetailResponse | null>(null);
-const isLoadingWo = ref(false);
 
-const isLoading = computed(() => isLoadingPl.value || isLoadingWo.value);
+const isLoading = computed(() => isLoadingPl.value);
 
 const fetchAllDetails = async () => {
     try {
-        const plData = await loadPlDetail(id.value);
-        if (plData && plData.id_wo) {
-            isLoadingWo.value = true;
-            woDetail.value = await getWorkOrderById(plData.id_wo);
-        }
+        await loadPlDetail(id.value);
     } catch (e) {
         toast.error("Gagal memuat rincian Packing List.");
-    } finally {
-        isLoadingWo.value = false;
     }
 };
 
-// Extract sizes from the first shell of the Work Order
-const woSizes = computed(() => {
-    if (!woDetail.value || !woDetail.value.shells || woDetail.value.shells.length === 0) return [];
-    return woDetail.value.shells[0]?.sizes || [];
+// Build display size catalog from packing list detail payload itself.
+const packingSizes = computed(() => {
+    if (!detail.value) return [];
+
+    const catalog = new Map<number, { id_wo_shell_size: number; id_size?: number | null; size: string }>();
+
+    detail.value.items?.forEach((item) => {
+        item.sizes?.forEach((sizeItem) => {
+            if (!catalog.has(sizeItem.id_wo_shell_size)) {
+                catalog.set(sizeItem.id_wo_shell_size, {
+                    id_wo_shell_size: sizeItem.id_wo_shell_size,
+                    id_size: sizeItem.id_size,
+                    size: sizeItem.size,
+                });
+            }
+        });
+    });
+
+    detail.value.reject_sizes?.forEach((sizeItem) => {
+        if (!catalog.has(sizeItem.id_wo_shell_size)) {
+            catalog.set(sizeItem.id_wo_shell_size, {
+                id_wo_shell_size: sizeItem.id_wo_shell_size,
+                id_size: sizeItem.id_size,
+                size: sizeItem.size,
+            });
+        }
+    });
+
+    return Array.from(catalog.values());
 });
 
 // Calculate total boxes
@@ -161,7 +177,7 @@ onMounted(() => {
                             </CardTitle>
                         </CardHeader>
                         <CardContent class="p-5 space-y-3 text-sm">
-                            <div v-for="sz in woSizes" :key="sz.id_wo_shell_size" class="flex justify-between items-center py-1.5 border-b border-neutral-100 last:border-0">
+                            <div v-for="sz in packingSizes" :key="sz.id_wo_shell_size" class="flex justify-between items-center py-1.5 border-b border-neutral-100 last:border-0">
                                 <span class="text-neutral-500 font-medium">Size {{ sz.size }}</span>
                                 <span class="font-bold text-neutral-900 font-mono">{{ (detail.reject_sizes?.find(r => r.id_wo_shell_size === sz.id_wo_shell_size)?.qty || 0).toLocaleString('id-ID') }} Pcs</span>
                             </div>
@@ -190,7 +206,7 @@ onMounted(() => {
                                             <th class="px-3 py-2.5 w-[12%]">Karton No</th>
                                             <th class="px-3 py-2.5 w-[15%]">Warna</th>
                                             <!-- Dynamic size headers from WO sizes -->
-                                            <th v-for="sz in woSizes" :key="sz.id_wo_shell_size" class="px-3 py-2.5 text-center bg-neutral-50/30">
+                                            <th v-for="sz in packingSizes" :key="sz.id_wo_shell_size" class="px-3 py-2.5 text-center bg-neutral-50/30">
                                                 Sz {{ sz.size }}
                                             </th>
                                             <th class="px-3 py-2.5 w-[12%] text-center">Qty / Box</th>
@@ -210,7 +226,7 @@ onMounted(() => {
                                             <td class="px-3 py-3 font-sans">{{ item.color }}</td>
                                             
                                             <!-- Dynamic size quantities mapping -->
-                                            <td v-for="sz in woSizes" :key="sz.id_wo_shell_size" class="px-3 py-3 text-center text-neutral-600">
+                                            <td v-for="sz in packingSizes" :key="sz.id_wo_shell_size" class="px-3 py-3 text-center text-neutral-600">
                                                 {{ item.sizes?.find(s => s.id_wo_shell_size === sz.id_wo_shell_size)?.qty || 0 }}
                                             </td>
                                             

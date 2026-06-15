@@ -20,7 +20,7 @@ import {
   History,
   ChevronLeft,
   ChevronRight,
-  Scissors
+  Scissors as ScissorsIcon
 } from 'lucide-vue-next';
 
 import { 
@@ -59,7 +59,7 @@ const search = useSearch({ strict: false }) as any;
 
 // Filters
 const selectedTableFilter = ref(search.value?.table || '');
-const selectedStatusFilter = ref(search.value?.status || 'approved'); // Default to approved history
+const selectedStatusFilter = ref(search.value?.status || ''); // Default to all history
 
 const filteredPendingItems = computed(() => {
   if (!selectedTableFilter.value) return pendingItems.value;
@@ -146,7 +146,8 @@ const getDetailUrl = (tableName: string, id: number) => {
     'MARKER_PLAN': '/marker-plan',
     'TIMELINE_PRODUKSI': '/timeline-produksi',
     'PACKING_LIST': '/packing-list',
-    'SPREADING_CUTTING_PLAN': '/spreading-cutting-plan'
+    'SPREADING_CUTTING_PLAN': '/spreading-cutting-plan',
+    'DATA_APPROVE_CUTTING_PLAN': '/data-approve-cutting-plan'
   };
   const basePath = pathMap[tableName] || `/${tableName.toLowerCase().replace('_', '-')}`;
   return `${basePath}/${id}`;
@@ -227,6 +228,7 @@ const getDocTypeName = (tableName: string) => {
     case 'TIMELINE_PRODUKSI': return 'Timeline Produksi';
     case 'PACKING_LIST': return 'Packing List';
     case 'SPREADING_CUTTING_PLAN': return 'Spreading & Cutting Plan';
+    case 'DATA_APPROVE_CUTTING_PLAN': return 'Data Approve Cutting Plan';
     default: return tableName;
   }
 };
@@ -246,7 +248,9 @@ const getDocTypeClass = (tableName: string) => {
     case 'PACKING_LIST': 
       return 'bg-teal-50 text-teal-700 border-teal-200/60 dark:bg-teal-900/20 dark:text-teal-400 dark:border-teal-800/30';
     case 'SPREADING_CUTTING_PLAN':
-      return 'bg-emerald-50 text-emerald-700 border-emerald-200/60 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800/30';
+      return 'bg-orange-50 text-orange-700 border-orange-200/60 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800/30';
+    case 'DATA_APPROVE_CUTTING_PLAN':
+      return 'bg-green-50 text-green-700 border-green-200/60 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800/30';
     default: 
       return 'bg-neutral-50 text-neutral-700 border-neutral-200/60 dark:bg-neutral-900/20 dark:text-neutral-400 dark:border-neutral-800/30';
   }
@@ -260,7 +264,8 @@ const getDocTypeIcon = (tableName: string) => {
     case 'MARKER_PLAN': return ClipboardCheck;
     case 'TIMELINE_PRODUKSI': return CalendarDays;
     case 'PACKING_LIST': return PackageOpen;
-    case 'SPREADING_CUTTING_PLAN': return Scissors;
+    case 'SPREADING_CUTTING_PLAN': return ScissorsIcon;
+    case 'DATA_APPROVE_CUTTING_PLAN': return ClipboardCheck;
     default: return FileText;
   }
 };
@@ -412,7 +417,8 @@ onMounted(() => {
               <option value="MARKER_PLAN">Marker Plan</option>
               <option value="TIMELINE_PRODUKSI">Timeline Produksi</option>
               <option value="PACKING_LIST">Packing List</option>
-              <option value="SPREADING_CUTTING_PLAN">Spreading & Cutting Plan</option>
+              <option value="SPREADING_CUTTING_PLAN">Spreading &amp; Cutting Plan</option>
+              <option value="DATA_APPROVE_CUTTING_PLAN">Data Approve Cutting Plan</option>
             </select>
           </div>
 
@@ -598,6 +604,7 @@ onMounted(() => {
                     
                     <!-- Detail Asli Button -->
                     <Button 
+                      v-if="selectedItem"
                       variant="outline" 
                       size="sm" 
                       class="mt-3 text-[11px] font-semibold border-neutral-300 shadow-xs h-7 px-2.5"

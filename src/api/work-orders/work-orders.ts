@@ -21,6 +21,7 @@ export interface WorkOrderListItem {
 
 export interface WorkOrderShellSize {
   id_wo_shell_size: number;
+  id_size?: number | null;
   size: string;
   qty: number;
   ratio: number;

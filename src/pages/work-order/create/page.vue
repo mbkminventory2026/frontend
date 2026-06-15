@@ -18,12 +18,23 @@ import { getPOClients, getPOClientById, type POClientListItem, type POClientItem
 import { getMitra } from '@/api/mitra/mitra';
 import { type MitraResponseItem } from '@/schemas/mitra/response';
 import { usePermission } from '@/composables/usePermission';
-import { getWarna } from '@/api/warna/warna';
+import { createWarna, getWarna } from '@/api/warna/warna';
+import { createSize, getSize } from '@/api/size/size';
+import type { WarnaResponseItem } from '@/schemas/warna/response';
+import type { SizeResponseItem } from '@/schemas/size/response';
 
 import { parseToFloat, parseToInt } from '@/lib/number';
 
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 const router = useRouter();
 const { hasPermission } = usePermission();
@@ -37,6 +48,7 @@ onMounted(() => {
   }
   fetchPOList();
   fetchColorOptions();
+  fetchSizeOptions();
   fetchBuyerList();
 });
 
@@ -61,7 +73,8 @@ const poItemOptions = ref<(POClientItemResponse & { id_po_client_item: number })
 const isLoadingPOItems = ref(false);
 const maxQty = ref<number | null>(null);
 const poDeliveryDate = ref('');
-const colorOptions = ref<any[]>([]);
+const colorOptions = ref<WarnaResponseItem[]>([]);
+const sizeOptions = ref<SizeResponseItem[]>([]);
 
 const fetchColorOptions = async () => {
   try {
@@ -72,8 +85,19 @@ const fetchColorOptions = async () => {
   }
 };
 
+const fetchSizeOptions = async () => {
+  try {
+    const res = await getSize({ limit: 1000, offset: 0 });
+    sizeOptions.value = res.results || [];
+  } catch (e) {
+    console.error('Gagal fetch data size:', e);
+  }
+};
+
 const parseNumber = parseToFloat;
 const parseInteger = parseToInt;
+const canQuickCreateWarna = computed(() => hasPermission('MASTER_WARNA_CREATE'));
+const canQuickCreateSize = computed(() => hasPermission('MASTER_SIZE_CREATE'));
 
 const fetchPOList = async () => {
   try {
@@ -200,11 +224,13 @@ watch(() => step1.id_po_client_item, (newVal) => {
 });
 
 // Step 2: Shells
-interface ShellSize { size: string; ratio: any; }
+interface ShellSize { id_size: number | null; size: string; ratio: any; }
 interface Shell { material_type: string; deskripsi: string; provided_by: string; color: string; cons: any; allow: any; berat_1_yd: any; qty_per_ratio: any; sizes: ShellSize[]; }
+interface ColorDialogTarget { kind: 'shell' | 'trim'; index: number; }
+interface SizeDialogTarget { shellIndex: number; sizeIndex: number; }
 
 const shells = ref<Shell[]>([
-  { material_type: 'fabric', deskripsi: '', provided_by: 'permatatex', color: '', cons: 0, allow: 0, berat_1_yd: 0, qty_per_ratio: 0, sizes: [{ size: '', ratio: 1 }] }
+  { material_type: 'fabric', deskripsi: '', provided_by: 'permatatex', color: '', cons: 0, allow: 0, berat_1_yd: 0, qty_per_ratio: 0, sizes: [{ id_size: null, size: '', ratio: 1 }] }
 ]);
 
 const addShell = () => {
@@ -214,13 +240,136 @@ const removeShell = (i: number) => shells.value.splice(i, 1);
 const addSize = (shellIdx: number) => {
   const shell = shells.value[shellIdx];
   if (shell) {
-    shell.sizes.push({ size: '', ratio: 1 });
+    shell.sizes.push({ id_size: null, size: '', ratio: 1 });
   }
 };
 const removeSize = (shellIdx: number, sizeIdx: number) => {
   const shell = shells.value[shellIdx];
   if (shell) {
     shell.sizes.splice(sizeIdx, 1);
+  }
+};
+
+const onSizeSelect = (shellIdx: number, sizeIdx: number, idSizeValue: string) => {
+  const shell = shells.value[shellIdx];
+  const size = shell?.sizes[sizeIdx];
+  if (!size) return;
+
+  const idSize = Number(idSizeValue);
+  const selected = sizeOptions.value.find((option) => option.id_size === idSize);
+
+  size.id_size = selected?.id_size ?? null;
+  size.size = selected?.nama_size ?? '';
+};
+
+const quickWarnaDialogOpen = ref(false);
+const quickSizeDialogOpen = ref(false);
+const isCreatingWarna = ref(false);
+const isCreatingSize = ref(false);
+const quickWarnaTarget = ref<ColorDialogTarget | null>(null);
+const quickSizeTarget = ref<SizeDialogTarget | null>(null);
+const quickWarnaForm = reactive({
+  nama_warna: '',
+  kode_hex: '',
+});
+const quickSizeForm = reactive({
+  nama_size: '',
+});
+
+const resetQuickWarnaForm = () => {
+  quickWarnaForm.nama_warna = '';
+  quickWarnaForm.kode_hex = '';
+};
+
+const resetQuickSizeForm = () => {
+  quickSizeForm.nama_size = '';
+};
+
+const openQuickWarnaDialog = (target: ColorDialogTarget) => {
+  quickWarnaTarget.value = target;
+  resetQuickWarnaForm();
+  quickWarnaDialogOpen.value = true;
+};
+
+const openQuickSizeDialog = (shellIndex: number, sizeIndex: number) => {
+  quickSizeTarget.value = { shellIndex, sizeIndex };
+  resetQuickSizeForm();
+  quickSizeDialogOpen.value = true;
+};
+
+const extractApiErrorMessage = (error: any, fallback: string) => {
+  return error?.response?.data?.message || error?.response?.data?.error || fallback;
+};
+
+const submitQuickWarna = async () => {
+  if (!quickWarnaForm.nama_warna.trim()) {
+    toast.error('Nama warna wajib diisi.');
+    return;
+  }
+
+  isCreatingWarna.value = true;
+  try {
+    const response = await createWarna({
+      nama_warna: quickWarnaForm.nama_warna.trim(),
+      kode_hex: quickWarnaForm.kode_hex.trim() || undefined,
+    });
+    const created = response.data as WarnaResponseItem;
+    await fetchColorOptions();
+
+    if (quickWarnaTarget.value) {
+      if (quickWarnaTarget.value.kind === 'shell') {
+        const targetShell = shells.value[quickWarnaTarget.value.index];
+        if (targetShell) {
+          targetShell.color = created.nama_warna;
+        }
+      } else {
+        const targetTrim = trims.value[quickWarnaTarget.value.index];
+        if (targetTrim) {
+          targetTrim.color = created.nama_warna;
+        }
+      }
+    }
+
+    toast.success('Warna berhasil ditambahkan.');
+    quickWarnaDialogOpen.value = false;
+    quickWarnaTarget.value = null;
+  } catch (error: any) {
+    toast.error(extractApiErrorMessage(error, 'Gagal menambahkan warna.'));
+  } finally {
+    isCreatingWarna.value = false;
+  }
+};
+
+const submitQuickSize = async () => {
+  if (!quickSizeForm.nama_size.trim()) {
+    toast.error('Nama size wajib diisi.');
+    return;
+  }
+
+  isCreatingSize.value = true;
+  try {
+    const response = await createSize({
+      nama_size: quickSizeForm.nama_size.trim(),
+    });
+    const created = response.data as SizeResponseItem;
+    await fetchSizeOptions();
+
+    if (quickSizeTarget.value) {
+      const targetShell = shells.value[quickSizeTarget.value.shellIndex];
+      const targetSize = targetShell?.sizes[quickSizeTarget.value.sizeIndex];
+      if (targetSize) {
+        targetSize.id_size = created.id_size;
+        targetSize.size = created.nama_size;
+      }
+    }
+
+    toast.success('Size berhasil ditambahkan.');
+    quickSizeDialogOpen.value = false;
+    quickSizeTarget.value = null;
+  } catch (error: any) {
+    toast.error(extractApiErrorMessage(error, 'Gagal menambahkan size.'));
+  } finally {
+    isCreatingSize.value = false;
   }
 };
 
@@ -380,7 +529,7 @@ const step2Valid = computed(() =>
     parseNumber(s.berat_1_yd) > 0 &&
     parseInteger(s.qty_per_ratio) > 0 &&
     s.sizes.length > 0 &&
-    s.sizes.every(sz => sz.size.trim() && parseToFloat(sz.ratio) > 0)
+    s.sizes.every(sz => !!sz.id_size && parseToFloat(sz.ratio) > 0)
   ) &&
   calculatedTotalQty.value <= (parseInteger(step1.qty) || 0)
 );
@@ -419,6 +568,7 @@ const handleSubmit = async () => {
         allow: parseInteger(s.allow),
         berat_1_yd: parseNumber(s.berat_1_yd),
         sizes: s.sizes.map(sz => ({
+          id_size: sz.id_size,
           size: sz.size,
           qty: getSizeCalculatedQty(s, sz),
           ratio: parseInteger(sz.ratio),
@@ -710,8 +860,25 @@ const handleSubmit = async () => {
                 </div>
                 <div class="space-y-1">
                   <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Color *</label>
-                  <input v-model="shell.color" type="text" placeholder="cth: Navy Blue"
-                    class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition" />
+                  <div class="flex items-center gap-2">
+                    <select v-model="shell.color"
+                      class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition cursor-pointer h-9">
+                      <option value="">Pilih warna</option>
+                      <option v-for="warna in colorOptions" :key="warna.id_warna" :value="warna.nama_warna">
+                        {{ warna.nama_warna }}
+                      </option>
+                    </select>
+                    <Button
+                      v-if="canQuickCreateWarna"
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      class="shrink-0 border-neutral-300 px-2"
+                      @click="openQuickWarnaDialog({ kind: 'shell', index: si })"
+                    >
+                      <PlusCircleIcon class="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
                 <div class="space-y-1">
                   <label class="text-[10px] font-bold text-neutral-500 uppercase">Cons (yd) *</label>
@@ -739,13 +906,23 @@ const handleSubmit = async () => {
               <div class="space-y-2">
                 <div class="flex items-center justify-between">
                   <span class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Distribusi Ukuran (Sizes) *</span>
-                  <button
-                    @click="addSize(si)"
-                    type="button"
-                    class="text-xs font-semibold text-neutral-600 hover:text-neutral-900 flex items-center gap-1 transition"
-                  >
-                    <PlusCircleIcon class="w-3.5 h-3.5" /> Tambah Ukuran
-                  </button>
+                  <div class="flex items-center gap-3">
+                    <button
+                      v-if="canQuickCreateSize"
+                      @click="openQuickSizeDialog(si, shell.sizes.length ? shell.sizes.length - 1 : 0)"
+                      type="button"
+                      class="text-xs font-semibold text-neutral-600 hover:text-neutral-900 flex items-center gap-1 transition"
+                    >
+                      <PlusCircleIcon class="w-3.5 h-3.5" /> Tambah Master Size
+                    </button>
+                    <button
+                      @click="addSize(si)"
+                      type="button"
+                      class="text-xs font-semibold text-neutral-600 hover:text-neutral-900 flex items-center gap-1 transition"
+                    >
+                      <PlusCircleIcon class="w-3.5 h-3.5" /> Tambah Ukuran
+                    </button>
+                  </div>
                 </div>
 
                 <div v-if="shell.sizes.length === 0" class="text-center py-4 border border-dashed border-neutral-200 rounded-lg text-neutral-400 text-xs">
@@ -766,8 +943,27 @@ const handleSubmit = async () => {
                       <tbody class="divide-y divide-neutral-100">
                         <tr v-for="(size, zi) in shell.sizes" :key="zi" class="bg-white">
                           <td class="px-3 py-2">
-                            <input v-model="size.size" type="text" placeholder="cth: L / XL / 32"
-                              class="w-full rounded border border-neutral-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-neutral-400 bg-white" />
+                            <div class="flex items-center gap-2">
+                              <select
+                                :value="size.id_size ? String(size.id_size) : ''"
+                                @change="onSizeSelect(si, zi, ($event.target as HTMLSelectElement).value)"
+                                class="w-full rounded border border-neutral-200 px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-neutral-400 bg-white h-8 cursor-pointer"
+                              >
+                                <option value="">Pilih size</option>
+                                <option v-for="sizeOption in sizeOptions" :key="sizeOption.id_size" :value="String(sizeOption.id_size)">
+                                  {{ sizeOption.nama_size }}
+                                </option>
+                              </select>
+                              <button
+                                v-if="canQuickCreateSize"
+                                @click="openQuickSizeDialog(si, zi)"
+                                type="button"
+                                class="shrink-0 text-neutral-400 hover:text-neutral-800 transition"
+                                title="Tambah size"
+                              >
+                                <PlusCircleIcon class="w-4 h-4" />
+                              </button>
+                            </div>
                           </td>
                           <td class="px-3 py-2">
                             <input :value="size.ratio" @input="handleRatioChange(si, zi, ($event.target as HTMLInputElement).value)" type="text" placeholder="1"
@@ -854,8 +1050,25 @@ const handleSubmit = async () => {
                   </div>
                   <div class="space-y-1">
                     <label class="text-[10px] font-bold text-neutral-500 uppercase">Color</label>
-                    <input v-model="trim.color" type="text" placeholder="cth: Black"
-                      class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition" />
+                    <div class="flex items-center gap-2">
+                      <select v-model="trim.color"
+                        class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 transition cursor-pointer h-9">
+                        <option value="">Pilih warna</option>
+                        <option v-for="warna in colorOptions" :key="warna.id_warna" :value="warna.nama_warna">
+                          {{ warna.nama_warna }}
+                        </option>
+                      </select>
+                      <Button
+                        v-if="canQuickCreateWarna"
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        class="shrink-0 border-neutral-300 px-2"
+                        @click="openQuickWarnaDialog({ kind: 'trim', index: ti })"
+                      >
+                        <PlusCircleIcon class="w-4 h-4" />
+                      </Button>
+                    </div>
                     <p v-if="trim.color && hasDuplicateTrimColor(ti)" class="text-[9px] text-amber-600 font-semibold mt-0.5 leading-none">
                       (Warna ini sudah digunakan di Trim lain)
                     </p>
@@ -1031,4 +1244,69 @@ const handleSubmit = async () => {
       </Card>
     </div>
   </div>
+
+  <Dialog v-model:open="quickWarnaDialogOpen">
+    <DialogContent class="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>Tambah Warna</DialogTitle>
+        <DialogDescription>
+          Tambahkan master warna baru tanpa keluar dari form Work Order.
+        </DialogDescription>
+      </DialogHeader>
+      <div class="space-y-4 py-2">
+        <div class="space-y-1">
+          <label class="text-sm font-medium text-neutral-700">Nama Warna</label>
+          <input
+            v-model="quickWarnaForm.nama_warna"
+            type="text"
+            placeholder="cth: Navy Blue"
+            class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition"
+          />
+        </div>
+        <div class="space-y-1">
+          <label class="text-sm font-medium text-neutral-700">Kode Hex <span class="text-neutral-400">(opsional)</span></label>
+          <input
+            v-model="quickWarnaForm.kode_hex"
+            type="text"
+            placeholder="cth: #1E3A8A"
+            class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition"
+          />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button type="button" variant="ghost" @click="quickWarnaDialogOpen = false">Batal</Button>
+        <Button type="button" :disabled="isCreatingWarna" @click="submitQuickWarna">
+          {{ isCreatingWarna ? 'Menyimpan...' : 'Simpan Warna' }}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+
+  <Dialog v-model:open="quickSizeDialogOpen">
+    <DialogContent class="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>Tambah Size</DialogTitle>
+        <DialogDescription>
+          Tambahkan master size baru tanpa keluar dari form Work Order.
+        </DialogDescription>
+      </DialogHeader>
+      <div class="space-y-4 py-2">
+        <div class="space-y-1">
+          <label class="text-sm font-medium text-neutral-700">Nama Size</label>
+          <input
+            v-model="quickSizeForm.nama_size"
+            type="text"
+            placeholder="cth: XL / 32 / FREE SIZE"
+            class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition"
+          />
+        </div>
+      </div>
+      <DialogFooter>
+        <Button type="button" variant="ghost" @click="quickSizeDialogOpen = false">Batal</Button>
+        <Button type="button" :disabled="isCreatingSize" @click="submitQuickSize">
+          {{ isCreatingSize ? 'Menyimpan...' : 'Simpan Size' }}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>

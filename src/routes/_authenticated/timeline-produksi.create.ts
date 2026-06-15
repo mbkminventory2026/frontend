@@ -4,7 +4,7 @@ import { requirePermission } from '@/lib/requirePermission'
 
 export const Route = createFileRoute('/_authenticated/timeline-produksi/create')({
   beforeLoad: () => {
-    requirePermission('TIMELINE_PRODUKSI_CREATE')()
+    requirePermission('TIMELINE_CREATE')()
   },
   component: Page,
 })

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useParams, useRouter } from '@tanstack/vue-router';
-import { CalendarIcon, HashIcon, InfoIcon, ArrowLeftIcon, ScissorsIcon, CheckCircle2Icon, XCircleIcon, ClockIcon, ShieldCheckIcon, UserIcon, ExternalLinkIcon, Loader2Icon } from 'lucide-vue-next';
+import { CalendarIcon, HashIcon, InfoIcon, ArrowLeftIcon, ScissorsIcon, Layers2Icon } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
 import { useSpreadingCuttingPlan } from '@/composables/useSpreadingCuttingPlan';
@@ -9,6 +9,7 @@ import { getDocumentAuditTrail, type DocumentAuditTrail } from '@/api/approvals/
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { formatDate } from '@/lib/formatter';
 
 const router = useRouter();
@@ -110,35 +111,92 @@ const getTotalNeedPlusAllow = (ratio: any) => {
     return getConsPlusAllow(ratio) * totalQty;
 };
 
-// ─── Approval State ────────────────────────────────────
-const auditTrail = ref<DocumentAuditTrail | null>(null);
-const isLoadingApproval = ref(false);
+// Calculate total cut qty for a specific size in a component across all its ratios
+const getComponentSizeTotalCut = (ratios: any[], sizeName: string) => {
+    if (!ratios) return 0;
+    return ratios.reduce((acc, ratio) => {
+        const found = ratio.sizes.find((s: any) => s.size === sizeName);
+        const ratioPlan = found ? found.ratio_plan : 0;
+        return acc + Math.round(ratioPlan * ratio.plan_spreading_gelaran);
+    }, 0);
+};
 
-const approvalStatusClass = computed(() => {
-  const status = auditTrail.value?.status_global?.toLowerCase();
-  if (status === 'approved') return 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-800/30';
-  if (status === 'rejected') return 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-800/30';
-  return 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-800/30';
-});
+// Calculate total component cut qty across all sizes and ratios
+const getComponentTotalCut = (ratios: any[]) => {
+    if (!ratios) return 0;
+    return ratios.reduce((acc, ratio) => {
+        return acc + getRatioTotalQty(ratio.sizes, ratio.plan_spreading_gelaran);
+    }, 0);
+};
 
-const approvalStatusLabel = computed(() => {
-  const status = auditTrail.value?.status_global?.toLowerCase();
-  if (status === 'approved') return 'APPROVED';
-  if (status === 'rejected') return 'REJECTED';
-  if (auditTrail.value) return 'PENDING';
-  return 'MEMUAT...';
-});
+// Get QTY Order for a specific size
+const getComponentSizeOrderQty = (ratios: any[], sizeName: string) => {
+    if (!ratios || ratios.length === 0) return 0;
+    for (const ratio of ratios) {
+        const found = ratio.sizes.find((s: any) => s.size === sizeName);
+        if (found) {
+            return found.size_qty || 0;
+        }
+    }
+    return 0;
+};
 
-const fetchApprovalStatus = async (docId: string) => {
-  isLoadingApproval.value = true;
-  try {
-    auditTrail.value = await getDocumentAuditTrail('SPREADING_CUTTING_PLAN', docId);
-  } catch {
-    // Silent fail — dokumen mungkin belum masuk alur approval
-    auditTrail.value = null;
-  } finally {
-    isLoadingApproval.value = false;
-  }
+// Get Total QTY Order for the component
+const getComponentTotalOrderQty = (ratios: any[]) => {
+    if (!ratios || ratios.length === 0) return 0;
+    let total = 0;
+    uniqueSizes.value.forEach(sizeName => {
+        total += getComponentSizeOrderQty(ratios, sizeName);
+    });
+    return total;
+};
+
+// Calculate size-wise difference and percentage
+const getSizeDiffAndPercent = (ratios: any[], sizeName: string) => {
+    const order = getComponentSizeOrderQty(ratios, sizeName);
+    const aktual = getComponentSizeTotalCut(ratios, sizeName);
+    const diff = aktual - order;
+    const pct = order > 0 ? (diff / order) * 100 : 0;
+    return { diff, pct };
+};
+
+// Calculate overall component difference and percentage
+const getTotalDiffAndPercent = (ratios: any[]) => {
+    const order = getComponentTotalOrderQty(ratios);
+    const aktual = getComponentTotalCut(ratios);
+    const diff = aktual - order;
+    const pct = order > 0 ? (diff / order) * 100 : 0;
+    return { diff, pct };
+};
+
+// Format difference and percentage output
+const formatDiffAndPercent = (diff: number, pct: number) => {
+    const sign = diff > 0 ? '+' : '';
+    return `${sign}${diff.toLocaleString('id-ID')} (${sign}${pct.toFixed(1)}%)`;
+};
+
+// Sum QTY Total Need + Allowance across all ratios in a component
+const getComponentTotalNeedPlusAllow = (ratios: any[]) => {
+    if (!ratios) return 0;
+    return ratios.reduce((acc, ratio) => {
+        return acc + getTotalNeedPlusAllow(ratio);
+    }, 0);
+};
+
+// Sum Reject across all ratios in a component
+const getComponentTotalReject = (ratios: any[]) => {
+    if (!ratios) return 0;
+    return ratios.reduce((acc, ratio) => {
+        return acc + (ratio.reject || 0);
+    }, 0);
+};
+
+// Sum Roll Qty across all ratios in a component
+const getComponentTotalRollQty = (ratios: any[]) => {
+    if (!ratios) return 0;
+    return ratios.reduce((acc, ratio) => {
+        return acc + (ratio.roll_qty || 0);
+    }, 0);
 };
 
 onMounted(() => {
@@ -160,19 +218,37 @@ onMounted(() => {
       <!-- Header Section -->
       <div class="flex flex-col md:flex-row gap-6 items-center border-b pb-6 border-neutral-200 justify-between">
         <div class="flex items-center gap-4">
-          <div class="bg-neutral-100 p-3.5 rounded-2xl border border-neutral-200 shadow-sm">
-            <ScissorsIcon class="w-10 h-10 text-neutral-700" />
+          <div class="bg-neutral-950 p-3.5 rounded-2xl border border-neutral-800 shadow-md text-white">
+            <ScissorsIcon class="w-10 h-10" />
           </div>
           <div>
             <div class="flex items-center gap-2.5">
-              <h1 class="text-2xl font-bold tracking-tight text-neutral-900">{{ detail.no_dokumen }}</h1>
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-neutral-100 text-neutral-800 border border-neutral-200">
-                Spreading & Cutting Plan
-              </span>
+              <span class="text-[10px] uppercase font-bold tracking-wider text-neutral-500 bg-neutral-100 px-2 py-0.5 rounded">Dokumen</span>
+              <h1 class="text-3xl font-extrabold tracking-tight text-neutral-955 font-mono">{{ detail.no_dokumen }}</h1>
             </div>
-            <p class="text-sm text-neutral-500 mt-1">
-              Tanggal Efektif: {{ formatDate(detail.tanggal_efektif) }}
-            </p>
+            <!-- Quick Metadata Badges -->
+            <div class="flex flex-wrap items-center gap-x-6 gap-y-2 mt-2 text-xs text-neutral-600">
+              <div class="flex items-center gap-1.5">
+                <span class="font-semibold text-neutral-400 uppercase tracking-wider text-[10px]">Tgl Efektif:</span>
+                <span class="font-medium text-neutral-900 bg-neutral-100 px-2 py-0.5 rounded">{{ formatDate(detail.tanggal_efektif) }}</span>
+              </div>
+              <div class="flex items-center gap-1.5 border-l border-neutral-200 pl-6">
+                <span class="font-semibold text-neutral-400 uppercase tracking-wider text-[10px]">Tgl Pembuatan:</span>
+                <span class="font-medium text-neutral-900">{{ formatDate(detail.created_at) }}</span>
+              </div>
+              <div class="flex items-center gap-1.5 border-l border-neutral-200 pl-6">
+                <span class="font-semibold text-neutral-400 uppercase tracking-wider text-[10px]">Style:</span>
+                <span class="font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">{{ detail.style || '—' }}</span>
+              </div>
+              <div class="flex items-center gap-1.5 border-l border-neutral-200 pl-6">
+                <span class="font-semibold text-neutral-400 uppercase tracking-wider text-[10px]">Model:</span>
+                <span class="font-medium text-neutral-900">{{ detail.model || '—' }}</span>
+              </div>
+              <div class="flex items-center gap-1.5 border-l border-neutral-200 pl-6">
+                <span class="font-semibold text-neutral-400 uppercase tracking-wider text-[10px]">Buyer:</span>
+                <span class="font-bold text-neutral-900 bg-neutral-100 px-2 py-0.5 rounded border border-neutral-200">{{ detail.buyer || '—' }}</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -192,7 +268,7 @@ onMounted(() => {
           <Card class="overflow-hidden border border-neutral-200 shadow-sm bg-white">
             <CardHeader class="bg-neutral-50/50 border-b border-neutral-200 pb-4">
               <CardTitle class="text-sm font-bold flex items-center gap-2 text-neutral-900 uppercase tracking-wider">
-                <ScissorsIcon class="w-4 h-4 text-neutral-600" />
+                <Layers2Icon class="w-4 h-4 text-neutral-600" />
                 Daftar Komponen & Ratio Spreading
               </CardTitle>
             </CardHeader>
@@ -212,19 +288,19 @@ onMounted(() => {
 
                 <!-- Ratio Table -->
                 <div class="overflow-x-auto border border-neutral-150 rounded-lg shadow-xs bg-white">
-                  <table class="w-full text-left border-collapse border-spacing-0 text-xs min-w-[1200px]">
+                  <table class="w-full text-left border-collapse border-spacing-0 text-xs min-w-[1500px]">
                     <thead class="bg-neutral-50/60 border-b border-neutral-200 text-[10px] uppercase font-bold text-neutral-500">
                       <tr>
-                        <th class="px-3 py-2.5 w-[3%]">No.</th>
+                        <th class="px-3 py-2.5 w-[3%]">No</th>
                         <!-- Dynamic size headers -->
                         <th v-for="sizeName in uniqueSizes" :key="sizeName" class="px-3 py-2.5 text-center w-[5%] bg-neutral-50">
-                          {{ sizeName }}
+                          Sz {{ sizeName }}
                         </th>
                         <th class="px-3 py-2.5 w-[6%]">Total QTY</th>
-                        <th class="px-3 py-2.5 w-[6%]">Plan Spreading (Layer)</th>
+                        <th class="px-3 py-2.5 w-[6%]">Spreading (Layer)</th>
                         <th class="px-3 py-2.5 w-[6%]">Sisa</th>
                         <th class="px-3 py-2.5 w-[6%]">Lebar Kain</th>
-                        <th class="px-3 py-2.5 w-[6%]">Cons</th>
+                        <th class="px-3 py-2.5 w-[6%]">Cons (Yd)</th>
                         <th class="px-3 py-2.5 w-[6%]">Allowance (%)</th>
                         <th class="px-3 py-2.5 w-[6%]">Roll Qty</th>
                         <th class="px-3 py-2.5 w-[6%]">Join Roll</th>
@@ -249,29 +325,29 @@ onMounted(() => {
                           {{ getRatioTotalQty(ratio.sizes, ratio.plan_spreading_gelaran).toLocaleString('id-ID') }}
                         </td>
                         
-                        <!-- Plan Spreading (Layer) -->
+                        <!-- Spreading (Layer) -->
                         <td class="px-3 py-3 text-right">{{ ratio.plan_spreading_gelaran }}</td>
                         
                         <!-- Sisa -->
                         <td class="px-3 py-3 text-right bg-neutral-50/20">{{ calculateDetailSisa(comp.ratios, ratioIdx).toLocaleString('id-ID') }}</td>
                         
                         <!-- Lebar Kain -->
-                        <td class="px-3 py-3 text-right">{{ ratio.lebar_kain.toFixed(2) }}</td>
+                        <td class="px-3 py-3 text-right">{{ ratio.lebar_kain.toFixed(3) }}</td>
                         
                         <!-- Cons -->
                         <td class="px-3 py-3 text-right">{{ ratio.cons.toFixed(3) }}</td>
                         
                         <!-- Allowance -->
                         <td class="px-3 py-3 text-right">{{ ratio.allowance.toFixed(2) }}%</td>
- 
+
                         <!-- Roll Qty -->
                         <td class="px-3 py-3 text-right">{{ ratio.roll_qty }}</td>
- 
+
                         <!-- Join Roll -->
                         <td class="px-3 py-3 text-right">{{ ratio.sambungan_roll }}</td>
- 
+
                         <!-- Reject -->
-                        <td class="px-3 py-3 text-right text-red-600">{{ ratio.reject.toFixed(3) }}</td>
+                        <td class="px-3 py-3 text-right text-red-600 bg-red-50/10">{{ ratio.reject.toFixed(3) }}</td>
                         
                         <!-- Cons+Allow (Yds) -->
                         <td class="px-3 py-3 text-right font-medium text-neutral-900 bg-neutral-50/30">{{ getConsPlusAllow(ratio).toFixed(3) }}</td>
@@ -282,148 +358,135 @@ onMounted(() => {
                         <!-- Ket -->
                         <td class="px-3 py-3 text-left font-sans truncate max-w-[150px]" :title="ratio.ket">{{ ratio.ket || '—' }}</td>
                       </tr>
+                      
+                      <!-- Footer Row 1: QTY Order (WO Target) -->
+                      <tr class="bg-neutral-50 font-bold border-t border-neutral-200">
+                        <td class="px-3 py-3 text-center text-[10px] uppercase tracking-wider text-neutral-500 font-sans">QTY Order</td>
+                        <td v-for="sizeName in uniqueSizes" :key="sizeName" class="px-3 py-3 text-center text-neutral-600 bg-neutral-50/40">
+                          {{ getComponentSizeOrderQty(comp.ratios, sizeName).toLocaleString('id-ID') }}
+                        </td>
+                        <td class="px-3 py-3 text-right text-neutral-700 bg-neutral-100/40">
+                          {{ getComponentTotalOrderQty(comp.ratios).toLocaleString('id-ID') }}
+                        </td>
+                        <td colspan="11" class="bg-neutral-50/20"></td>
+                      </tr>
+
+                      <!-- Footer Row 2: QTY Aktual (Total Planned Cut) -->
+                      <tr class="bg-neutral-50 font-bold border-t border-neutral-200">
+                        <td class="px-3 py-3 text-center text-[10px] uppercase tracking-wider text-neutral-500 font-sans">QTY Aktual</td>
+                        <td v-for="sizeName in uniqueSizes" :key="sizeName" class="px-3 py-3 text-center text-neutral-900 bg-neutral-50/40">
+                          {{ getComponentSizeTotalCut(comp.ratios, sizeName).toLocaleString('id-ID') }}
+                        </td>
+                        <td class="px-3 py-3 text-right text-neutral-900 bg-neutral-100/40">
+                          {{ getComponentTotalCut(comp.ratios).toLocaleString('id-ID') }}
+                        </td>
+                        <td colspan="11" class="bg-neutral-50/20"></td>
+                      </tr>
+
+                      <!-- Footer Row 3: Selisih (%) -->
+                      <tr class="bg-neutral-100 font-bold border-t-2 border-neutral-300">
+                        <td class="px-3 py-3 text-center text-[10px] uppercase tracking-wider text-neutral-600 font-sans">Selisih (%)</td>
+                        <td v-for="sizeName in uniqueSizes" :key="sizeName" class="px-3 py-3 text-center bg-neutral-100/60 font-mono"
+                            :class="[getSizeDiffAndPercent(comp.ratios, sizeName).diff < 0 ? 'text-red-600' : getSizeDiffAndPercent(comp.ratios, sizeName).diff > 0 ? 'text-green-600' : 'text-neutral-500']">
+                          {{ formatDiffAndPercent(getSizeDiffAndPercent(comp.ratios, sizeName).diff, getSizeDiffAndPercent(comp.ratios, sizeName).pct) }}
+                        </td>
+                        <td class="px-3 py-3 text-right bg-neutral-150/80 font-mono"
+                            :class="[getTotalDiffAndPercent(comp.ratios).diff < 0 ? 'text-red-700' : getTotalDiffAndPercent(comp.ratios).diff > 0 ? 'text-green-700' : 'text-neutral-700']">
+                          {{ formatDiffAndPercent(getTotalDiffAndPercent(comp.ratios).diff, getTotalDiffAndPercent(comp.ratios).pct) }}
+                        </td>
+                        <td colspan="11" class="bg-neutral-100/40"></td>
+                      </tr>
                     </tbody>
                   </table>
+                </div>
+
+                <!-- Fabric & Roll Summary Card -->
+                <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 bg-neutral-50 p-4 rounded-lg border border-neutral-200">
+                  <div class="flex flex-col gap-1">
+                    <span class="text-[10px] uppercase font-bold tracking-wider text-neutral-400">Total Roll Spreading</span>
+                    <span class="text-xs font-bold text-neutral-900 font-mono">{{ getComponentTotalRollQty(comp.ratios) }} Rolls</span>
+                  </div>
+                  <div class="flex flex-col gap-1 border-t md:border-t-0 md:border-l border-neutral-200 pt-2 md:pt-0 md:pl-4">
+                    <span class="text-[10px] uppercase font-bold tracking-wider text-neutral-400">Total Need + Allowance</span>
+                    <span class="text-xs font-bold text-neutral-900 font-mono">{{ getComponentTotalNeedPlusAllow(comp.ratios).toFixed(3) }} yds</span>
+                  </div>
+                  <div class="flex flex-col gap-1 border-t md:border-t-0 md:border-l border-neutral-200 pt-2 md:pt-0 md:pl-4">
+                    <span class="text-[10px] uppercase font-bold tracking-wider text-neutral-400">Total Reject Fabric</span>
+                    <span class="text-xs font-bold text-red-600 font-mono">{{ getComponentTotalReject(comp.ratios).toFixed(3) }} yds</span>
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
-
         </div>
 
-        <!-- Right Side: Metadata info -->
+        <!-- Right Side: Metadata Info Card -->
         <div class="space-y-6">
           <Card class="border border-neutral-200 shadow-sm bg-white">
             <CardHeader class="bg-neutral-50/50 border-b border-neutral-200 pb-4">
-              <CardTitle class="text-xs font-bold text-neutral-950 uppercase tracking-wider flex items-center gap-2">
+              <CardTitle class="text-xs font-bold text-neutral-955 uppercase tracking-wider flex items-center gap-2">
                 <InfoIcon class="w-4 h-4 text-neutral-600" />
                 Metadata Dokumen
               </CardTitle>
             </CardHeader>
             <CardContent class="pt-6 space-y-4 text-xs text-neutral-700">
-              <div class="flex justify-between items-center py-1 border-b border-neutral-100">
-                <span class="text-neutral-400 flex items-center gap-1.5">
-                  <HashIcon class="w-3.5 h-3.5" /> ID Plan
+              <div class="flex items-center justify-between">
+                <span class="text-neutral-500 flex items-center gap-1.5">
+                  <HashIcon class="w-3.5 h-3.5 text-neutral-400" /> Plan ID
                 </span>
                 <span class="font-mono font-bold text-neutral-900">#{{ detail.id_spreading_cutting_plan }}</span>
               </div>
-              <div class="flex justify-between items-center py-1 border-b border-neutral-100">
-                <span class="text-neutral-400 flex items-center gap-1.5">
-                  <CalendarIcon class="w-3.5 h-3.5" /> Tanggal Dibuat
+              <Separator class="bg-neutral-100" />
+              <div class="flex items-center justify-between">
+                <span class="text-neutral-500 flex items-center gap-1.5">
+                  <HashIcon class="w-3.5 h-3.5 text-neutral-400" /> Rujukan Work Order
+                </span>
+                <span class="font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">WO #{{ detail.id_wo }}</span>
+              </div>
+              <Separator class="bg-neutral-100" />
+              <div class="flex items-center justify-between">
+                <span class="text-neutral-500 flex items-center gap-1.5">
+                  <InfoIcon class="w-3.5 h-3.5 text-neutral-400" /> Buyer
+                </span>
+                <span class="font-bold text-neutral-900">{{ detail.buyer || '—' }}</span>
+              </div>
+              <Separator class="bg-neutral-100" />
+              <div class="flex items-center justify-between">
+                <span class="text-neutral-500 flex items-center gap-1.5">
+                  <InfoIcon class="w-3.5 h-3.5 text-neutral-400" /> Model
+                </span>
+                <span class="font-bold text-neutral-900">{{ detail.model || '—' }}</span>
+              </div>
+              <Separator class="bg-neutral-100" />
+              <div class="flex items-center justify-between">
+                <span class="text-neutral-500 flex items-center gap-1.5">
+                  <InfoIcon class="w-3.5 h-3.5 text-neutral-400" /> Style
+                </span>
+                <span class="font-bold text-neutral-900 font-mono">{{ detail.style || '—' }}</span>
+              </div>
+              <Separator class="bg-neutral-100" />
+              <div class="flex items-center justify-between">
+                <span class="text-neutral-500 flex items-center gap-1.5">
+                  <CalendarIcon class="w-3.5 h-3.5 text-neutral-400" /> Tanggal Dibuat
                 </span>
                 <span class="font-medium text-neutral-900">{{ formatDate(detail.created_at) }}</span>
               </div>
-              <div class="flex justify-between items-center py-1">
-                <span class="text-neutral-400 flex items-center gap-1.5">
-                  <InfoIcon class="w-3.5 h-3.5" /> Rujukan Work Order
-                </span>
-                <span class="font-mono font-bold text-neutral-900">WO #{{ detail.id_wo }}</span>
-              </div>
-            </CardContent>
-            </Card>
-
-          <!-- Approval Status Card -->
-          <Card class="border border-neutral-200 shadow-sm bg-white">
-            <CardHeader class="bg-neutral-50/50 border-b border-neutral-200 pb-4">
-              <CardTitle class="text-xs font-bold text-neutral-950 uppercase tracking-wider flex items-center gap-2">
-                <ShieldCheckIcon class="w-4 h-4 text-neutral-600" />
-                Status Approval
-              </CardTitle>
-            </CardHeader>
-            <CardContent class="pt-5 space-y-4">
-
-              <!-- Loading -->
-              <div v-if="isLoadingApproval" class="flex items-center justify-center py-4 gap-2">
-                <Loader2Icon class="w-4 h-4 text-neutral-400 animate-spin" />
-                <span class="text-xs text-neutral-400">Memuat status...</span>
-              </div>
-
-              <!-- No approval data -->
-              <div v-else-if="!auditTrail" class="text-center py-4">
-                <span class="text-[11px] text-neutral-400">Belum ada data approval untuk dokumen ini.</span>
-              </div>
-
-              <!-- Approval status -->
-              <div v-else class="space-y-4">
-                <!-- Global Status Badge -->
-                <div class="flex items-center justify-between">
-                  <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Status Dokumen</span>
-                  <span
-                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border"
-                    :class="approvalStatusClass"
-                  >
-                    <CheckCircle2Icon v-if="auditTrail.status_global?.toLowerCase() === 'approved'" class="w-3 h-3" />
-                    <XCircleIcon v-else-if="auditTrail.status_global?.toLowerCase() === 'rejected'" class="w-3 h-3" />
-                    <ClockIcon v-else class="w-3 h-3" />
-                    {{ approvalStatusLabel }}
-                  </span>
-                </div>
-
-                <!-- Steps List -->
-                <div class="space-y-2">
-                  <p class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Alur Persetujuan</p>
-                  <div
-                    v-for="step in auditTrail.steps"
-                    :key="step.id_otoritas_detail"
-                    class="flex items-center justify-between py-2 border-b border-neutral-100 last:border-0"
-                  >
-                    <div class="flex items-center gap-2">
-                      <div
-                        class="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
-                        :class="step.done ? 'bg-emerald-100 text-emerald-600' : 'bg-neutral-100 text-neutral-400'"
-                      >
-                        <CheckCircle2Icon v-if="step.done" class="w-3 h-3" />
-                        <ClockIcon v-else class="w-3 h-3" />
-                      </div>
-                      <div>
-                        <p class="text-[11px] font-semibold text-neutral-700">{{ step.tipe_peran }}</p>
-                        <p class="text-[10px] text-neutral-400 flex items-center gap-1">
-                          <UserIcon class="w-2.5 h-2.5" />
-                          {{ step.nama_user || 'Belum Ditugaskan' }}
-                        </p>
-                      </div>
-                    </div>
-                    <div class="text-right">
-                      <span
-                        class="text-[9px] font-bold px-1.5 py-0.5 rounded"
-                        :class="step.done ? 'bg-emerald-50 text-emerald-700' : 'bg-neutral-100 text-neutral-500'"
-                      >
-                        {{ step.done ? 'Selesai' : 'Menunggu' }}
-                      </span>
-                      <p v-if="step.waktu_aksi" class="text-[9px] text-neutral-400 mt-0.5">
-                        {{ formatDate(step.waktu_aksi) }}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Link to Approvals page if still pending -->
-                <Button
-                  v-if="auditTrail.status_global?.toLowerCase() !== 'approved'"
-                  variant="outline"
-                  size="sm"
-                  class="w-full text-[11px] border-neutral-300 shadow-xs h-8"
-                  @click="router.navigate({ to: '/approvals' })"
-                >
-                  <ExternalLinkIcon class="w-3.5 h-3.5 mr-1.5" />
-                  Proses di Halaman Approval
-                </Button>
-              </div>
             </CardContent>
           </Card>
-
         </div>
 
       </div>
     </div>
 
     <!-- Error State -->
-    <div v-else class="text-center py-20 bg-white border border-neutral-200 rounded-2xl shadow-sm max-w-md mx-auto">
-      <InfoIcon class="w-12 h-12 text-red-500 mx-auto mb-3" />
-      <h3 class="text-lg font-bold text-neutral-800">Dokumen Tidak Ditemukan</h3>
-      <p class="text-neutral-500 text-xs mt-1 px-4">Pastikan ID dokumen Spreading & Cutting Plan yang Anda akses sudah benar.</p>
-      <Button @click="router.navigate({ to: '/spreading-cutting-plan' })" class="mt-5 bg-neutral-900 text-white hover:bg-neutral-800">
-        Kembali ke Daftar
+    <div v-else class="flex flex-col items-center justify-center min-h-[400px] text-center space-y-4">
+      <div class="bg-neutral-100 p-4 rounded-full border border-neutral-200">
+        <Layers2Icon class="w-12 h-12 text-neutral-400" />
+      </div>
+      <h2 class="text-2xl font-bold text-neutral-900">Spreading Plan Tidak Ditemukan</h2>
+      <p class="text-neutral-500">Maaf, data Spreading Plan yang Anda cari tidak tersedia.</p>
+      <Button @click="router.navigate({ to: '/spreading-cutting-plan' })" class="bg-neutral-900 hover:bg-neutral-800 text-white shadow-sm border border-neutral-800">
+        Kembali ke Daftar Spreading Plan
       </Button>
     </div>
   </div>
