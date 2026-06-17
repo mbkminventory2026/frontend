@@ -55,22 +55,24 @@ export interface MasterPlanDetail {
 
 // ─── API Functions ───────────────────────────────────────────────────────────
 
+// Interceptor sudah unwrap response.data.data → response.data berisi payload langsung
+
 export const getMasterPlans = async (params?: {
   page?: number;
   limit?: number;
   search?: string;
 }): Promise<{ results: MasterPlanListItem[]; count: number }> => {
-  const response = await apiClient.get<{ data: { items: MasterPlanListItem[]; pagination: { total_items: number } } }>(
+  const response = await apiClient.get<{ items: MasterPlanListItem[]; pagination: { total_items: number } }>(
     '/api/v1/master-plans',
     { params: { page: params?.page, limit: params?.limit ?? 20, search: params?.search } }
   );
-  const d = response.data.data;
-  return { results: d.items ?? [], count: d.pagination?.total_items ?? d.items?.length ?? 0 };
+  const d = response.data;
+  return { results: d?.items ?? [], count: d?.pagination?.total_items ?? d?.items?.length ?? 0 };
 };
 
 export const getMasterPlanById = async (id: number | string): Promise<MasterPlanDetail> => {
-  const response = await apiClient.get<{ data: MasterPlanDetail }>(`/api/v1/master-plans/${id}`);
-  return response.data.data;
+  const response = await apiClient.get<MasterPlanDetail>(`/api/v1/master-plans/${id}`);
+  return response.data;
 };
 
 export const createMasterPlan = async (payload: {
@@ -79,13 +81,13 @@ export const createMasterPlan = async (payload: {
   nama?: string;
   items?: { id_wo: number; no_urut?: number }[];
 }): Promise<MasterPlanDetail> => {
-  const response = await apiClient.post<{ data: MasterPlanDetail }>('/api/v1/master-plans', payload);
-  return response.data.data;
+  const response = await apiClient.post<MasterPlanDetail>('/api/v1/master-plans', payload);
+  return response.data;
 };
 
 export const updateMasterPlan = async (id: number, payload: { nama: string }): Promise<MasterPlanDetail> => {
-  const response = await apiClient.put<{ data: MasterPlanDetail }>(`/api/v1/master-plans/${id}`, payload);
-  return response.data.data;
+  const response = await apiClient.put<MasterPlanDetail>(`/api/v1/master-plans/${id}`, payload);
+  return response.data;
 };
 
 export const deleteMasterPlan = async (id: number): Promise<void> => {
@@ -96,11 +98,11 @@ export const addMasterPlanItem = async (
   planId: number,
   payload: { id_wo: number; no_urut?: number }
 ): Promise<MasterPlanItemDetail> => {
-  const response = await apiClient.post<{ data: MasterPlanItemDetail }>(
+  const response = await apiClient.post<MasterPlanItemDetail>(
     `/api/v1/master-plans/${planId}/items`,
     payload
   );
-  return response.data.data;
+  return response.data;
 };
 
 export const removeMasterPlanItem = async (planId: number, itemId: number): Promise<void> => {
