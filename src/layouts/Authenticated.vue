@@ -99,8 +99,8 @@ const navMainItems = computed(() => {
     ].filter((item) => !item.permission || hasPermission(item.permission))
   }
 
-  if (authStore.roleName === "OPERATOR") {
-    const operatorItems: NavSection[] = [
+  if (authStore.roleName === "ADMIN_SISTEM") {
+    const adminSistemItems: NavSection[] = [
       {
         title: "Dashboard",
         url: "/dashboard",
@@ -148,7 +148,7 @@ const navMainItems = computed(() => {
       },
     ]
 
-    return operatorItems
+    return adminSistemItems
       .map((item) => {
         if (item.permission && !hasPermission(item.permission)) {
           return null
