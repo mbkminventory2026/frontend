@@ -284,6 +284,11 @@ const navMainItems = computed(() => {
           permission: "WO_READ",
         },
         {
+          title: "Master Plan",
+          url: "/master-plan",
+          permission: "MASTER_PLAN_READ",
+        },
+        {
           title: "Marker Plan",
           url: "/marker-plan",
           permission: "MARKER_PLAN_READ",
