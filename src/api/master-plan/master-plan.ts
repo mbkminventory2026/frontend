@@ -30,12 +30,14 @@ export interface TargetProsesItem {
 export interface MasterPlanItemDetail {
   id_master_plan_item: number;
   id_master_plan: number;
+  id_wo_shell: number;
   id_wo: number;
   no_urut: number;
   buyer: string;
   style: string;
   qty: number;
   color: string;
+  deskripsi: string;
   created_at: string;
   target_harian: TargetHarianItem[];
   output_harian: OutputHarianItem[];
@@ -79,7 +81,7 @@ export const createMasterPlan = async (payload: {
   id_departemen: number;
   id_production_line: number;
   nama?: string;
-  items?: { id_wo: number; no_urut?: number }[];
+  items?: { id_wo_shell: number; no_urut?: number }[];
 }): Promise<MasterPlanDetail> => {
   const response = await apiClient.post<MasterPlanDetail>('/api/v1/master-plans', payload);
   return response.data;
@@ -96,7 +98,7 @@ export const deleteMasterPlan = async (id: number): Promise<void> => {
 
 export const addMasterPlanItem = async (
   planId: number,
-  payload: { id_wo: number; no_urut?: number }
+  payload: { id_wo_shell: number; no_urut?: number }
 ): Promise<MasterPlanItemDetail> => {
   const response = await apiClient.post<MasterPlanItemDetail>(
     `/api/v1/master-plans/${planId}/items`,

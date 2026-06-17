@@ -7,7 +7,7 @@ import { toast } from 'vue-sonner';
 import { createMasterPlan } from '@/api/master-plan/master-plan';
 import { getDepartemen } from '@/api/departemen/departemen';
 import { getProductionLines, type ProductionLine } from '@/api/production-master/production-master';
-import { getWorkOrders, type WorkOrderListItem } from '@/api/work-orders/work-orders';
+import { getWorkOrders, getWorkOrderById, type WorkOrderListItem, type WorkOrderShell } from '@/api/work-orders/work-orders';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,9 +28,11 @@ const selectedLineId = ref<number | ''>('');
 const nama = ref('');
 
 interface ItemEntry {
-  id_wo: number | '';
-  no_urut: number;
-  label: string;
+    id_wo: number | '';
+    id_wo_shell: number | '';
+    no_urut: number;
+    shells: WorkOrderShell[];
+    isLoadingShells: boolean;
 }
 const items = ref<ItemEntry[]>([]);
 
@@ -56,7 +58,7 @@ onMounted(async () => {
 });
 
 const addItem = () => {
-    items.value.push({ id_wo: '', no_urut: items.value.length + 1, label: '' });
+    items.value.push({ id_wo: '', id_wo_shell: '', no_urut: items.value.length + 1, shells: [], isLoadingShells: false });
 };
 
 const removeItem = (index: number) => {
@@ -64,21 +66,31 @@ const removeItem = (index: number) => {
     items.value.forEach((item, i) => { item.no_urut = i + 1; });
 };
 
-const onWoSelect = (index: number, woId: number) => {
+const onWoSelect = async (index: number, woId: number) => {
     const item = items.value[index];
     if (!item) return;
     item.id_wo = woId;
-    const wo = woList.value.find(w => w.id_wo === woId);
-    item.label = wo ? `${wo.buyer} - ${wo.model}` : '';
+    item.id_wo_shell = '';
+    item.shells = [];
+    if (!woId) return;
+    item.isLoadingShells = true;
+    try {
+        const detail = await getWorkOrderById(woId);
+        item.shells = detail.shells ?? [];
+    } catch {
+        toast.error('Gagal memuat data shell WO');
+    } finally {
+        item.isLoadingShells = false;
+    }
 };
 
 const handleSubmit = async () => {
     if (!selectedDepartemenId.value) { toast.error('Pilih departemen'); return; }
     if (!selectedLineId.value) { toast.error('Pilih line produksi'); return; }
 
-    const validItems = items.value.filter(it => it.id_wo !== '');
-    const duplicateWo = validItems.length !== new Set(validItems.map(it => it.id_wo)).size;
-    if (duplicateWo) { toast.error('WO tidak boleh duplikat'); return; }
+    const validItems = items.value.filter(it => it.id_wo_shell !== '');
+    const duplicateShell = validItems.length !== new Set(validItems.map(it => it.id_wo_shell)).size;
+    if (duplicateShell) { toast.error('Shell WO tidak boleh duplikat'); return; }
 
     isSubmitting.value = true;
     try {
@@ -86,7 +98,7 @@ const handleSubmit = async () => {
             id_departemen: selectedDepartemenId.value as number,
             id_production_line: selectedLineId.value as number,
             nama: nama.value.trim(),
-            items: validItems.map(it => ({ id_wo: it.id_wo as number, no_urut: it.no_urut })),
+            items: validItems.map(it => ({ id_wo_shell: it.id_wo_shell as number, no_urut: it.no_urut })),
         });
         toast.success('Master Plan berhasil dibuat');
         router.navigate({ to: '/master-plan/$id', params: { id: String(result.id_master_plan) } });
@@ -157,32 +169,54 @@ const handleSubmit = async () => {
             <!-- Items -->
             <Card class="p-5 space-y-4">
                 <div class="flex items-center justify-between">
-                    <h2 class="font-semibold text-neutral-800">Work Order dalam Plan</h2>
+                    <h2 class="font-semibold text-neutral-800">Work Order Shell dalam Plan</h2>
                     <Button variant="outline" size="sm" @click="addItem">
                         <PlusIcon class="w-4 h-4 mr-1" />
-                        Tambah WO
+                        Tambah Item
                     </Button>
                 </div>
 
                 <p v-if="items.length === 0" class="text-sm text-neutral-400 italic py-3 text-center">
-                    Belum ada WO. Klik "Tambah WO" atau tambahkan setelah plan dibuat.
+                    Belum ada item. Klik "Tambah Item" atau tambahkan setelah plan dibuat.
                 </p>
 
-                <div v-for="(item, index) in items" :key="index" class="flex items-center gap-3 border border-neutral-200 rounded-lg p-3">
-                    <span class="text-sm font-medium text-neutral-500 w-6 text-center">{{ item.no_urut }}</span>
-                    <select
-                        :value="item.id_wo"
-                        @change="onWoSelect(index, Number(($event.target as HTMLSelectElement).value))"
-                        class="flex-1 border border-neutral-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-neutral-400"
-                    >
-                        <option value="">-- Pilih WO --</option>
-                        <option v-for="wo in woList" :key="wo.id_wo" :value="wo.id_wo">
-                            #{{ wo.id_wo }} — {{ wo.buyer }} {{ wo.model }} ({{ wo.qty }} pcs)
-                        </option>
-                    </select>
-                    <Button variant="ghost" size="icon" class="text-red-500 hover:bg-red-50" @click="removeItem(index)">
-                        <Trash2Icon class="w-4 h-4" />
-                    </Button>
+                <div v-for="(item, index) in items" :key="index" class="border border-neutral-200 rounded-lg p-3 space-y-2">
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm font-medium text-neutral-500 w-6 text-center flex-shrink-0">{{ item.no_urut }}</span>
+                        <!-- WO selector -->
+                        <select
+                            :value="item.id_wo"
+                            @change="onWoSelect(index, Number(($event.target as HTMLSelectElement).value))"
+                            class="flex-1 border border-neutral-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-neutral-400"
+                        >
+                            <option value="">-- Pilih WO --</option>
+                            <option v-for="wo in woList" :key="wo.id_wo" :value="wo.id_wo">
+                                #{{ wo.id_wo }} — {{ wo.buyer }} {{ wo.model }} ({{ wo.qty }} pcs)
+                            </option>
+                        </select>
+                        <Button variant="ghost" size="icon" class="text-red-500 hover:bg-red-50 flex-shrink-0" @click="removeItem(index)">
+                            <Trash2Icon class="w-4 h-4" />
+                        </Button>
+                    </div>
+                    <!-- Shell selector (shown after WO is selected) -->
+                    <div v-if="item.id_wo !== ''" class="ml-9">
+                        <div v-if="item.isLoadingShells" class="flex items-center gap-2 text-sm text-neutral-400 py-1">
+                            <Spinner class="w-3 h-3" /> Memuat shell...
+                        </div>
+                        <div v-else-if="item.shells.length === 0" class="text-sm text-neutral-400 italic py-1">
+                            WO ini tidak memiliki shell.
+                        </div>
+                        <select
+                            v-else
+                            v-model="item.id_wo_shell"
+                            class="w-full border border-neutral-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-neutral-400"
+                        >
+                            <option value="">-- Pilih Warna / Shell --</option>
+                            <option v-for="s in item.shells" :key="s.id_wo_shell" :value="s.id_wo_shell">
+                                {{ s.color || '(no color)' }} — {{ s.deskripsi }}
+                            </option>
+                        </select>
+                    </div>
                 </div>
             </Card>
 
