@@ -33,7 +33,18 @@ export interface PendingApproval {
   current_status: string;
 }
 
+interface PendingApprovalRaw {
+  id_dokumen: number;
+  nama_tabel_dokumen: string;
+  tipe_peran: string;
+}
+
 export const getPendingApprovals = async (): Promise<PendingApproval[]> => {
   const response = await apiClient.get('/api/v1/approvals/pending');
-  return response.data;
+  const rows: PendingApprovalRaw[] = response.data || [];
+  return rows.map((row) => ({
+    document_id: row.id_dokumen,
+    table_name: row.nama_tabel_dokumen,
+    current_status: row.tipe_peran,
+  }));
 };
