@@ -119,7 +119,7 @@ const totalPendingApprovals = computed(() => pendingApprovals.value?.length || 0
               <div class="font-bold text-slate-700">{{ approval.table_name }} #{{ approval.document_id }}</div>
               <div class="text-xs text-slate-500 mt-1">Status saat ini: <span class="font-medium text-amber-600">{{ approval.current_status }}</span></div>
             </div>
-            <router-link :to="`/approvals/${approval.table_name.toLowerCase()}/${approval.document_id}`" class="px-3 py-1.5 bg-white border border-slate-200 rounded text-sm font-medium text-indigo-600 shadow-sm group-hover:bg-indigo-50 transition-colors">
+            <router-link to="/approvals" class="px-3 py-1.5 bg-white border border-slate-200 rounded text-sm font-medium text-indigo-600 shadow-sm group-hover:bg-indigo-50 transition-colors">
               Review
             </router-link>
           </div>

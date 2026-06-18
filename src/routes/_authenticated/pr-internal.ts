@@ -3,7 +3,7 @@ import { requirePermission } from '@/lib/requirePermission'
 
 export const Route = createFileRoute('/_authenticated/pr-internal')({
   beforeLoad: () => {
-    requirePermission('PO_INTERNAL_READ')()
+    requirePermission('PR_INTERNAL_READ')()
   },
   component: Outlet,
 })
