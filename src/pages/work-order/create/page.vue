@@ -233,16 +233,16 @@ watch(() => step1.id_po_client_item, (newVal) => {
 
 // Step 2: Shells
 interface ShellSize { id_size: number | null; size: string; ratio: any; }
-interface Shell { material_type: string; deskripsi: string; color: string; cons: any; allow: any; qty_per_ratio: any; sizes: ShellSize[]; }
+interface Shell { material_type: string; deskripsi: string; color: string; cons: any; allow: any; qty_per_ratio: any; berat_1_yd: any; sizes: ShellSize[]; }
 interface ColorDialogTarget { kind: 'shell' | 'trim'; index: number; }
 interface SizeDialogTarget { shellIndex: number; sizeIndex: number; }
 
 const shells = ref<Shell[]>([
-  { material_type: 'fabric', deskripsi: '', color: '', cons: 0, allow: 2, qty_per_ratio: 0, sizes: [{ id_size: null, size: '', ratio: 1 }] }
+  { material_type: 'fabric', deskripsi: '', color: '', cons: 0, allow: 2, qty_per_ratio: 0, berat_1_yd: 0, sizes: [{ id_size: null, size: '', ratio: 1 }] }
 ]);
 
 const addShell = () => {
-  shells.value.push({ material_type: 'fabric', deskripsi: '', color: '', cons: 0, allow: 2, qty_per_ratio: 0, sizes: [] });
+  shells.value.push({ material_type: 'fabric', deskripsi: '', color: '', cons: 0, allow: 2, qty_per_ratio: 0, berat_1_yd: 0, sizes: [] });
 };
 const removeShell = (i: number) => shells.value.splice(i, 1);
 const duplicateShell = (i: number) => {
@@ -559,6 +559,7 @@ const step2Valid = computed(() =>
     parseNumber(s.cons) > 0 &&
     parseInteger(s.allow) >= 1 &&
     parseInteger(s.qty_per_ratio) > 0 &&
+    parseNumber(s.berat_1_yd) >= 0 &&
     s.sizes.length > 0 &&
     s.sizes.every(sz => !!sz.id_size && parseToFloat(sz.ratio) > 0)
   ) &&
@@ -597,7 +598,7 @@ const handleSubmit = async () => {
         color: s.color,
         cons: parseNumber(s.cons),
         allow: parseInteger(s.allow),
-        berat_1_yd: 0,
+        berat_1_yd: parseNumber(s.berat_1_yd),
         sizes: s.sizes.map(sz => ({
           id_size: sz.id_size,
           size: sz.size,
@@ -872,7 +873,7 @@ const handleSubmit = async () => {
               </div>
 
               <!-- Shell Fields -->
-              <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+              <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
                 <div class="space-y-1">
                   <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Material Type *</label>
                   <select v-model="shell.material_type"
@@ -920,6 +921,11 @@ const handleSubmit = async () => {
                 <div class="space-y-1">
                   <label class="text-[10px] font-bold text-neutral-500 uppercase">Qty / Ratio *</label>
                   <input v-model="shell.qty_per_ratio" @focus="($event.target as HTMLInputElement).select()" type="text" placeholder="cth: 42"
+                    class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition" />
+                </div>
+                <div class="space-y-1">
+                  <label class="text-[10px] font-bold text-neutral-500 uppercase">Berat/Yard (Kg) *</label>
+                  <input v-model="shell.berat_1_yd" @input="shell.berat_1_yd = ($event.target as HTMLInputElement).value.replace(/,/g, '.')" @focus="($event.target as HTMLInputElement).select()" type="text" placeholder="cth: 0.25"
                     class="w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition" />
                 </div>
               </div>
