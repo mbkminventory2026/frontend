@@ -1,0 +1,7 @@
+{
+  "target": "vue",
+  "routesDirectory": "./src/routes",
+  "generatedRouteTree": "./src/routeTree.gen.ts",
+  "quoteStyle": "single",
+  "autoCodeSplitting": true
+}
