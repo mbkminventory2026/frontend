@@ -12,7 +12,7 @@ export const Route = createFileRoute('/_authenticated/pr-internal/')({
     },
 
     beforeLoad: ({ search, location }) => {
-        requirePermission('PO_INTERNAL_READ')()
+        requirePermission('PR_INTERNAL_READ')()
         validateTableSearchRedirect(
             '/_authenticated/pr-internal',
             location.search as Record<string, any>,

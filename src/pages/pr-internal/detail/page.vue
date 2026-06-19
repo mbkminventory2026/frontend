@@ -36,7 +36,7 @@ const isLoading = ref(true);
 const showApproveDialog = ref(false);
 const isApproving = ref(false);
 
-const canApprove = computed(() => hasPermission('PR_APPROVE') || hasPermission('ALL_ACCESS'));
+const canApprove = computed(() => hasPermission('PR_INTERNAL_APPROVE') || hasPermission('ALL_ACCESS'));
 const isApproved = computed(() => detail.value?.status?.toLowerCase() === 'approved');
 
 const fetchDetail = async () => {

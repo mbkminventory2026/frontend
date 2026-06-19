@@ -27,8 +27,8 @@ const showApproveDialog = ref(false);
 const approvingId = ref<number | null>(null);
 const isApproving = ref(false);
 
-const canCreate = computed(() => hasPermission('PO_INTERNAL_CREATE'));
-const canApprove = computed(() => hasPermission('PR_APPROVE') || hasPermission('ALL_ACCESS'));
+const canCreate = computed(() => hasPermission('PR_INTERNAL_CREATE'));
+const canApprove = computed(() => hasPermission('PR_INTERNAL_APPROVE') || hasPermission('ALL_ACCESS'));
 
 // ─── Fetch PR List ──────────────────────────────────────
 const fetchData = async () => {
