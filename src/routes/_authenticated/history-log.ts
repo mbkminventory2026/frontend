@@ -2,11 +2,11 @@ import { createFileRoute, Outlet, redirect } from '@tanstack/vue-router'
 import { decodeJwt } from '@/lib/auth'
 import { requirePermission } from '@/lib/requirePermission'
 
-function requireOperatorRole() {
+function requireAdminSistemRole() {
   const token = localStorage.getItem('accessToken')
   const claims = decodeJwt(token)
 
-  if (claims?.role_name !== 'OPERATOR') {
+  if (claims?.role_name !== 'ADMIN_SISTEM') {
     throw redirect({ to: '/forbidden' })
   }
 }
@@ -14,7 +14,7 @@ function requireOperatorRole() {
 export const Route = createFileRoute('/_authenticated/history-log')({
   beforeLoad: () => {
     requirePermission('LOG_READ')()
-    requireOperatorRole()
+    requireAdminSistemRole()
   },
   component: Outlet,
 })

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useParams, useRouter } from '@tanstack/vue-router';
-import { CalendarIcon, HashIcon, InfoIcon, ArrowLeftIcon, ScissorsIcon, Layers2Icon } from 'lucide-vue-next';
+import { CalendarIcon, HashIcon, InfoIcon, ArrowLeftIcon, ScissorsIcon, Layers2Icon, CheckCircle2Icon, XCircleIcon, ClockIcon, ShieldCheckIcon, UserIcon, ExternalLinkIcon, Loader2Icon } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
 import { useSpreadingCuttingPlan } from '@/composables/useSpreadingCuttingPlan';
@@ -197,6 +197,37 @@ const getComponentTotalRollQty = (ratios: any[]) => {
     return ratios.reduce((acc, ratio) => {
         return acc + (ratio.roll_qty || 0);
     }, 0);
+};
+
+// ─── Approval State ────────────────────────────────────
+const auditTrail = ref<DocumentAuditTrail | null>(null);
+const isLoadingApproval = ref(false);
+
+const approvalStatusClass = computed(() => {
+  const status = auditTrail.value?.status_global?.toLowerCase();
+  if (status === 'approved') return 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-800/30';
+  if (status === 'rejected') return 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-800/30';
+  return 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-800/30';
+});
+
+const approvalStatusLabel = computed(() => {
+  const status = auditTrail.value?.status_global?.toLowerCase();
+  if (status === 'approved') return 'APPROVED';
+  if (status === 'rejected') return 'REJECTED';
+  if (auditTrail.value) return 'PENDING';
+  return 'MEMUAT...';
+});
+
+const fetchApprovalStatus = async (docId: string) => {
+  isLoadingApproval.value = true;
+  try {
+    auditTrail.value = await getDocumentAuditTrail('SPREADING_CUTTING_PLAN', docId);
+  } catch {
+    // Silent fail — dokumen mungkin belum masuk alur approval
+    auditTrail.value = null;
+  } finally {
+    isLoadingApproval.value = false;
+  }
 };
 
 onMounted(() => {
@@ -422,6 +453,96 @@ onMounted(() => {
 
         <!-- Right Side: Metadata Info Card -->
         <div class="space-y-6">
+          <!-- Approval Status Card -->
+          <Card class="border border-neutral-200 shadow-sm bg-white">
+            <CardHeader class="bg-neutral-50/50 border-b border-neutral-200 pb-4">
+              <CardTitle class="text-xs font-bold text-neutral-955 uppercase tracking-wider flex items-center gap-2">
+                <ShieldCheckIcon class="w-4 h-4 text-neutral-600" />
+                Status Approval
+              </CardTitle>
+            </CardHeader>
+            <CardContent class="pt-5 space-y-4">
+
+              <!-- Loading -->
+              <div v-if="isLoadingApproval" class="flex items-center justify-center py-4 gap-2">
+                <Loader2Icon class="w-4 h-4 text-neutral-400 animate-spin" />
+                <span class="text-xs text-neutral-400">Memuat status...</span>
+              </div>
+
+              <!-- No approval data -->
+              <div v-else-if="!auditTrail" class="text-center py-4">
+                <span class="text-[11px] text-neutral-400">Belum ada data approval untuk dokumen ini.</span>
+              </div>
+
+              <!-- Approval status -->
+              <div v-else class="space-y-4">
+                <!-- Global Status Badge -->
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Status Dokumen</span>
+                  <span
+                    class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border"
+                    :class="approvalStatusClass"
+                  >
+                    <CheckCircle2Icon v-if="auditTrail.status_global?.toLowerCase() === 'approved'" class="w-3 h-3" />
+                    <XCircleIcon v-else-if="auditTrail.status_global?.toLowerCase() === 'rejected'" class="w-3 h-3" />
+                    <ClockIcon v-else class="w-3 h-3" />
+                    {{ approvalStatusLabel }}
+                  </span>
+                </div>
+
+                <!-- Steps List -->
+                <div class="space-y-2">
+                  <p class="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Alur Persetujuan</p>
+                  <div
+                    v-for="step in auditTrail.steps"
+                    :key="step.id_otoritas_detail"
+                    class="flex items-center justify-between py-2 border-b border-neutral-100 last:border-0"
+                  >
+                    <div class="flex items-center gap-2">
+                      <div
+                        class="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+                        :class="step.done ? 'bg-emerald-100 text-emerald-600' : 'bg-neutral-100 text-neutral-400'"
+                      >
+                        <CheckCircle2Icon v-if="step.done" class="w-3 h-3" />
+                        <ClockIcon v-else class="w-3 h-3" />
+                      </div>
+                      <div>
+                        <p class="text-[11px] font-semibold text-neutral-700">{{ step.tipe_peran }}</p>
+                        <p class="text-[10px] text-neutral-400 flex items-center gap-1">
+                          <UserIcon class="w-2.5 h-2.5" />
+                          {{ step.nama_user || 'Belum Ditugaskan' }}
+                        </p>
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <span
+                        class="text-[9px] font-bold px-1.5 py-0.5 rounded"
+                        :class="step.done ? 'bg-emerald-50 text-emerald-700' : 'bg-neutral-100 text-neutral-500'"
+                      >
+                        {{ step.done ? 'Selesai' : 'Menunggu' }}
+                      </span>
+                      <p v-if="step.waktu_aksi" class="text-[9px] text-neutral-400 mt-0.5">
+                        {{ formatDate(step.waktu_aksi) }}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Link to Approvals page if still pending -->
+                <Button
+                  v-if="auditTrail.status_global?.toLowerCase() !== 'approved'"
+                  variant="outline"
+                  size="sm"
+                  class="w-full text-[11px] border-neutral-300 shadow-xs h-8"
+                  @click="router.navigate({ to: '/approvals' })"
+                >
+                  <ExternalLinkIcon class="w-3.5 h-3.5 mr-1.5" />
+                  Proses di Halaman Approval
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card class="border border-neutral-200 shadow-sm bg-white">
             <CardHeader class="bg-neutral-50/50 border-b border-neutral-200 pb-4">
               <CardTitle class="text-xs font-bold text-neutral-955 uppercase tracking-wider flex items-center gap-2">

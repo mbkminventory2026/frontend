@@ -32,7 +32,7 @@ const router = useRouter();
 
 const RESERVED_ROLES = [
     'SUPER_ADMIN',
-    'OPERATOR',
+    'ADMIN_SISTEM',
     'ADMIN_KEUANGAN',
     'ADMIN_PRODUKSI',
     'ADMIN_GUDANG',
@@ -125,7 +125,7 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
             const targetRoleName = item.nama_role;
             const canModify = isSuperAdmin || (
                 targetRoleName !== 'SUPER_ADMIN' &&
-                targetRoleName !== 'OPERATOR' &&
+                targetRoleName !== 'ADMIN_SISTEM' &&
                 targetRoleName !== authStore.roleName
             );
 

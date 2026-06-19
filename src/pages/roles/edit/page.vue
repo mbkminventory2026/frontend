@@ -242,7 +242,7 @@ const loadRoleData = async () => {
         const targetRoleName = roleData.nama_role;
         const canModify = isSuperAdmin || (
             targetRoleName !== 'SUPER_ADMIN' &&
-            targetRoleName !== 'OPERATOR' &&
+            targetRoleName !== 'ADMIN_SISTEM' &&
             targetRoleName !== authStore.roleName
         );
 

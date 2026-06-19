@@ -52,8 +52,8 @@ const roleLabel = computed(() => normalizedRole.value.replace(/_/g, ' ') || 'ADM
     </div>
 
     <!-- Role-Specific Dashboard Views -->
-    <!-- Menampilkan Operator Dashboard khusus untuk Operator -->
-    <OperatorDashboard v-if="normalizedRole === 'OPERATOR' || !normalizedRole" />
+    <!-- Menampilkan Admin Sistem Dashboard khusus untuk Admin Sistem -->
+    <OperatorDashboard v-if="normalizedRole === 'ADMIN_SISTEM' || !normalizedRole" />
     
     <FinanceDashboard v-else-if="normalizedRole === 'ADMIN_KEUANGAN'" />
     <AdminProduksiDashboard v-else-if="normalizedRole === 'ADMIN_PRODUKSI'" />
