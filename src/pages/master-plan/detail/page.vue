@@ -223,8 +223,8 @@ const handleRemoveItem = async (item: MasterPlanItemDetail) => {
 
 const addDateRange = (item: MasterPlanItemDetail) => {
     const start = dateRangeStart.value[item.id_master_plan_item];
-    const end = dateRangeEnd.value[item.id_master_plan_item] || start;
     if (!start) { toast.error('Masukkan tanggal mulai'); return; }
+    const end = dateRangeEnd.value[item.id_master_plan_item] || start;
     if (end < start) { toast.error('Tanggal akhir harus >= tanggal mulai'); return; }
 
     if (!itemDayRows.value[item.id_master_plan_item]) {

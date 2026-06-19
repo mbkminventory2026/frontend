@@ -11,14 +11,14 @@ export function useBreadcrumbs() {
             .filter(m => m.routeId !== '__root__' && m.pathname !== '/')
             .map((match) => {
                 const parts = match.routeId.replace(/^\/|\/$/g, '').split('/')
-                const activeParts = parts.filter(part => !part.startsWith('_') && !part.startsWith('$'))
+                const activeParts = parts.filter((part: string) => !part.startsWith('_') && !part.startsWith('$'))
                 
                 if (activeParts.length === 0) return null
 
                 const lastSegment = activeParts[activeParts.length - 1] || ''
                 const defaultLabel = lastSegment
                     .replace(/-/g, ' ')
-                    .replace(/\b\w/g, c => c.toUpperCase())
+                    .replace(/\b\w/g, (c: string) => c.toUpperCase())
 
                 return {
                     label: (match.staticData as any)?.breadcrumb ?? defaultLabel,
