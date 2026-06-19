@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useParams, useRouter } from '@tanstack/vue-router';
 import { CalendarIcon, HashIcon, InfoIcon, ArrowLeftIcon, ScissorsIcon, Layers2Icon } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
 import { useSpreadingCuttingPlan } from '@/composables/useSpreadingCuttingPlan';
+import { getDocumentAuditTrail, type DocumentAuditTrail } from '@/api/approvals/approvals';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -199,7 +200,8 @@ const getComponentTotalRollQty = (ratios: any[]) => {
 };
 
 onMounted(() => {
-    fetchDetail();
+  fetchDetail();
+  fetchApprovalStatus(id.value);
 });
 </script>
 
