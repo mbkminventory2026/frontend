@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "backend:mock": "json-server --watch db.json --port 3001",
-    "build": "vue-tsc -b && vite build",
+    "generate-routes": "npx @tanstack/router-cli generate",
+    "build": "npm run generate-routes && vue-tsc -b && vite build",
     "preview": "vite preview"
   },
   "dependencies": {

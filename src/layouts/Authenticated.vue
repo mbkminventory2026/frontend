@@ -99,8 +99,8 @@ const navMainItems = computed(() => {
     ].filter((item) => !item.permission || hasPermission(item.permission))
   }
 
-  if (authStore.roleName === "OPERATOR") {
-    const operatorItems: NavSection[] = [
+  if (authStore.roleName === "ADMIN_SISTEM") {
+    const adminSistemItems: NavSection[] = [
       {
         title: "Dashboard",
         url: "/dashboard",
@@ -148,7 +148,7 @@ const navMainItems = computed(() => {
       },
     ]
 
-    return operatorItems
+    return adminSistemItems
       .map((item) => {
         if (item.permission && !hasPermission(item.permission)) {
           return null
@@ -284,6 +284,11 @@ const navMainItems = computed(() => {
           permission: "WO_READ",
         },
         {
+          title: "Master Plan",
+          url: "/master-plan",
+          permission: "MASTER_PLAN_READ",
+        },
+        {
           title: "Marker Plan",
           url: "/marker-plan",
           permission: "MARKER_PLAN_READ",
@@ -307,6 +312,11 @@ const navMainItems = computed(() => {
           title: "Packing List",
           url: "/packing-list",
           permission: "PACKING_LIST_READ",
+        },
+        {
+          title: "Rekonsiliasi Material",
+          url: "/rekonsiliasi",
+          permission: "REKONSILIASI_READ",
         },
         {
           title: "PR Internal",

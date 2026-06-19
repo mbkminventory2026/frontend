@@ -37,7 +37,7 @@ const canModify = computed(() => {
     const targetRoleName = values.value.nama_role;
     return isSuperAdmin || (
         targetRoleName !== 'SUPER_ADMIN' &&
-        targetRoleName !== 'OPERATOR' &&
+        targetRoleName !== 'ADMIN_SISTEM' &&
         targetRoleName !== authStore.roleName
     );
 });
