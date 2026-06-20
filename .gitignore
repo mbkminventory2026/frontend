@@ -68,3 +68,5 @@ go.work.sum
 .tanstack/
 
 src/routeTree.gen.ts
+.vercel
+.env*
