@@ -105,7 +105,6 @@ const { hasPermission } = usePermission();
 const params = useParams({ strict: false });
 const id = computed(() => {
   const routeId = params.value.id as string | undefined;
-  console.log('Route params:', params.value, 'routeId:', routeId);
   return routeId && routeId !== 'undefined' ? String(routeId) : null;
 });
 const isEditMode = computed(() => !!id.value);

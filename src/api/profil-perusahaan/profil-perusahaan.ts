@@ -63,8 +63,6 @@ export const getProfilPerusahaan = async (params: {
         }
     })
 
-    console.log('getProfilPerusahaan response:', response.data);
-
     const data = response.data;
     const results = data ? (Array.isArray(data) ? data : [data]) : [];
 
@@ -76,7 +74,6 @@ export const getProfilPerusahaan = async (params: {
 
 export const createProfilPerusahaan = async (data: any) => {
     const payload = await processPayload(data);
-    console.log('Final Create Payload:', payload);
     return await apiClient.post('/api/v1/profil-perusahaan', payload);
 }
 

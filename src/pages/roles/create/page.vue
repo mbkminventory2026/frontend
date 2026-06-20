@@ -137,19 +137,11 @@ function isPageSelected(group: any): boolean {
 }
 
 function handlePageToggle(group: any, checked: any) {
-    console.log(`=== [DEBUG] PAGE CHECKBOX TOGGLED ===`);
-    console.log(`Halaman: ${group.label} (${group.key})`);
-    console.log(`Status: ${checked ? 'DIPILIH (Checked)' : 'BATAL DIPILIH (Unchecked)'}`);
-    console.log(`Otomatis Grant Hak Akses GET/READ:`, group.readCodes);
     if (group.actions && group.actions.length > 0) {
-        console.log(`Daftar Operasi Khusus (Field 4) yang ${checked ? 'akan muncul' : 'dihilangkan'}:`);
         group.actions.forEach((a: any) => {
-            console.log(`  - ${a.label} [Kode: ${a.code}]`);
         });
     } else {
-        console.log(`Tidak ada Operasi Khusus (Field 4) untuk halaman ini.`);
     }
-    console.log(`======================================`);
 
     let currentVals = [...selectedPermissionIds.value];
     if (checked) {
