@@ -79,7 +79,7 @@ const normalizedInitialValues = computed(() => {
 // Initialize and sync formValues when dialog opens or initialValues change
 watch(
   [() => props.isOpen, () => props.initialValues],
-  ([open, initVals]) => {
+  ([open, _initVals]) => {
     if (open) {
       formValues.value = { ...normalizedInitialValues.value }
     } else {
@@ -521,8 +521,7 @@ function isPageSelected(group: any, value: any): boolean {
 
 function handlePageToggle(group: any, checked: any, value: any, handleChange: any) {
   if (group.actions && group.actions.length > 0) {
-      group.actions.forEach((a: any) => {
-      });
+      // no-op: actions exist but no per-action processing needed here
   } else {
   }
 

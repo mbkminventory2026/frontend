@@ -138,8 +138,7 @@ function isPageSelected(group: any): boolean {
 
 function handlePageToggle(group: any, checked: any) {
     if (group.actions && group.actions.length > 0) {
-        group.actions.forEach((a: any) => {
-        });
+        // no-op: actions exist but no per-action processing needed here
     } else {
     }
 
