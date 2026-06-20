@@ -75,14 +75,11 @@ const normalizedInitialValues = computed(() => {
   return vals
 })
 
-
-
 // Initialize formValues when dialog opens or initialValues change
 // Initialize and sync formValues when dialog opens or initialValues change
 watch(
   [() => props.isOpen, () => props.initialValues],
   ([open, initVals]) => {
-    console.log("[DEBUG] watch open/initialValues:", open, initVals)
     if (open) {
       formValues.value = { ...normalizedInitialValues.value }
     } else {
@@ -289,8 +286,6 @@ const fields = computed(() => {
 function onFieldChange(key: string, value: any) {
   formValues.value = { ...formValues.value, [key]: value }
 }
-
-
 
 function coerceValue(value: any, field: DialogField): any {
   if (value == null || value === '') return value
@@ -519,27 +514,17 @@ function handleAllAccessToggle(checked: boolean, handleChange: any) {
 }
 
 function isPageSelected(group: any, value: any): boolean {
-  console.log(`[DEBUG] isPageSelected for ${group.label}, value:`, value, "readValues:", group.readValues);
   if (!group.readValues || group.readValues.length === 0) return false
   const res = Array.isArray(value) && group.readValues.every((rv: any) => value.some((v: any) => String(v) === String(rv)))
-  console.log(`[DEBUG] isPageSelected result for ${group.label}:`, res);
   return res
 }
 
 function handlePageToggle(group: any, checked: any, value: any, handleChange: any) {
-  console.log(`=== [DEBUG] PAGE CHECKBOX TOGGLED (DIALOG) ===`);
-  console.log(`Halaman: ${group.label} (${group.key})`);
-  console.log(`Status: ${checked ? 'DIPILIH (Checked)' : 'BATAL DIPILIH (Unchecked)'}`);
-  console.log(`Otomatis Grant Hak Akses GET/READ:`, group.readCodes);
   if (group.actions && group.actions.length > 0) {
-      console.log(`Daftar Operasi Khusus (Field 4) yang ${checked ? 'akan muncul' : 'dihilangkan'}:`);
       group.actions.forEach((a: any) => {
-          console.log(`  - ${a.label} [Kode: ${a.code}]`);
       });
   } else {
-      console.log(`Tidak ada Operasi Khusus (Field 4) untuk halaman ini.`);
   }
-  console.log(`==============================================`);
 
   let currentVals = Array.isArray(value) ? [...value] : []
   if (checked) {

@@ -97,12 +97,9 @@ export function useAIEstimation() {
       jenis_kain: Number(form.value.jenis_kain),
     };
 
-    console.log('[AI Estimation] Sending payload to Go backend:', JSON.stringify(payload));
-
     isLoading.value = true;
     try {
       const result = await predictAIEstimation(payload);
-      console.log('[AI Estimation] Received result from Go backend:', JSON.stringify(result));
       estimationResult.value = result;
       toast.success('Estimasi AI berhasil dihitung!');
     } catch (error: any) {
