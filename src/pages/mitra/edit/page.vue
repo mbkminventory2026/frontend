@@ -26,7 +26,11 @@ const formSchema = [
     placeholder: 'Pilih tipe perusahaan',
     type: 'select',
     required: true,
-    rules: 'required'
+    rules: 'required',
+    options: [
+      { label: 'Client', value: 'CLIENT' },
+      { label: 'Supplier', value: 'SUPPLIER' }
+    ]
   },
   {
     name: 'alamat',

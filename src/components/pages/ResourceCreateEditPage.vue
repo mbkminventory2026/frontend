@@ -59,6 +59,7 @@ export interface ResourceCreateEditPageProps<T> {
     type?: any;
     required?: boolean;
     rules?: string;
+    options?: any[];
   }>;
 
   /**
@@ -241,6 +242,7 @@ const description = computed(() => {
                 :label="field.label"
                 :placeholder="field.placeholder"
                 :type="field.type"
+                :options="field.options"
                 :class="{
                   'sm:col-span-2': field.name?.includes('keterangan') || field.name?.includes('description') || field.name?.includes('alamat'),
                 }"
