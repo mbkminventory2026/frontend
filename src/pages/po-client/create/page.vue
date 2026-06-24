@@ -73,7 +73,7 @@ const { values, isLoading, isSaving } = form;
 // Add/Remove Nested Table Rows
 const addItem = () => {
     if (!values.value.items) values.value.items = [];
-    values.value.items.push({ style: '', colour: '', qty: 1, price: 'Rp 0', description: '' });
+    values.value.items.push({ style: '', qty: 1, price: 'Rp 0', description: '' });
 };
 
 const removeItem = (index: any) => {
@@ -112,8 +112,8 @@ form.save = async () => {
     for (const item of values.value.items) {
         const priceNum = parseRupiahToNumber(item.price);
         const qtyNum = parseToInt(item.qty);
-        if (!item.style || !item.colour || qtyNum <= 0 || priceNum < 0) {
-            toast.error("Harap lengkapi semua baris item (Style, Colour, Qty > 0, Price >= 0).");
+        if (!item.style || qtyNum <= 0 || priceNum < 0) {
+            toast.error("Harap lengkapi semua baris item (Style, Qty > 0, Price >= 0).");
             return;
         }
     }
@@ -141,7 +141,6 @@ form.save = async () => {
         id_mitra: Number(values.value.idMitra),
         items: values.value.items.map((item: any) => ({
             style: item.style,
-            colour: item.colour,
             qty: parseToInt(item.qty),
             price: parseRupiahToNumber(item.price),
             description: item.description || ''
@@ -174,12 +173,11 @@ onMounted(async () => {
                 items: detail.items && detail.items.length > 0 
                     ? detail.items.map((i: any) => ({
                         style: i.style,
-                        colour: i.colour,
                         qty: i.qty,
                         price: formatRupiah(i.price),
                         description: i.description || ''
                       }))
-                    : [{ style: '', colour: '', qty: 1, price: 'Rp 0', description: '' }],
+                    : [{ style: '', qty: 1, price: 'Rp 0', description: '' }],
                 penanggungJawab: detail.penanggung_jawab && detail.penanggung_jawab.length > 0
                     ? detail.penanggung_jawab.map((pj: any) => ({
                         nama: pj.nama,
@@ -204,7 +202,7 @@ onMounted(async () => {
             paymentTerm: '',
             file: '',
             idMitra: authStore.isMitra ? String(authStore.mitraId || '') : '',
-            items: [{ style: '', colour: '', qty: 1, price: 'Rp 0', description: '' }],
+            items: [{ style: '', qty: 1, price: 'Rp 0', description: '' }],
             penanggungJawab: [{ nama: '', noTelp: '', email: '' }]
         };
     }
@@ -330,9 +328,8 @@ const grandFormTotal = computed(() => {
                             <thead class="bg-neutral-50/75 text-neutral-600 font-semibold border-b border-neutral-200 text-[11px] uppercase tracking-wider">
                                 <tr>
                                     <th class="p-3.5 w-[22%] whitespace-nowrap text-neutral-700">Style <span class="text-red-500">*</span></th>
-                                    <th class="p-3.5 w-[18%] whitespace-nowrap text-neutral-700">Colour <span class="text-red-500">*</span></th>
                                     <th class="p-3.5 w-[12%] whitespace-nowrap text-neutral-700 text-center">Qty <span class="text-red-500">*</span></th>
-                                    <th class="p-3.5 w-[22%] whitespace-nowrap text-neutral-700">Price <span class="text-red-500">*</span></th>
+                                    <th class="p-3.5 w-[24%] whitespace-nowrap text-neutral-700">Price <span class="text-red-500">*</span></th>
                                     <th class="p-3.5 whitespace-nowrap text-neutral-700">Description</th>
                                     <th class="p-3.5 text-center w-[8%] whitespace-nowrap text-neutral-700">Actions</th>
                                 </tr>
@@ -341,9 +338,6 @@ const grandFormTotal = computed(() => {
                                 <tr v-for="(item, idx) in values.items" :key="idx" class="hover:bg-neutral-50/40 transition-colors duration-150">
                                     <td class="p-3">
                                         <Input v-model="item.style" placeholder="Style/Model" class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" :aria-invalid="hasSubmitted && !item.style ? 'true' : undefined" />
-                                    </td>
-                                    <td class="p-3">
-                                        <Input v-model="item.colour" placeholder="Colour" class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" :aria-invalid="hasSubmitted && !item.colour ? 'true' : undefined" />
                                     </td>
                                     <td class="p-3">
                                         <Input v-model="item.qty" type="text" class="h-9 text-sm border-neutral-200 text-center focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white" :aria-invalid="hasSubmitted && (!item.qty || parseToInt(item.qty) <= 0) ? 'true' : undefined" />
@@ -370,7 +364,7 @@ const grandFormTotal = computed(() => {
                                 
                                 <!-- Grand Total Footer -->
                                 <tr class="bg-neutral-50/55 border-t-2 border-neutral-200 font-semibold text-neutral-900 text-xs">
-                                    <td colspan="2" class="p-3.5 text-right uppercase tracking-wider font-bold">Grand Total:</td>
+                                    <td class="p-3.5 text-right uppercase tracking-wider font-bold">Grand Total:</td>
                                     <td class="p-3.5 text-center font-mono font-bold text-neutral-950">{{ totalFormQty }}</td>
                                     <td class="p-3.5 text-left font-mono font-bold text-neutral-950">{{ formatRupiah(grandFormTotal) }}</td>
                                     <td></td>

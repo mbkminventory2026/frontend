@@ -4,7 +4,6 @@ import { mapPayloadToSnakeCase } from "@/lib/utils";
 export interface POClientItemResponse {
     id_po_client_item?: number;
     style: string;
-    colour: string;
     description?: string;
     qty: number;
     price: number;

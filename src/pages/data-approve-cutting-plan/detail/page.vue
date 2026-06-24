@@ -143,7 +143,6 @@ onMounted(() => {
             <p class="text-sm text-neutral-500 mt-1">
               {{ detail.buyer }} · {{ detail.model }}
               <span v-if="detail.style" class="ml-2 text-neutral-400">Style: {{ detail.style }}</span>
-              <span v-if="detail.colour" class="ml-2 text-neutral-400">Colour: {{ detail.colour }}</span>
             </p>
           </div>
         </div>
@@ -393,10 +392,6 @@ onMounted(() => {
               <div v-if="detail.style" class="flex justify-between items-center py-1 border-b border-neutral-100">
                 <span class="text-neutral-400">Style</span>
                 <span class="font-medium">{{ detail.style }}</span>
-              </div>
-              <div v-if="detail.colour" class="flex justify-between items-center py-1 border-b border-neutral-100">
-                <span class="text-neutral-400">Colour</span>
-                <span class="font-medium">{{ detail.colour }}</span>
               </div>
               <div class="flex justify-between items-center py-1">
                 <span class="text-neutral-400 flex items-center gap-1.5"><CalendarIcon class="w-3.5 h-3.5" /> Dibuat</span>

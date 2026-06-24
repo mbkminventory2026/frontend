@@ -17,7 +17,6 @@ export interface DataApproveCuttingPlanDetail {
   buyer: string;
   model: string;
   style: string;
-  colour: string;
   created_at: string;
   rows: DataApproveCuttingPlanRow[];
 }

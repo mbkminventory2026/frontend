@@ -786,7 +786,7 @@ const handleSubmit = async () => {
               </div>
 
               <div class="space-y-1.5">
-                <label class="text-xs font-semibold text-neutral-700">PO Item (Style / Colour) <span class="text-red-500">*</span></label>
+                <label class="text-xs font-semibold text-neutral-700">PO Item (Style) <span class="text-red-500">*</span></label>
                 <select
                   v-model="step1.id_po_client_item"
                   :disabled="!step1.selectedPOId || isLoadingPOItems"
@@ -796,7 +796,7 @@ const handleSubmit = async () => {
                     {{ isLoadingPOItems ? 'Memuat item...' : (step1.selectedPOId && poItemOptions.length === 0) ? 'Tidak ada item garmen tersedia (Semua sudah memiliki WO)' : 'Pilih PO Item...' }}
                   </option>
                   <option v-for="item in poItemOptions" :key="item.id_po_client_item" :value="item.id_po_client_item">
-                    {{ item.style }} — {{ item.colour }} ({{ item.qty }} pcs)
+                    {{ item.style }}{{ item.description ? ` - ${item.description}` : '' }} ({{ item.qty }} pcs)
                   </option>
                 </select>
               </div>

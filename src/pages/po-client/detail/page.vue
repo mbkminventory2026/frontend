@@ -456,7 +456,6 @@ onMounted(() => {
                                     <thead class="bg-neutral-50/50 text-neutral-600 font-semibold border-b border-neutral-200">
                                         <tr>
                                             <th class="p-4 w-[20%]">Style / Model</th>
-                                            <th class="p-4 w-[15%]">Colour</th>
                                             <th class="p-4 text-center w-[10%]">Qty</th>
                                             <th class="p-4 text-right w-[15%]">Unit Price</th>
                                             <th class="p-4 text-right w-[15%]">Total Price</th>
@@ -471,7 +470,6 @@ onMounted(() => {
                                                     {{ item.description }}
                                                 </div>
                                             </td>
-                                            <td class="p-4">{{ item.colour }}</td>
                                             <td class="p-4 text-center font-mono font-medium">{{ item.qty }}</td>
                                             <td class="p-4 text-right font-mono">{{ formatPrice(item.price) }}</td>
                                             <td class="p-4 text-right font-mono font-semibold">{{ formatPrice(item.qty * item.price) }}</td>
@@ -572,7 +570,7 @@ onMounted(() => {
                                             :key="item.id_po_client_item" 
                                             :value="item.id_po_client_item"
                                         >
-                                            {{ item.style }} ({{ item.colour }})
+                                            {{ item.style }}{{ item.description ? ` - ${item.description}` : '' }}
                                         </option>
                                     </select>
                                 </div>

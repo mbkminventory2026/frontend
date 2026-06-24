@@ -180,6 +180,18 @@ const navMainItems = computed(() => {
       permission: "MASTER_PROFIL_PERUSAHAAN_READ",
     },
     {
+      title: "Daftar Barang",
+      url: "/barang",
+      icon: Boxes,
+      permission: "MASTER_BARANG_READ",
+    },
+    {
+      title: "Jenis Barang",
+      url: "/jenis-barang",
+      icon: Boxes,
+      permission: "MASTER_JENIS_BARANG_READ",
+    },
+    {
       title: "Dashboard",
       url: "/dashboard",
       icon: LayoutDashboard,
@@ -197,16 +209,6 @@ const navMainItems = computed(() => {
       url: "#",
       icon: Boxes,
       items: [
-        {
-          title: "Daftar Barang",
-          url: "/barang",
-          permission: "MASTER_BARANG_READ",
-        },
-        {
-          title: "Jenis Barang",
-          url: "/jenis-barang",
-          permission: "MASTER_JENIS_BARANG_READ",
-        },
         {
           title: "Departemen",
           url: "/departemen",
