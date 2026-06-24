@@ -37,7 +37,7 @@ const submit = async () => {
       <div class="w-full max-w-md rounded-lg border bg-white p-8 shadow-sm">
         <div class="mb-8 text-center">
           <h1 class="text-2xl font-bold tracking-tight text-slate-900">Lupa Password</h1>
-          <p class="mt-2 text-sm text-slate-500">Kirim permintaan reset password ke operator.</p>
+          <p class="mt-2 text-sm text-slate-500">Kirim permintaan reset password ke admin sistem.</p>
         </div>
 
         <form class="space-y-4" @submit.prevent="submit">

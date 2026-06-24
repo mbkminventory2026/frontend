@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { Button } from '@/components/ui/button';
-import OperatorDashboard from './OperatorDashboard.vue';
+import AdminSistemDashboard from './AdminSistemDashboard.vue';
 import FinanceDashboard from './FinanceDashboard.vue';
 import AdminProduksiDashboard from './AdminProduksiDashboard.vue';
 import AdminGudangDashboard from './AdminGudangDashboard.vue';
@@ -53,7 +53,7 @@ const roleLabel = computed(() => normalizedRole.value.replace(/_/g, ' ') || 'ADM
 
     <!-- Role-Specific Dashboard Views -->
     <!-- Menampilkan Admin Sistem Dashboard khusus untuk Admin Sistem -->
-    <OperatorDashboard v-if="normalizedRole === 'ADMIN_SISTEM' || !normalizedRole" />
+    <AdminSistemDashboard v-if="normalizedRole === 'ADMIN_SISTEM' || !normalizedRole" />
     
     <FinanceDashboard v-else-if="normalizedRole === 'ADMIN_KEUANGAN'" />
     <AdminProduksiDashboard v-else-if="normalizedRole === 'ADMIN_PRODUKSI'" />

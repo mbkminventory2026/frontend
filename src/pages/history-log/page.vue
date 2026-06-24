@@ -369,7 +369,7 @@ onMounted(() => {
       <div class="h-1.5 rounded-t-3xl bg-gradient-to-r from-sidebar via-sidebar-accent to-sidebar-primary"></div>
       <div class="flex flex-col gap-3 p-6">
         <div>
-          <h1 class="text-2xl font-bold text-slate-900">History Log Operator</h1>
+          <h1 class="text-2xl font-bold text-slate-900">History Log Aktivitas</h1>
           <p class="mt-1 text-sm text-slate-500">
             Daftar perubahan data yang tercatat dari aksi create, update, dan delete.
           </p>

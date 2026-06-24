@@ -85,7 +85,7 @@ onMounted(fetchItems)
   <div class="space-y-6">
     <div>
       <h1 class="text-2xl font-semibold text-slate-900">Permintaan Reset Password</h1>
-      <p class="mt-1 text-sm text-slate-500">Operator meninjau dan memproses permintaan reset password di halaman ini.</p>
+      <p class="mt-1 text-sm text-slate-500">Admin sistem meninjau dan memproses permintaan reset password di halaman ini.</p>
     </div>
 
     <div class="overflow-hidden rounded-xl border bg-white shadow-sm">

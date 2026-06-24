@@ -64,7 +64,7 @@ const fetchDashboardData = async () => {
     permissionsCount.value = permissionResult.count
     passwordResetRequests.value = resetResult
   } catch (error: any) {
-    toast.error(error.response?.data?.message || 'Gagal memuat overview operator')
+    toast.error(error.response?.data?.message || 'Gagal memuat overview admin sistem')
   } finally {
     isLoading.value = false
   }
@@ -97,7 +97,7 @@ const stats = computed(() => [
   {
     title: 'User Menunggu Approval',
     value: pendingUsers.value.length.toLocaleString(),
-    description: 'Akun baru yang masih perlu ditinjau operator.',
+    description: 'Akun baru yang masih perlu ditinjau admin sistem.',
     icon: UserRoundCheck,
     color: 'text-amber-700',
     bg: 'bg-amber-50',
@@ -121,7 +121,7 @@ const stats = computed(() => [
   {
     title: 'Hak Akses Terdaftar',
     value: permissionsCount.value.toLocaleString(),
-    description: 'Total permission yang dikelola operator.',
+    description: 'Total permission yang dikelola admin sistem.',
     icon: BadgeCheck,
     color: 'text-violet-700',
     bg: 'bg-violet-50',
@@ -134,10 +134,10 @@ const stats = computed(() => [
     <div class="flex flex-col gap-2">
       <h2 class="flex items-center gap-2 text-xl font-bold text-slate-800">
         <ShieldCheck class="h-6 w-6 text-sky-700" />
-        Overview Operasional Operator
+        Overview Operasional Admin Sistem
       </h2>
       <p class="max-w-3xl text-sm text-slate-500">
-        Fokus dashboard operator adalah provisioning akun, approval user, pengelolaan role, dan pemrosesan reset password.
+        Fokus dashboard admin sistem adalah provisioning akun, approval user, pengelolaan role, dan pemrosesan reset password.
       </p>
     </div>
 
@@ -165,7 +165,7 @@ const stats = computed(() => [
         <div class="flex items-center justify-between gap-4">
           <div>
             <h3 class="text-lg font-semibold text-slate-900">Tindak Lanjut Prioritas</h3>
-            <p class="mt-1 text-sm text-slate-500">Daftar item yang paling sering menjadi pekerjaan operator harian.</p>
+            <p class="mt-1 text-sm text-slate-500">Daftar item yang paling sering menjadi pekerjaan admin sistem harian.</p>
           </div>
           <Button
             type="button"

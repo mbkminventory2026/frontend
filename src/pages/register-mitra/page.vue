@@ -85,7 +85,7 @@ const onSubmit = form.handleSubmit(async (values) => {
         </div>
         <h2 class="text-3xl font-bold text-slate-900 tracking-tight">Registrasi Berhasil!</h2>
         <p class="text-slate-500 max-w-md mx-auto mt-4 leading-relaxed">
-          Pendaftaran kemitraan perusahaan Anda telah diajukan ke sistem dan saat ini sedang menunggu proses verifikasi dari Operator. Jika disetujui, akun login Anda akan dibuatkan oleh pihak operator.
+          Pendaftaran kemitraan perusahaan Anda telah diajukan ke sistem dan saat ini sedang menunggu proses verifikasi dari Admin Sistem. Jika disetujui, akun login Anda akan dibuatkan oleh pihak admin sistem.
         </p>
         <div class="mt-8 flex gap-4 justify-center">
           <Link to="/login">
