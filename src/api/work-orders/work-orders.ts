@@ -185,6 +185,23 @@ export const clientCloseWorkOrder = async (id: string | number) => {
   return await apiClient.patch(`/api/v1/work-orders/${id}/client-close`);
 };
 
+export const downloadWorkOrderExcel = async (id: string | number) => {
+  if (!id) throw new Error("ID is required");
+
+  const response = await apiClient.get(`/api/v1/work-orders/${id}/export/excel`, {
+    responseType: "blob",
+  });
+
+  const contentDisposition = response.headers["content-disposition"] as string | undefined;
+  const matchedFileName = contentDisposition?.match(/filename="([^"]+)"/i);
+  const fileName = matchedFileName?.[1] || `work-order-${id}.xlsx`;
+
+  return {
+    blob: response.data as Blob,
+    fileName,
+  };
+};
+
 export interface ReturClientListItem {
   id_retur_client: number;
   id_wo: number;

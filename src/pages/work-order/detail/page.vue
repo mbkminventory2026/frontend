@@ -4,6 +4,7 @@ import { useParams, useRouter, useSearch, useNavigate } from '@tanstack/vue-rout
 import {
     ArrowLeftIcon,
     FileTextIcon,
+    DownloadIcon,
     Layers2Icon,
     ScissorsIcon,
     ClipboardListIcon,
@@ -19,6 +20,7 @@ import {
     getWorkOrderById,
     closeWorkOrder,
     clientCloseWorkOrder,
+    downloadWorkOrderExcel,
     submitWorkOrderReturn,
     type WorkOrderDetailResponse,
 } from '@/api/work-orders/work-orders';
@@ -55,6 +57,7 @@ const id = computed(() => params.value.id);
 const detail = ref<WorkOrderDetailResponse | null>(null);
 const isLoading = ref(true);
 const productionSummary = ref<ProductionAggregateResponse[]>([]);
+const isExportingExcel = ref(false);
 
 // Shell detail state
 const selectedShellId = computed(() => search.value?.['wo-shell'] ? Number(search.value['wo-shell']) : null);
@@ -163,6 +166,26 @@ const handleClientCloseWO = async () => {
         await fetchDetail();
     } catch (error: any) {
         toast.error(error.response?.data?.message || 'Gagal menandai selesai.');
+    }
+};
+
+const handleExportExcel = async () => {
+    isExportingExcel.value = true;
+    try {
+        const result = await downloadWorkOrderExcel(id.value);
+        const objectUrl = window.URL.createObjectURL(result.blob);
+        const link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = result.fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(objectUrl);
+        toast.success('Export Excel Work Order berhasil diunduh.');
+    } catch (error: any) {
+        toast.error(error?.response?.data?.message || 'Gagal mengunduh export Excel Work Order.');
+    } finally {
+        isExportingExcel.value = false;
     }
 };
 
@@ -773,6 +796,16 @@ onMounted(fetchDetail);
                         >
                             <ArrowLeftIcon class="w-4 h-4 mr-2" />
                             Kembali
+                        </Button>
+                        <Button
+                            v-if="!isClient"
+                            :disabled="isExportingExcel"
+                            @click="handleExportExcel"
+                            variant="outline"
+                            class="flex-1 md:flex-none border-emerald-300 text-emerald-700 hover:bg-emerald-50 shadow-xs"
+                        >
+                            <DownloadIcon class="w-4 h-4 mr-2" />
+                            {{ isExportingExcel ? 'Mengunduh...' : 'Export Excel' }}
                         </Button>
                         <Button
                             v-if="isClient && isWOOpen && !detail.retur"
