@@ -1,7 +1,7 @@
 import { ref, computed } from 'vue';
 import { toast } from 'vue-sonner';
 import { predictAIEstimation } from '@/api/dashboard/aiEstimation';
-import type { AIEstimationRequest } from '@/schemas/ai-estimation/request';
+import { aiEstimationRequestSchema, type AIEstimationRequest } from '@/schemas/ai-estimation/request';
 import type { AIPredictionResponseData } from '@/schemas/ai-estimation/response';
 
 import { parseToFloat, parseToInt } from '@/lib/number';
@@ -16,17 +16,18 @@ export function useAIEstimation() {
     qty_l: '',
     qty_xl: '',
     qty_xxl: '',
-    jenis: 1.0,
-    men_women: 1.0,
-    panjang_01: 0.0,
-    embro: 0.0,
-    furing: 0.0,
-    cutting_in_house: 1.0,
+    jenis: undefined,
+    men_women: undefined,
+    panjang_01: undefined,
+    embro: undefined,
+    furing: undefined,
+    cutting_in_house: undefined,
     konsumsi_kain_per_pcs: '',
-    jenis_kain: 1.0,
+    jenis_kain: undefined,
   });
 
   const form = ref<any>(initialFormState());
+  const errors = ref<Record<string, string>>({});
 
   // Real-time calculations matching backend logic, casting to Number to prevent string concatenation
   const totalQty = computed(() => {
@@ -63,11 +64,13 @@ export function useAIEstimation() {
 
   const resetForm = () => {
     form.value = initialFormState();
+    errors.value = {};
     estimationResult.value = null;
     toast.info('Formulir berhasil direset');
   };
 
   const calculateEstimation = async () => {
+    errors.value = {};
     const total = totalQty.value;
     if (total === 0) {
       toast.error('Jumlah total pesanan (QTY S + M + L + XL + XXL) harus lebih besar dari 0.');
@@ -75,34 +78,39 @@ export function useAIEstimation() {
     }
 
     const konsumsi = parseToFloat(form.value.konsumsi_kain_per_pcs);
-    if (konsumsi <= 0) {
-      toast.error('Konsumsi kain per pcs harus lebih besar dari 0.');
+
+    const rawPayload = {
+      qty_s: form.value.qty_s === '' ? undefined : parseToInt(form.value.qty_s),
+      qty_m: form.value.qty_m === '' ? undefined : parseToInt(form.value.qty_m),
+      qty_l: form.value.qty_l === '' ? undefined : parseToInt(form.value.qty_l),
+      qty_xl: form.value.qty_xl === '' ? undefined : parseToInt(form.value.qty_xl),
+      qty_xxl: form.value.qty_xxl === '' ? undefined : parseToInt(form.value.qty_xxl),
+      jenis: form.value.jenis,
+      men_women: form.value.men_women,
+      panjang_01: form.value.panjang_01,
+      embro: form.value.embro,
+      furing: form.value.furing,
+      cutting_in_house: form.value.cutting_in_house,
+      konsumsi_kain_per_pcs: form.value.konsumsi_kain_per_pcs === '' ? undefined : konsumsi,
+      jenis_kain: form.value.jenis_kain,
+    };
+
+    const validation = aiEstimationRequestSchema.safeParse(rawPayload);
+    if (!validation.success) {
+      validation.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          errors.value[issue.path[0].toString()] = issue.message;
+        }
+      });
+      toast.error('Silakan periksa kembali form Anda.');
       return;
     }
 
-    // Map and sanitize request payload to strict numbers
-    const payload: AIEstimationRequest = {
-      qty_s: parseToInt(form.value.qty_s),
-      qty_m: parseToInt(form.value.qty_m),
-      qty_l: parseToInt(form.value.qty_l),
-      qty_xl: parseToInt(form.value.qty_xl),
-      qty_xxl: parseToInt(form.value.qty_xxl),
-      jenis: Number(form.value.jenis),
-      men_women: Number(form.value.men_women),
-      panjang_01: Number(form.value.panjang_01),
-      embro: Number(form.value.embro),
-      furing: Number(form.value.furing),
-      cutting_in_house: Number(form.value.cutting_in_house),
-      konsumsi_kain_per_pcs: konsumsi,
-      jenis_kain: Number(form.value.jenis_kain),
-    };
-
-    console.log('[AI Estimation] Sending payload to Go backend:', JSON.stringify(payload));
+    const payload: AIEstimationRequest = validation.data;
 
     isLoading.value = true;
     try {
       const result = await predictAIEstimation(payload);
-      console.log('[AI Estimation] Received result from Go backend:', JSON.stringify(result));
       estimationResult.value = result;
       toast.success('Estimasi AI berhasil dihitung!');
     } catch (error: any) {
@@ -126,6 +134,7 @@ export function useAIEstimation() {
 
   return {
     form,
+    errors,
     isLoading,
     estimationResult,
     totalQty,

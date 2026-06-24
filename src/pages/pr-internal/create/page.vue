@@ -57,8 +57,6 @@ watch(() => values.value.idWo, async (newVal) => {
     isLoadingMaterials.value = true;
     try {
         const detail = await getWorkOrderById(Number(newVal));
-        console.log("Work Order yang dipilih ID:", newVal);
-        console.log("Work Order detail response:", detail);
         // Flatten ML groups → individual MLI rows. woMaterials stores MLI objects.
         const mlGroups = detail.material_lists || [];
         const flatItems: any[] = [];

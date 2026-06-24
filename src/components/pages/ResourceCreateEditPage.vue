@@ -59,6 +59,7 @@ export interface ResourceCreateEditPageProps<T> {
     type?: any;
     required?: boolean;
     rules?: string;
+    options?: any[];
   }>;
 
   /**
@@ -105,7 +106,6 @@ const { hasPermission } = usePermission();
 const params = useParams({ strict: false });
 const id = computed(() => {
   const routeId = params.value.id as string | undefined;
-  console.log('Route params:', params.value, 'routeId:', routeId);
   return routeId && routeId !== 'undefined' ? String(routeId) : null;
 });
 const isEditMode = computed(() => !!id.value);
@@ -242,6 +242,7 @@ const description = computed(() => {
                 :label="field.label"
                 :placeholder="field.placeholder"
                 :type="field.type"
+                :options="field.options"
                 :class="{
                   'sm:col-span-2': field.name?.includes('keterangan') || field.name?.includes('description') || field.name?.includes('alamat'),
                 }"

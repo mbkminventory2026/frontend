@@ -135,20 +135,11 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
                     size: 'sm',
                     onClick: () => {
                         getRoleById(item.id_role).then((fullRole) => {
-                            console.log("=== [DEBUG] EDIT ROLE CLICKED ===");
-                            console.log("Nama Role:", item.nama_role);
-                            console.log("Daftar ID Hak Akses:", fullRole.hak_akses_ids);
                             
                             // Map IDs to permission codes and details
                             const matchedPerms = (fullRole.hak_akses_ids || []).map(id => {
                                 return permissionOptions.value.find(p => String(p.value) === String(id));
                             }).filter(Boolean) as any[];
-
-                            console.log("Detail Hak Akses dari Database:", matchedPerms.map(p => ({
-                                id: p.value,
-                                kode: p.code,
-                                nama_halaman: p.label
-                            })));
 
                             // Determine active pages
                             const activePages: string[] = [];
@@ -159,8 +150,6 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
                                     activePages.push(`${p.label} [Kode: ${code}]`);
                                 }
                             });
-                            console.log("Halaman yang Aktif (memiliki akses GET/READ):", activePages);
-                            console.log("=================================");
 
                             editDialog.openDialog({
                                 ...item,

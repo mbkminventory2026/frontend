@@ -25,8 +25,6 @@ import {
   Boxes,
   Users,
   Truck,
-  LifeBuoy,
-  Send,
   Sparkles,
   Shield,
   Factory,
@@ -439,18 +437,7 @@ const navMainItems = computed(() => {
 })
 
 const data = {
-  navSecondary: [
-    {
-      title: "Support",
-      url: "#",
-      icon: LifeBuoy,
-    },
-    {
-      title: "Feedback",
-      url: "#",
-      icon: Send,
-    },
-  ],
+  navSecondary: [],
   projects: [],
 }
 </script>

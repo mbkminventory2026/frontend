@@ -1,10 +1,7 @@
 import axios, { AxiosError } from "axios";
 
 export const apiClient = axios.create({
-    // baseURL: 'https://pokeapi.co/api/v2',
-    baseURL: 'http://localhost:8080',
-    // baseURL: 'https://jsonplaceholder.typicode.com/',    // json placeholder
-    // baseURL: 'https://rickandmortyapi.com/api/character',   // format meta
+    baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
     timeout: 60000,
 });
 
@@ -13,11 +10,9 @@ apiClient.interceptors.request.use(
     (config) => {
         // sesuai dengan authStore.ts -> setItem('accessToken')
         const token = localStorage.getItem('accessToken');
-        console.log('[API Request]', config.method?.toUpperCase(), config.url, 'Token exists:', !!token);
 
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
-            console.log('[API Request Headers]', config.headers.Authorization);
         } else {
             console.warn('[API Request Warning] Token is missing from localStorage!');
         }

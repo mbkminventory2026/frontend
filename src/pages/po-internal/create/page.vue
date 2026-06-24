@@ -150,11 +150,8 @@ const currentLoadedPrId = ref<number | string | null>(null);
 const loadPrInternalDetails = async (prId: number | string) => {
     if (!prId) return;
     if (currentLoadedPrId.value === prId) return;
-    console.log('[DEBUG] loadPrInternalDetails dipanggil untuk PR ID:', prId);
     try {
         const pr = await getPRInternalById(prId);
-        console.log('[DEBUG] Detail PR Internal berhasil di-load:', pr);
-        console.log('[DEBUG] Items dari PR Internal:', pr.items);
         
         // Pre-fill header
         values.value.supplierName = pr.vendor_name || '';
@@ -174,7 +171,6 @@ const loadPrInternalDetails = async (prId: number | string) => {
             values.value.items = [{ item: '', description: '', qty: 1, unit: '', unitPrice: 'Rp 0' }];
         }
         currentLoadedPrId.value = prId;
-        console.log('[DEBUG] loadPrInternalDetails selesai. State values saat ini:', values.value);
     } catch (e) {
         console.error('[DEBUG] Gagal mengambil detail PR Internal:', e);
         toast.error('Gagal memuat detail PR Internal.');
@@ -182,7 +178,6 @@ const loadPrInternalDetails = async (prId: number | string) => {
 };
 
 watch(() => values.value.idPrInternal, async (newVal, oldVal) => {
-    console.log('[DEBUG] Watch idPrInternal terpicu:', { newVal, oldVal });
     if (newVal && newVal !== oldVal) {
         await loadPrInternalDetails(newVal);
     } else if (!newVal) {
@@ -192,7 +187,6 @@ watch(() => values.value.idPrInternal, async (newVal, oldVal) => {
         values.value.supplierTelp = '';
         values.value.items = [{ item: '', description: '', qty: 1, unit: '', unitPrice: 'Rp 0' }];
         currentLoadedPrId.value = null;
-        console.log('[DEBUG] idPrInternal kosong. Membersihkan form.');
     }
 });
 
@@ -207,14 +201,10 @@ const computedPrId = computed(() => {
 });
 
 watch([computedPrId, isListLoaded], async ([newPrId, listLoaded]) => {
-    console.log('[DEBUG] Watch computedPrId / isListLoaded terpicu:', { newPrId, listLoaded });
     if (listLoaded && newPrId) {
         const prIdNum = Number(newPrId);
-        console.log('[DEBUG] Memproses pre-fill URL prId:', prIdNum);
         try {
             const pr = await getPRInternalById(prIdNum);
-            console.log('[DEBUG] URL PR Detail berhasil di-load:', pr);
-            console.log('[DEBUG] URL PR Items:', pr.items);
             
             // Check if already in list
             const exists = prInternalList.value.some(item => item.id_pr_internal === prIdNum);
@@ -231,7 +221,6 @@ watch([computedPrId, isListLoaded], async ([newPrId, listLoaded]) => {
                     id_user: pr.id_user,
                     created_at: pr.created_at
                 });
-                console.log('[DEBUG] PR ditambahkan ke opsi list dropdown.');
             }
             
             // Set currentLoadedPrId so watch skips loading it again
@@ -257,7 +246,6 @@ watch([computedPrId, isListLoaded], async ([newPrId, listLoaded]) => {
             } else {
                 values.value.items = [{ item: '', description: '', qty: 1, unit: '', unitPrice: 'Rp 0' }];
             }
-            console.log('[DEBUG] Prefill URL selesai. State values saat ini:', values.value);
         } catch (e) {
             console.error('[DEBUG] Gagal memuat detail PR dari URL:', e);
             toast.error('Gagal memuat detail PR Internal.');
@@ -266,7 +254,6 @@ watch([computedPrId, isListLoaded], async ([newPrId, listLoaded]) => {
 }, { immediate: true });
 
 onMounted(async () => {
-    console.log('[DEBUG] onMounted dipanggil.');
     // Set initial default values
     values.value = {
         tanggal: '',
@@ -285,7 +272,6 @@ onMounted(async () => {
         items: [{ item: '', description: '', qty: 1, unit: '', unitPrice: 'Rp 0' }],
     };
     await fetchApprovedPRInternals();
-    console.log('[DEBUG] fetchApprovedPRInternals selesai.');
 });
 </script>
 

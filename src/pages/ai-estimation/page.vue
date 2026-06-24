@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   jenisOptions,
   menWomenOptions,
@@ -28,10 +29,12 @@ import {
 
 const {
   form,
+  errors,
   isLoading,
   estimationResult,
   totalQty,
   jumlahSize,
+  sizeRatios,
   resetForm,
   calculateEstimation
 } = useAIEstimation();
@@ -75,61 +78,88 @@ const {
                   <Label for="qty_s" class="text-[10px] font-bold text-slate-600 block text-center">S</Label>
                   <Input
                     id="qty_s"
-                    type="text"
+                    type="number"
+                    min="0"
                     v-model="form.qty_s"
                     placeholder="0"
                     class="h-8 text-center text-xs font-medium border-slate-200"
+                    :class="{ 'border-red-500': errors.qty_s }"
                   />
+                  <p v-if="errors.qty_s" class="text-[9px] text-red-500 text-center">{{ errors.qty_s }}</p>
                 </div>
                 <div class="space-y-1">
                   <Label for="qty_m" class="text-[10px] font-bold text-slate-600 block text-center">M</Label>
                   <Input
                     id="qty_m"
-                    type="text"
+                    type="number"
+                    min="0"
                     v-model="form.qty_m"
                     placeholder="0"
                     class="h-8 text-center text-xs font-medium border-slate-200"
+                    :class="{ 'border-red-500': errors.qty_m }"
                   />
+                  <p v-if="errors.qty_m" class="text-[9px] text-red-500 text-center">{{ errors.qty_m }}</p>
                 </div>
                 <div class="space-y-1">
                   <Label for="qty_l" class="text-[10px] font-bold text-slate-600 block text-center">L</Label>
                   <Input
                     id="qty_l"
-                    type="text"
+                    type="number"
+                    min="0"
                     v-model="form.qty_l"
                     placeholder="0"
                     class="h-8 text-center text-xs font-medium border-slate-200"
+                    :class="{ 'border-red-500': errors.qty_l }"
                   />
+                  <p v-if="errors.qty_l" class="text-[9px] text-red-500 text-center">{{ errors.qty_l }}</p>
                 </div>
                 <div class="space-y-1">
                   <Label for="qty_xl" class="text-[10px] font-bold text-slate-600 block text-center">XL</Label>
                   <Input
                     id="qty_xl"
-                    type="text"
+                    type="number"
+                    min="0"
                     v-model="form.qty_xl"
                     placeholder="0"
                     class="h-8 text-center text-xs font-medium border-slate-200"
+                    :class="{ 'border-red-500': errors.qty_xl }"
                   />
+                  <p v-if="errors.qty_xl" class="text-[9px] text-red-500 text-center">{{ errors.qty_xl }}</p>
                 </div>
                 <div class="space-y-1">
                   <Label for="qty_xxl" class="text-[10px] font-bold text-slate-600 block text-center">XXL</Label>
                   <Input
                     id="qty_xxl"
-                    type="text"
+                    type="number"
+                    min="0"
                     v-model="form.qty_xxl"
                     placeholder="0"
                     class="h-8 text-center text-xs font-medium border-slate-200"
+                    :class="{ 'border-red-500': errors.qty_xxl }"
                   />
+                  <p v-if="errors.qty_xxl" class="text-[9px] text-red-500 text-center">{{ errors.qty_xxl }}</p>
                 </div>
               </div>
             </div>
 
             <!-- Live Calculation Summary Panel (More compact, no rainbow bars) -->
-            <div class="p-3 bg-slate-50 border border-slate-100 rounded-lg text-xs flex justify-between items-center text-slate-600">
-              <span class="font-medium">Total Input:</span>
-              <div class="flex gap-4">
-                <span>Total Qty: <strong class="text-slate-800">{{ totalQty }} pcs</strong></span>
-                <span>Ukuran Terisi: <strong class="text-slate-800">{{ jumlahSize }} Size</strong></span>
+            <div class="p-3 bg-slate-50 border border-slate-100 rounded-lg text-xs flex flex-col gap-2 text-slate-600">
+              <div class="flex justify-between items-center">
+                <span class="font-medium">Total Input:</span>
+                <div class="flex gap-4">
+                  <span>Total Qty: <strong class="text-slate-800">{{ totalQty }} pcs</strong></span>
+                  <span>Ukuran Terisi: <strong class="text-slate-800">{{ jumlahSize }} Size</strong></span>
+                </div>
+              </div>
+              <div v-if="totalQty > 0" class="flex justify-between items-center pt-2 border-t border-slate-200">
+                <span class="font-medium text-[11px]">Rasio Ukuran:</span>
+                <div class="flex gap-2.5 text-[11px]">
+                  <span v-if="sizeRatios.s > 0">S: <strong>{{ (sizeRatios.s * 100).toFixed(1) }}%</strong></span>
+                  <span v-if="sizeRatios.m > 0">M: <strong>{{ (sizeRatios.m * 100).toFixed(1) }}%</strong></span>
+                  <span v-if="sizeRatios.l > 0">L: <strong>{{ (sizeRatios.l * 100).toFixed(1) }}%</strong></span>
+                  <span v-if="sizeRatios.xl > 0">XL: <strong>{{ (sizeRatios.xl * 100).toFixed(1) }}%</strong></span>
+                  <span v-if="sizeRatios.xxl > 0">XXL: <strong>{{ (sizeRatios.xxl * 100).toFixed(1) }}%</strong></span>
+                </div>
               </div>
             </div>
 
@@ -142,112 +172,144 @@ const {
               <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                 <!-- Jenis Pakaian -->
                 <div class="space-y-1">
-                  <Label for="jenis" class="text-xs font-semibold text-slate-700">Jenis Pakaian</Label>
-                  <select
-                    id="jenis"
-                    v-model.number="form.jenis"
-                    class="flex h-9 w-full rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400"
-                  >
-                    <option v-for="opt in jenisOptions" :key="opt.value" :value="opt.value">
-                      {{ opt.label }}
-                    </option>
-                  </select>
+                  <Label for="jenis" class="text-xs font-semibold text-slate-700" :class="{ 'text-red-500': errors.jenis }">Jenis Pakaian</Label>
+                  <Select v-model="form.jenis">
+                    <SelectTrigger id="jenis" class="w-full h-9 text-xs" :class="{ 'border-red-500': errors.jenis }">
+                      <SelectValue placeholder="Pilih Jenis Pakaian..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem v-for="opt in jenisOptions" :key="opt.value" :value="opt.value.toString()">
+                          {{ opt.label }}
+                        </SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <p v-if="errors.jenis" class="text-[10px] text-red-500">{{ errors.jenis }}</p>
                 </div>
 
                 <!-- Kategori Gender -->
                 <div class="space-y-1">
-                  <Label for="men_women" class="text-xs font-semibold text-slate-700">Kategori Target</Label>
-                  <select
-                    id="men_women"
-                    v-model.number="form.men_women"
-                    class="flex h-9 w-full rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400"
-                  >
-                    <option v-for="opt in menWomenOptions" :key="opt.value" :value="opt.value">
-                      {{ opt.label }}
-                    </option>
-                  </select>
+                  <Label for="men_women" class="text-xs font-semibold text-slate-700" :class="{ 'text-red-500': errors.men_women }">Kategori Target</Label>
+                  <Select v-model="form.men_women">
+                    <SelectTrigger id="men_women" class="w-full h-9 text-xs" :class="{ 'border-red-500': errors.men_women }">
+                      <SelectValue placeholder="Pilih Kategori Target..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem v-for="opt in menWomenOptions" :key="opt.value" :value="opt.value.toString()">
+                          {{ opt.label }}
+                        </SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <p v-if="errors.men_women" class="text-[10px] text-red-500">{{ errors.men_women }}</p>
                 </div>
 
                 <!-- Sleeve Length -->
                 <div class="space-y-1">
-                  <Label for="panjang_01" class="text-xs font-semibold text-slate-700">Lengan / Panjang</Label>
-                  <select
-                    id="panjang_01"
-                    v-model.number="form.panjang_01"
-                    class="flex h-9 w-full rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400"
-                  >
-                    <option v-for="opt in panjangOptions" :key="opt.value" :value="opt.value">
-                      {{ opt.label }}
-                    </option>
-                  </select>
+                  <Label for="panjang_01" class="text-xs font-semibold text-slate-700" :class="{ 'text-red-500': errors.panjang_01 }">Lengan / Panjang</Label>
+                  <Select v-model="form.panjang_01">
+                    <SelectTrigger id="panjang_01" class="w-full h-9 text-xs" :class="{ 'border-red-500': errors.panjang_01 }">
+                      <SelectValue placeholder="Pilih Lengan / Panjang..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem v-for="opt in panjangOptions" :key="opt.value" :value="opt.value.toString()">
+                          {{ opt.label }}
+                        </SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <p v-if="errors.panjang_01" class="text-[10px] text-red-500">{{ errors.panjang_01 }}</p>
                 </div>
 
                 <!-- Embroidery -->
                 <div class="space-y-1">
-                  <Label for="embro" class="text-xs font-semibold text-slate-700">Bordir (Embroidery)</Label>
-                  <select
-                    id="embro"
-                    v-model.number="form.embro"
-                    class="flex h-9 w-full rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400"
-                  >
-                    <option v-for="opt in embroOptions" :key="opt.value" :value="opt.value">
-                      {{ opt.label }}
-                    </option>
-                  </select>
+                  <Label for="embro" class="text-xs font-semibold text-slate-700" :class="{ 'text-red-500': errors.embro }">Bordir (Embroidery)</Label>
+                  <Select v-model="form.embro">
+                    <SelectTrigger id="embro" class="w-full h-9 text-xs" :class="{ 'border-red-500': errors.embro }">
+                      <SelectValue placeholder="Pilih Bordir (Embroidery)..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem v-for="opt in embroOptions" :key="opt.value" :value="opt.value.toString()">
+                          {{ opt.label }}
+                        </SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <p v-if="errors.embro" class="text-[10px] text-red-500">{{ errors.embro }}</p>
                 </div>
 
                 <!-- Furing / Lining -->
                 <div class="space-y-1">
-                  <Label for="furing" class="text-xs font-semibold text-slate-700">Furing (Lining)</Label>
-                  <select
-                    id="furing"
-                    v-model.number="form.furing"
-                    class="flex h-9 w-full rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400"
-                  >
-                    <option v-for="opt in furingOptions" :key="opt.value" :value="opt.value">
-                      {{ opt.label }}
-                    </option>
-                  </select>
+                  <Label for="furing" class="text-xs font-semibold text-slate-700" :class="{ 'text-red-500': errors.furing }">Furing (Lining)</Label>
+                  <Select v-model="form.furing">
+                    <SelectTrigger id="furing" class="w-full h-9 text-xs" :class="{ 'border-red-500': errors.furing }">
+                      <SelectValue placeholder="Pilih Furing (Lining)..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem v-for="opt in furingOptions" :key="opt.value" :value="opt.value.toString()">
+                          {{ opt.label }}
+                        </SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <p v-if="errors.furing" class="text-[10px] text-red-500">{{ errors.furing }}</p>
                 </div>
 
                 <!-- Cutting in House -->
                 <div class="space-y-1">
-                  <Label for="cutting_in_house" class="text-xs font-semibold text-slate-700">Lokasi / Metode Cutting</Label>
-                  <select
-                    id="cutting_in_house"
-                    v-model.number="form.cutting_in_house"
-                    class="flex h-9 w-full rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400"
-                  >
-                    <option v-for="opt in cuttingInHouseOptions" :key="opt.value" :value="opt.value">
-                      {{ opt.label }}
-                    </option>
-                  </select>
+                  <Label for="cutting_in_house" class="text-xs font-semibold text-slate-700" :class="{ 'text-red-500': errors.cutting_in_house }">Lokasi / Metode Cutting</Label>
+                  <Select v-model="form.cutting_in_house">
+                    <SelectTrigger id="cutting_in_house" class="w-full h-9 text-xs" :class="{ 'border-red-500': errors.cutting_in_house }">
+                      <SelectValue placeholder="Pilih Lokasi / Metode Cutting..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem v-for="opt in cuttingInHouseOptions" :key="opt.value" :value="opt.value.toString()">
+                          {{ opt.label }}
+                        </SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <p v-if="errors.cutting_in_house" class="text-[10px] text-red-500">{{ errors.cutting_in_house }}</p>
                 </div>
 
                 <!-- Jenis Kain -->
                 <div class="space-y-1">
-                  <Label for="jenis_kain" class="text-xs font-semibold text-slate-700">Jenis Bahan Kain</Label>
-                  <select
-                    id="jenis_kain"
-                    v-model.number="form.jenis_kain"
-                    class="flex h-9 w-full rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-slate-400"
-                  >
-                    <option v-for="opt in jenisKainOptions" :key="opt.value" :value="opt.value">
-                      {{ opt.label }}
-                    </option>
-                  </select>
+                  <Label for="jenis_kain" class="text-xs font-semibold text-slate-700" :class="{ 'text-red-500': errors.jenis_kain }">Jenis Bahan Kain</Label>
+                  <Select v-model="form.jenis_kain">
+                    <SelectTrigger id="jenis_kain" class="w-full h-9 text-xs" :class="{ 'border-red-500': errors.jenis_kain }">
+                      <SelectValue placeholder="Pilih Jenis Bahan Kain..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectGroup>
+                        <SelectItem v-for="opt in jenisKainOptions" :key="opt.value" :value="opt.value.toString()">
+                          {{ opt.label }}
+                        </SelectItem>
+                      </SelectGroup>
+                    </SelectContent>
+                  </Select>
+                  <p v-if="errors.jenis_kain" class="text-[10px] text-red-500">{{ errors.jenis_kain }}</p>
                 </div>
 
                 <!-- Konsumsi Kain per Pcs -->
                 <div class="space-y-1">
-                  <Label for="konsumsi_kain_per_pcs" class="text-xs font-semibold text-slate-700">Konsumsi Kain (meter/pcs)</Label>
+                  <Label for="konsumsi_kain_per_pcs" class="text-xs font-semibold text-slate-700" :class="{ 'text-red-500': errors.konsumsi_kain_per_pcs }">Konsumsi Kain (meter/pcs)</Label>
                   <Input
                     id="konsumsi_kain_per_pcs"
-                    type="text"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
                     v-model="form.konsumsi_kain_per_pcs"
                     placeholder="Contoh: 1.25"
                     class="h-9 border-slate-200 text-xs"
+                    :class="{ 'border-red-500': errors.konsumsi_kain_per_pcs }"
                   />
+                  <p v-if="errors.konsumsi_kain_per_pcs" class="text-[10px] text-red-500">{{ errors.konsumsi_kain_per_pcs }}</p>
                 </div>
               </div>
             </div>
@@ -370,10 +432,10 @@ const {
 
           <!-- Clean Info Advisory -->
           <div class="flex gap-2.5 bg-slate-50 border border-slate-100 rounded-lg p-3 text-[11px] text-slate-600 leading-normal">
-            <Info class="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5" />
+            <Info class="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
             <div>
               <strong class="text-slate-800 block mb-0.5">Catatan Validasi AI:</strong>
-              Prediksi dihitung oleh model klasifikasi & regresi **TabPFN** berdasarkan bobot parameter input. Keakuratan estimasi dipengaruhi konsistensi kapasitas lini produksi aktual.
+              Prediksi dihitung oleh model TabPFN berdasarkan bobot parameter input. Keakuratan estimasi dipengaruhi konsistensi kapasitas lini produksi aktual.
             </div>
           </div>
         </div>
@@ -411,14 +473,5 @@ const {
   }
 }
 
-select {
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-  background-position: right 0.65rem center;
-  background-repeat: no-repeat;
-  background-size: 1.1em 1.1em;
-  padding-right: 2.2rem;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-}
+
 </style>
