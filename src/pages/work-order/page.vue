@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { h, ref, watch, onMounted, computed } from 'vue';
 import { useSearch, useRouter } from '@tanstack/vue-router';
-import { PlusIcon, EyeIcon, CheckCircleIcon, FileTextIcon } from 'lucide-vue-next';
+import { PlusIcon, EyeIcon, CheckCircleIcon, FileTextIcon, DownloadIcon } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
 import {
     getWorkOrders,
     closeWorkOrder,
+    downloadWorkOrderExcel,
     type WorkOrderListItem,
 } from '@/api/work-orders/work-orders';
 import { workOrderSchema } from '@/pages/work-order/schema';
@@ -52,7 +53,6 @@ const fetchData = async () => {
         isLoading.value = false;
     }
 };
-
 // ─── Close WO ──────────────────────────────────────────
 const handleCloseWO = async (id: number) => {
     if (!confirm('Apakah Anda yakin ingin menyelesaikan/menutup Work Order ini? Status penutupan tidak dapat diubah.')) return;
@@ -62,6 +62,28 @@ const handleCloseWO = async (id: number) => {
         await fetchData();
     } catch (error: any) {
         toast.error(error.response?.data?.message || 'Gagal menutup Work Order.');
+    }
+};
+
+// ─── Export Excel ──────────────────────────────────────
+const isExportingMap = ref<Record<number, boolean>>({});
+const handleExportExcel = async (id: number) => {
+    isExportingMap.value[id] = true;
+    try {
+        const result = await downloadWorkOrderExcel(id);
+        const objectUrl = window.URL.createObjectURL(result.blob);
+        const link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = result.fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(objectUrl);
+        toast.success('Export Excel Work Order berhasil diunduh.');
+    } catch (error: any) {
+        toast.error(error?.response?.data?.message || 'Gagal mengunduh export Excel Work Order.');
+    } finally {
+        isExportingMap.value[id] = false;
     }
 };
 
@@ -167,6 +189,16 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
                     }, () => [
                         h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
                         'View'
+                    ]),
+                    h(Button, {
+                        variant: 'outline',
+                        size: 'sm',
+                        class: 'shadow-xs border-neutral-300 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50/50',
+                        disabled: isExportingMap.value[id] || false,
+                        onClick: () => handleExportExcel(id)
+                    }, () => [
+                        h(DownloadIcon, { class: 'w-4 h-4 mr-1' }),
+                        isExportingMap.value[id] ? 'Exporting...' : 'Export'
                     ]),
                     ...(canClose.value && isClientClosed ? [
                         h(Button, {
