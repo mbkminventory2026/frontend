@@ -106,6 +106,23 @@ const navMainItems = computed(() => {
         permission: "DASHBOARD_READ",
       },
       {
+        title: "Master Data",
+        url: "#",
+        icon: Boxes,
+        items: [
+          {
+            title: "Departemen",
+            url: "/departemen",
+            permission: "MASTER_DEPARTEMEN_READ",
+          },
+          {
+            title: "Profil Perusahaan",
+            url: "/profil-perusahaan",
+            permission: "MASTER_PROFIL_PERUSAHAAN_READ",
+          },
+        ],
+      },
+      {
         title: "Manajemen Akses",
         url: "#",
         icon: Users,
