@@ -10,13 +10,14 @@ import {
     Building2,
     ArrowLeftIcon,
     CheckCircleIcon,
+    DownloadIcon,
     MapPin,
     Briefcase,
     User,
 } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
-import { getPRInternalById, approvePRInternal, type PRInternalDetailResponse } from '@/api/pr-internals/pr-internals';
+import { getPRInternalById, approvePRInternal, downloadPRInternalExcel, type PRInternalDetailResponse } from '@/api/pr-internals/pr-internals';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,6 +32,7 @@ const { hasPermission } = usePermission();
 
 const detail = ref<PRInternalDetailResponse | null>(null);
 const isLoading = ref(true);
+const isExportingExcel = ref(false);
 
 // ─── Approve Dialog ─────────────────────────────────────
 const showApproveDialog = ref(false);
@@ -83,6 +85,26 @@ const confirmApprove = async () => {
     }
 };
 
+const handleExportExcel = async () => {
+    isExportingExcel.value = true;
+    try {
+        const result = await downloadPRInternalExcel(id.value);
+        const objectUrl = window.URL.createObjectURL(result.blob);
+        const link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = result.fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(objectUrl);
+        toast.success('Export Excel PR Internal berhasil diunduh.');
+    } catch (error: any) {
+        toast.error(error?.response?.data?.message || 'Gagal mengunduh export Excel PR Internal.');
+    } finally {
+        isExportingExcel.value = false;
+    }
+};
+
 onMounted(() => {
     fetchDetail();
 });
@@ -129,6 +151,15 @@ onMounted(() => {
                 <div class="flex gap-2 w-full md:w-auto">
                     <Button @click="router.history.back()" variant="outline" class="flex-1 md:flex-none border-neutral-300">
                         <ArrowLeftIcon class="w-4 h-4 mr-2" /> Kembali
+                    </Button>
+                    <Button
+                        :disabled="isExportingExcel"
+                        @click="handleExportExcel"
+                        variant="outline"
+                        class="flex-1 md:flex-none border-emerald-300 text-emerald-700 hover:bg-emerald-50 shadow-xs"
+                    >
+                        <DownloadIcon class="w-4 h-4 mr-2" />
+                        {{ isExportingExcel ? 'Mengunduh...' : 'Export Excel' }}
                     </Button>
                     <Button
                         v-if="canApprove && !isApproved"

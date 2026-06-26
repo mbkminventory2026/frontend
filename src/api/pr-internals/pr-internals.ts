@@ -99,6 +99,23 @@ export const approvePRInternal = async (id: string | number) => {
     return (response.data as any).data || response.data;
 };
 
+export const downloadPRInternalExcel = async (id: string | number) => {
+    if (!id) throw new Error("ID is required");
+
+    const response = await apiClient.get(`/api/v1/pr-internals/${id}/export/excel`, {
+        responseType: "blob",
+    });
+
+    const contentDisposition = response.headers["content-disposition"] as string | undefined;
+    const matchedFileName = contentDisposition?.match(/filename="([^"]+)"/i);
+    const fileName = matchedFileName?.[1] || `pr-internal-${id}.xlsx`;
+
+    return {
+        blob: response.data as Blob,
+        fileName,
+    };
+};
+
 /** Fetch all approved PR Internals for use in dropdowns */
 export const getApprovedPRInternals = async () => {
     const response = await apiClient.get<{ items: PRInternalListItem[]; pagination: { total_items: number } }>('/api/v1/pr-internals', {

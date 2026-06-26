@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { h, ref, watch, onMounted, computed } from 'vue';
 import { useSearch, useRouter } from '@tanstack/vue-router';
-import { PlusIcon, EyeIcon, CheckCircleIcon, ClipboardListIcon, FileTextIcon } from 'lucide-vue-next';
+import { PlusIcon, EyeIcon, CheckCircleIcon, ClipboardListIcon, FileTextIcon, DownloadIcon } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
-import { getPRInternals, approvePRInternal, type PRInternalListItem } from '@/api/pr-internals/pr-internals';
+import { getPRInternals, approvePRInternal, downloadPRInternalExcel, type PRInternalListItem } from '@/api/pr-internals/pr-internals';
 import { prInternalSchema } from '@/pages/pr-internal/schema';
 
 import DataTable from '@/components/DataTable.vue';
@@ -21,6 +21,7 @@ const router = useRouter();
 const data = ref<PRInternalListItem[]>([]);
 const totalCount = ref(0);
 const isLoading = ref(false);
+const isExportingMap = ref<Record<number, boolean>>({});
 
 // ─── Confirm Approve Dialog ─────────────────────────────
 const showApproveDialog = ref(false);
@@ -80,6 +81,26 @@ const confirmApprove = async () => {
     }
 };
 
+const handleExportExcel = async (id: number) => {
+    isExportingMap.value[id] = true;
+    try {
+        const result = await downloadPRInternalExcel(id);
+        const objectUrl = window.URL.createObjectURL(result.blob);
+        const link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = result.fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(objectUrl);
+        toast.success('Export Excel PR Internal berhasil diunduh.');
+    } catch (error: any) {
+        toast.error(error?.response?.data?.message || 'Gagal mengunduh export Excel PR Internal.');
+    } finally {
+        isExportingMap.value[id] = false;
+    }
+};
+
 // ─── Table ──────────────────────────────────────────────
 const { table, searchTerm, onSearch, clearFilter } = useTable({
     data: data,
@@ -111,7 +132,7 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
                 const status = (row.getValue('status') as string || '').toLowerCase();
                 const isPending = status !== 'approved';
 
-                return h('div', { class: 'flex gap-2 justify-center items-center' }, [
+                return h('div', { class: 'flex min-w-[320px] gap-2 justify-center items-center' }, [
                     h(Button, {
                         variant: 'outline',
                         size: 'sm',
@@ -120,6 +141,16 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
                     }, () => [
                         h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
                         'View'
+                    ]),
+                    h(Button, {
+                        variant: 'outline',
+                        size: 'sm',
+                        class: 'shadow-xs border-neutral-300 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50/50',
+                        disabled: isExportingMap.value[id] || false,
+                        onClick: () => handleExportExcel(id)
+                    }, () => [
+                        h(DownloadIcon, { class: 'w-4 h-4 mr-1' }),
+                        isExportingMap.value[id] ? 'Exporting...' : 'Export'
                     ]),
                     ...(canApprove.value && isPending ? [
                         h(Button, {
