@@ -89,3 +89,20 @@ export const getPOInternalById = async (id: string | number) => {
     const response = await apiClient.get<{ data: POInternalDetailResponse }>(`/api/v1/po-internals/${id}`);
     return (response.data as any).data || response.data;
 };
+
+export const downloadPOInternalExcel = async (id: string | number) => {
+    if (!id) throw new Error("ID is required");
+
+    const response = await apiClient.get(`/api/v1/po-internals/${id}/export/excel`, {
+        responseType: "blob",
+    });
+
+    const contentDisposition = response.headers["content-disposition"] as string | undefined;
+    const matchedFileName = contentDisposition?.match(/filename="([^"]+)"/i);
+    const fileName = matchedFileName?.[1] || `po-internal-${id}.xlsx`;
+
+    return {
+        blob: response.data as Blob,
+        fileName,
+    };
+};

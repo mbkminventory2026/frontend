@@ -11,9 +11,11 @@ import {
     DollarSign,
     Building2,
     ArrowLeftIcon,
+    DownloadIcon,
 } from 'lucide-vue-next';
+import { toast } from 'vue-sonner';
 
-import { getPOInternalById, type POInternalDetailResponse } from '@/api/po-internals/po-internals';
+import { downloadPOInternalExcel, getPOInternalById, type POInternalDetailResponse } from '@/api/po-internals/po-internals';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,6 +28,7 @@ const id = computed(() => params.value.id);
 
 const detail = ref<POInternalDetailResponse | null>(null);
 const isLoading = ref(true);
+const isExportingExcel = ref(false);
 
 const fetchDetail = async () => {
     isLoading.value = true;
@@ -56,6 +59,26 @@ const totalQty = computed(() => {
     if (!detail.value || !detail.value.items) return 0;
     return detail.value.items.reduce((acc, curr) => acc + curr.qty, 0);
 });
+
+const handleExportExcel = async () => {
+    isExportingExcel.value = true;
+    try {
+        const result = await downloadPOInternalExcel(id.value);
+        const objectUrl = window.URL.createObjectURL(result.blob);
+        const link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = result.fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(objectUrl);
+        toast.success('Export Excel PO Internal berhasil diunduh.');
+    } catch (error: any) {
+        toast.error(error?.response?.data?.message || 'Gagal mengunduh export Excel PO Internal.');
+    } finally {
+        isExportingExcel.value = false;
+    }
+};
 
 onMounted(() => {
     fetchDetail();
@@ -101,6 +124,15 @@ onMounted(() => {
                 <div class="flex gap-2 w-full md:w-auto">
                     <Button @click="router.history.back()" variant="outline" class="flex-1 md:flex-none border-neutral-300">
                         <ArrowLeftIcon class="w-4 h-4 mr-2" /> Kembali
+                    </Button>
+                    <Button
+                        :disabled="isExportingExcel"
+                        @click="handleExportExcel"
+                        variant="outline"
+                        class="flex-1 md:flex-none border-emerald-300 text-emerald-700 hover:bg-emerald-50 shadow-xs"
+                    >
+                        <DownloadIcon class="w-4 h-4 mr-2" />
+                        {{ isExportingExcel ? 'Mengunduh...' : 'Export Excel' }}
                     </Button>
                 </div>
             </div>

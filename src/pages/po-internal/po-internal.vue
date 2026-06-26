@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { h, ref, watch, onMounted } from 'vue';
 import { useSearch, useRouter } from '@tanstack/vue-router';
-import { PlusIcon, EyeIcon } from 'lucide-vue-next';
+import { PlusIcon, EyeIcon, DownloadIcon } from 'lucide-vue-next';
+import { toast } from 'vue-sonner';
 
-import { getPOInternals, type POInternalListItem } from '@/api/po-internals/po-internals';
+import { downloadPOInternalExcel, getPOInternals, type POInternalListItem } from '@/api/po-internals/po-internals';
 import { poInternalSchema } from '@/pages/po-internal/schema';
 
 import DataTable from '@/components/DataTable.vue';
@@ -19,6 +20,7 @@ const router = useRouter();
 const data = ref<POInternalListItem[]>([]);
 const totalCount = ref(0);
 const isLoading = ref(false);
+const isExportingMap = ref<Record<number, boolean>>({});
 
 const fetchData = async () => {
     isLoading.value = true;
@@ -39,6 +41,26 @@ const fetchData = async () => {
         console.error("Gagal fetch PO Internals:", error);
     } finally {
         isLoading.value = false;
+    }
+};
+
+const handleExportExcel = async (id: number) => {
+    isExportingMap.value[id] = true;
+    try {
+        const result = await downloadPOInternalExcel(id);
+        const objectUrl = window.URL.createObjectURL(result.blob);
+        const link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = result.fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(objectUrl);
+        toast.success('Export Excel PO Internal berhasil diunduh.');
+    } catch (error: any) {
+        toast.error(error?.response?.data?.message || 'Gagal mengunduh export Excel PO Internal.');
+    } finally {
+        isExportingMap.value[id] = false;
     }
 };
 
@@ -64,6 +86,16 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
                     }, () => [
                         h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
                         'View'
+                    ]),
+                    h(Button, {
+                        variant: 'outline',
+                        size: 'sm',
+                        class: 'shadow-xs border-neutral-300 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50/50',
+                        disabled: isExportingMap.value[id] || false,
+                        onClick: () => handleExportExcel(id)
+                    }, () => [
+                        h(DownloadIcon, { class: 'w-4 h-4 mr-1' }),
+                        isExportingMap.value[id] ? 'Exporting...' : 'Export'
                     ])
                 ])
             }
