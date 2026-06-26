@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useParams, useRouter } from '@tanstack/vue-router';
 import {
     ArrowLeftIcon,
     LayersIcon,
     InfoIcon,
     PackageIcon,
+    DownloadIcon,
 } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
+import { downloadPackingListExcel } from '@/api/packing-list/packing-list';
 import { usePackingList } from '@/composables/usePackingList';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -21,12 +23,33 @@ const id = computed(() => params.value.id);
 const { isLoading: isLoadingPl, detail, fetchDetail: loadPlDetail } = usePackingList();
 
 const isLoading = computed(() => isLoadingPl.value);
+const isExportingExcel = ref(false);
 
 const fetchAllDetails = async () => {
     try {
         await loadPlDetail(id.value);
     } catch (e) {
         toast.error("Gagal memuat rincian Packing List.");
+    }
+};
+
+const handleExportExcel = async () => {
+    isExportingExcel.value = true;
+    try {
+        const result = await downloadPackingListExcel(id.value);
+        const objectUrl = window.URL.createObjectURL(result.blob);
+        const link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = result.fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(objectUrl);
+        toast.success('Export Excel Packing List berhasil diunduh.');
+    } catch (error: any) {
+        toast.error(error?.response?.data?.message || 'Gagal mengunduh export Excel Packing List.');
+    } finally {
+        isExportingExcel.value = false;
     }
 };
 
@@ -110,6 +133,15 @@ onMounted(() => {
                 <div class="flex gap-2 w-full md:w-auto">
                     <Button @click="router.history.back()" variant="outline" class="flex-1 md:flex-none border-neutral-300 shadow-xs">
                         <ArrowLeftIcon class="w-4 h-4 mr-2" /> Kembali
+                    </Button>
+                    <Button
+                        :disabled="isExportingExcel"
+                        @click="handleExportExcel"
+                        variant="outline"
+                        class="flex-1 md:flex-none border-emerald-300 text-emerald-700 hover:bg-emerald-50 shadow-xs"
+                    >
+                        <DownloadIcon class="w-4 h-4 mr-2" />
+                        {{ isExportingExcel ? 'Mengunduh...' : 'Export Excel' }}
                     </Button>
                 </div>
             </div>

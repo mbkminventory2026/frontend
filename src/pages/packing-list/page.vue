@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { h, ref, watch, onMounted } from 'vue';
 import { useSearch, useRouter } from '@tanstack/vue-router';
-import { PlusIcon, EyeIcon } from 'lucide-vue-next';
+import { PlusIcon, EyeIcon, DownloadIcon } from 'lucide-vue-next';
+import { toast } from 'vue-sonner';
 
-import { getPackingLists } from '@/api/packing-list/packing-list';
+import { downloadPackingListExcel, getPackingLists } from '@/api/packing-list/packing-list';
 import type { PackingListListItem } from '@/schemas/packing-list/response';
 import { packingListSchema } from '@/pages/packing-list/schema';
 
@@ -21,6 +22,7 @@ const router = useRouter();
 const data = ref<PackingListListItem[]>([]);
 const totalCount = ref(0);
 const isLoading = ref(false);
+const isExportingMap = ref<Record<number, boolean>>({});
 
 const fetchData = async () => {
     isLoading.value = true;
@@ -48,6 +50,26 @@ const fetchData = async () => {
     }
 }
 
+const handleExportExcel = async (id: number) => {
+    isExportingMap.value[id] = true;
+    try {
+        const result = await downloadPackingListExcel(id);
+        const objectUrl = window.URL.createObjectURL(result.blob);
+        const link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = result.fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(objectUrl);
+        toast.success('Export Excel Packing List berhasil diunduh.');
+    } catch (error: any) {
+        toast.error(error?.response?.data?.message || 'Gagal mengunduh export Excel Packing List.');
+    } finally {
+        isExportingMap.value[id] = false;
+    }
+}
+
 const { table, searchTerm, onSearch, clearFilter } = useTable({
     data: data,
     rowCount: totalCount,
@@ -72,13 +94,26 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
             id: 'actions', 
             cell: ({ row }) => {
                 const id = row.original.id_packing_list;
-                return h(Button, {
-                    variant: 'outline',
-                    size: 'sm',
-                    onClick: () => router.navigate({ to: '/packing-list/$id', params: { id: String(id) } })
-                }, () => [
-                    h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
-                    'View Detail'
+                return h('div', { class: 'flex min-w-[240px] gap-2 justify-center items-center' }, [
+                    h(Button, {
+                        variant: 'outline',
+                        size: 'sm',
+                        class: 'shadow-xs border-neutral-300',
+                        onClick: () => router.navigate({ to: '/packing-list/$id', params: { id: String(id) } })
+                    }, () => [
+                        h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
+                        'View Detail'
+                    ]),
+                    h(Button, {
+                        variant: 'outline',
+                        size: 'sm',
+                        class: 'shadow-xs border-neutral-300 text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50/50',
+                        disabled: isExportingMap.value[id] || false,
+                        onClick: () => handleExportExcel(id)
+                    }, () => [
+                        h(DownloadIcon, { class: 'w-4 h-4 mr-1' }),
+                        isExportingMap.value[id] ? 'Exporting...' : 'Export'
+                    ])
                 ]);
             } 
         }

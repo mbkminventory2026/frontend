@@ -13,6 +13,23 @@ export const getPackingListById = async (id: string | number) => {
   return response.data.data || response.data;
 };
 
+export const downloadPackingListExcel = async (id: string | number) => {
+  if (!id) throw new Error("ID is required");
+
+  const response = await apiClient.get(`/api/v1/packing-lists/${id}/export/excel`, {
+    responseType: "blob",
+  });
+
+  const contentDisposition = response.headers["content-disposition"] as string | undefined;
+  const matchedFileName = contentDisposition?.match(/filename="([^"]+)"/i);
+  const fileName = matchedFileName?.[1] || `packing-list-${id}.xlsx`;
+
+  return {
+    blob: response.data as Blob,
+    fileName,
+  };
+};
+
 export const getPackingLists = async (params: {
   limit?: number;
   offset?: number;
