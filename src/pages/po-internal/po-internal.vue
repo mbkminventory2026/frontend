@@ -78,10 +78,11 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
         {
             header: 'Actions', id: 'actions', cell: ({ row }) => {
                 const id = row.getValue('id_po_internal') as number;
-                return h('div', { class: 'flex gap-2 justify-center items-center' }, [
+                return h('div', { class: 'flex min-w-[220px] gap-2 justify-center items-center' }, [
                     h(Button, {
                         variant: 'outline',
                         size: 'sm',
+                        class: 'shadow-xs border-neutral-300',
                         onClick: () => router.navigate({ to: '/po-internal/$id', params: { id: String(id) } })
                     }, () => [
                         h(EyeIcon, { class: 'w-4 h-4 mr-1' }),
