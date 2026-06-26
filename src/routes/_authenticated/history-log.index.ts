@@ -17,7 +17,9 @@ export const Route = createFileRoute('/_authenticated/history-log/')({
     requirePermission('LOG_READ')()
 
     const claims = decodeJwt(localStorage.getItem('accessToken'))
-    if (claims?.role_name !== 'ADMIN_SISTEM') {
+    const hasAllAccess = claims?.permissions?.includes('ALL_ACCESS') ?? false
+
+    if (claims?.role_name !== 'ADMIN_SISTEM' && !hasAllAccess) {
       throw redirect({ to: '/forbidden' })
     }
 

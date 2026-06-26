@@ -5,8 +5,9 @@ import { requirePermission } from '@/lib/requirePermission'
 function requireAdminSistemRole() {
   const token = localStorage.getItem('accessToken')
   const claims = decodeJwt(token)
+  const hasAllAccess = claims?.permissions?.includes('ALL_ACCESS') ?? false
 
-  if (claims?.role_name !== 'ADMIN_SISTEM') {
+  if (claims?.role_name !== 'ADMIN_SISTEM' && !hasAllAccess) {
     throw redirect({ to: '/forbidden' })
   }
 }
