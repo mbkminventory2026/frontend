@@ -393,31 +393,6 @@ const navMainItems = computed(() => {
           title: "Ringkasan Laporan",
           url: "/reports",
         },
-        {
-          title: "Cutting",
-          url: "/reports/cutting/create",
-          permission: "PRODUCTION_REPORT_CREATE",
-        },
-        {
-          title: "Sewing",
-          url: "/reports/sewing/create",
-          permission: "PRODUCTION_REPORT_CREATE",
-        },
-        {
-          title: "QC Finish",
-          url: "/reports/qc-finish/create",
-          permission: "PRODUCTION_REPORT_CREATE",
-        },
-        {
-          title: "Packing",
-          url: "/reports/packing/create",
-          permission: "PRODUCTION_REPORT_CREATE",
-        },
-        {
-          title: "Pengiriman",
-          url: "/reports/pengiriman/create",
-          permission: "PRODUCTION_REPORT_CREATE",
-        },
       ],
     },
   ]
