@@ -487,7 +487,7 @@ const onMaterialSourceChange = (mi: number, val: string) => {
     mat.source = { type: 'shell', index: idx };
     mat.item = s?.deskripsi || '';
     mat.unit = 'yds';
-    mat.qty = getShellTotalQty(idx);
+    mat.qty = Math.round(getShellTotalCons(idx));
   } else if (type === 'trim') {
     const t = trims.value[idx];
     mat.source = { type: 'trim', index: idx };
@@ -505,7 +505,7 @@ const autoGenerateMaterials = () => {
       newItems.push({
         item: s.deskripsi,
         description: '',
-        qty: getShellTotalQty(si),
+        qty: Math.round(getShellTotalCons(si)),
         unit: 'yds',
         est_price: 0,
         source: { type: 'shell', index: si },

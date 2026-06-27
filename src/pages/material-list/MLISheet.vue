@@ -123,13 +123,7 @@ const progressSJ = computed(() => qtyWo.value > 0 ? Math.min(100, Math.round((qt
 const progressRecv = computed(() => qtyWo.value > 0 ? Math.min(100, Math.round((qtyRecv.value / qtyWo.value) * 100)) : 0);
 
 const recvQtyNum = computed(() => parseInt(recvQty.value) || 0);
-const recvWarning = computed(() => {
-    if (!props.item) return null;
-    const afterRecv = qtyRecv.value + recvQtyNum.value;
-    if (afterRecv > qtySJ.value) return `Qty received (${afterRecv}) melebihi qty surat jalan (${qtySJ.value}).`;
-    if (afterRecv > qtyWo.value) return `Qty received (${afterRecv}) melebihi qty WO (${qtyWo.value}).`;
-    return null;
-});
+const recvWarning = computed(() => null);
 </script>
 
 <template>

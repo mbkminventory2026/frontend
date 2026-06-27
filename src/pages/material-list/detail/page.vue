@@ -92,12 +92,7 @@ const sjcKeterangan = ref('');
 const isSubmittingSJC = ref(false);
 
 const sjcQtyNum = computed(() => parseInt(sjcQty.value) || 0);
-const sjcWarning = computed(() => {
-    if (!detail.value || sjcQtyNum.value <= 0) return null;
-    if (sjcQtyNum.value > remainingForSJC.value)
-        return `Qty melebihi sisa yang bisa di-SJ (${remainingForSJC.value} ${detail.value.unit}).`;
-    return null;
-});
+const sjcWarning = computed(() => null);
 
 const submitSJC = async () => {
     if (!detail.value) return;
@@ -121,12 +116,7 @@ const isSubmittingRecv = ref(false);
 const isConfirmOpen = ref(false);
 
 const recvQtyNum = computed(() => parseInt(recvQty.value) || 0);
-const recvWarning = computed(() => {
-    if (!detail.value || recvQtyNum.value <= 0) return null;
-    if (recvQtyNum.value > remainingToReceive.value)
-        return `Qty melebihi sisa yang perlu diterima (${remainingToReceive.value} ${detail.value.unit}).`;
-    return null;
-});
+const recvWarning = computed(() => null);
 
 const openConfirm = () => {
     if (!recvTanggal.value || recvQtyNum.value <= 0) { toast.error('Tanggal dan qty wajib diisi.'); return; }
