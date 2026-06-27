@@ -6,11 +6,11 @@ export interface SuratJalanInternalItemRequest {
 }
 
 export interface CreateSuratJalanInternalRequest {
-  id_wo: number;
-  no_dokumen: string;
+  id_wo?: number;
+  no_dokumen?: string;
   deskripsi?: string;
   items: SuratJalanInternalItemRequest[];
-  id_packing_lists?: number[];
+  id_packing_lists: number[];
 }
 
 export interface AssignPackingListRequest {
