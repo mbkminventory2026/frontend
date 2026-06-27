@@ -6,6 +6,10 @@ import TurnstileWidget from '@/components/TurnstileWidget.vue';
 
 import { useLoginForm } from '@/composables/auth/useLoginForm';
 import { Link } from '@tanstack/vue-router';
+import { EyeIcon, EyeOffIcon } from 'lucide-vue-next';
+import { ref } from 'vue';
+
+const showPassword = ref(false);
 
 const {
     isLoading,
@@ -35,7 +39,18 @@ const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY || '1x000000000000000000
             <FormItem>
                 <FormLabel>Password</FormLabel>
                 <FormControl>
-                    <Input type="password" placeholder="••••••••" v-bind="componentField"/>
+                    <div class="relative">
+                        <Input :type="showPassword ? 'text' : 'password'" placeholder="••••••••" class="pr-10" v-bind="componentField"/>
+                        <button
+                            type="button"
+                            @click="showPassword = !showPassword"
+                            class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 hover:text-slate-600"
+                            :aria-label="showPassword ? 'Sembunyikan password' : 'Tampilkan password'"
+                        >
+                            <EyeOffIcon v-if="showPassword" class="w-4 h-4" />
+                            <EyeIcon v-else class="w-4 h-4" />
+                        </button>
+                    </div>
                 </FormControl>
                 <FormMessage/>
             </FormItem>

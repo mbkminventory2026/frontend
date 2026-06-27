@@ -403,8 +403,6 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
 });
 
 const UserDialogSchema = computed<DialogSchemaType>(() => {
-    const isEdit = createDialog.isEditMode.value;
-    
     // Filter role options based on user_type
     let filteredRoles = roleOptions.value;
     const currentUserType = activeFormValues.value?.user_type;
@@ -425,14 +423,6 @@ const UserDialogSchema = computed<DialogSchemaType>(() => {
             placeholder: "Masukkan username",
             rules: "required",
             position: "left"
-        },
-        {
-            key: "password",
-            label: "Password",
-            type: "password",
-            placeholder: isEdit ? "Biarkan kosong jika tidak diubah" : "Kosongkan untuk generate otomatis",
-            rules: "",
-            position: "right"
         },
         {
             key: "user_type",
