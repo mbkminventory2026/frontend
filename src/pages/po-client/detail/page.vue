@@ -39,6 +39,7 @@ const params = useParams({ from: '/_authenticated/po-client/$id' });
 const id = computed(() => params.value.id);
 
 const isClient = computed(() => authStore.isMitra || authStore.roleName?.toUpperCase() === 'CLIENT');
+const isAdminKeuangan = computed(() => authStore.roleName?.toUpperCase() === 'ADMIN_KEUANGAN');
 
 const canCreateOrEdit = computed(() => {
     return hasPermission('PO_CLIENT_CREATE') || hasPermission('PO_CLIENT_UPDATE');
@@ -415,9 +416,10 @@ onMounted(() => {
                                     
                                     <!-- PDF base64 format -->
                                     <div v-if="detail.file.startsWith('data:application/pdf;base64,')" class="flex items-center gap-2 mt-1.5 animate-in fade-in slide-in-from-top-1 duration-250">
-                                        <a :href="detail.file" download="attached_po_document.pdf" class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-bold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100/80 border border-red-200/60 rounded-lg shadow-xs transition-all">
+                                        <a v-if="isAdminKeuangan" :href="detail.file" download="attached_po_document.pdf" class="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-bold text-red-700 hover:text-red-800 bg-red-50 hover:bg-red-100/80 border border-red-200/60 rounded-lg shadow-xs transition-all">
                                             <FileTextIcon class="w-4 h-4 text-red-600 animate-pulse" /> Download PDF Document
                                         </a>
+                                        <span v-else class="text-xs text-neutral-400 italic">Dokumen PDF (Hanya dapat diunduh oleh Admin Keuangan)</span>
                                     </div>
                                     
                                     <!-- Image base64 format -->
@@ -432,7 +434,7 @@ onMounted(() => {
                                     
                                     <!-- Generic Fallback generic file string -->
                                     <div v-else class="flex items-center gap-2 mt-1.5">
-                                        <a :href="detail.file" download class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:text-neutral-900 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 rounded-lg shadow-xs transition-all">
+                                        <a v-if="isAdminKeuangan || !detail.file.toLowerCase().includes('.pdf')" :href="detail.file" download class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-neutral-700 hover:text-neutral-900 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 rounded-lg shadow-xs transition-all">
                                             <PaperclipIcon class="w-3.5 h-3.5 text-neutral-500" /> Download File
                                         </a>
                                         <span class="text-xs text-neutral-500 truncate max-w-[200px]">{{ detail.file }}</span>

@@ -358,7 +358,7 @@ const navMainItems = computed(() => {
         {
           title: "Material List",
           url: "/material-list",
-          permission: "WO_READ",
+          permission: "MATERIAL_LIST_READ",
         },
         {
           title: "Laporan Penerimaan",

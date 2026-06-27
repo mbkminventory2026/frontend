@@ -3,7 +3,7 @@ import { requirePermission } from '@/lib/requirePermission'
 
 export const Route = createFileRoute('/_authenticated/material-list')({
   beforeLoad: () => {
-    requirePermission('WO_READ')()
+    requirePermission('MATERIAL_LIST_READ')()
   },
   component: Outlet,
 })
