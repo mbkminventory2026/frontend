@@ -91,7 +91,6 @@ const sjcQty = ref('');
 const sjcKeterangan = ref('');
 const isSubmittingSJC = ref(false);
 
-const sjcQtyNum = computed(() => parseInt(sjcQty.value) || 0);
 const sjcWarning = computed(() => null);
 
 const submitSJC = async () => {

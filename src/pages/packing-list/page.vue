@@ -86,7 +86,12 @@ const { table, searchTerm, onSearch, clearFilter } = useTable({
             accessorKey: 'id_surat_jalan_internal', 
             cell: ({ row }) => {
                 const sjId = row.original.id_surat_jalan_internal;
-                return sjId ? `#${sjId}` : '—';
+                return sjId 
+                    ? h('button', { 
+                        class: 'text-indigo-600 hover:underline font-medium', 
+                        onClick: () => router.navigate({ to: '/surat-jalan-internal/$id', params: { id: String(sjId) } }) 
+                      }, `#${sjId}`) 
+                    : '—';
             } 
         },
         { 

@@ -336,6 +336,11 @@ const navMainItems = computed(() => {
           permission: "PACKING_LIST_READ",
         },
         {
+          title: "Surat Jalan Internal",
+          url: "/surat-jalan-internal",
+          permission: "SURAT_JALAN_INTERNAL_READ",
+        },
+        {
           title: "Rekonsiliasi Material",
           url: "/rekonsiliasi",
           permission: "REKONSILIASI_READ",
