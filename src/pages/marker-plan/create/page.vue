@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import DateInput from '@/components/form/DateInput.vue';
 import { Label } from '@/components/ui/label';
 
 const router = useRouter();
@@ -480,7 +481,7 @@ onMounted(async () => {
 
           <div class="space-y-1.5">
             <Label class="text-xs font-semibold text-neutral-700">Tanggal Efektif <span class="text-red-500">*</span></Label>
-            <Input v-model="tanggalEfektif" type="date" class="h-9 text-xs border-neutral-200" required />
+            <DateInput v-model="tanggalEfektif" class="h-9 text-xs border-neutral-200" />
           </div>
         </div>
 

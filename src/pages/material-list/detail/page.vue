@@ -11,6 +11,7 @@ import { apiClient } from '@/lib/apiClient';
 import { createSuratJalanClient, createReceived } from '@/api/material-list/material-list';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import DateInput from '@/components/form/DateInput.vue';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
@@ -281,7 +282,7 @@ const executeDelete = async () => {
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <Label class="text-xs">Tanggal <span class="text-red-500">*</span></Label>
-                                <Input v-model="sjcTanggal" type="date" class="mt-1 text-sm" />
+                                <DateInput v-model="sjcTanggal" class="mt-1 text-sm" />
                             </div>
                             <div>
                                 <Label class="text-xs">Qty <span class="text-red-500">*</span> <span class="text-neutral-400">(maks {{ remainingForSJC }})</span></Label>
@@ -362,7 +363,7 @@ const executeDelete = async () => {
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <Label class="text-xs">Tanggal <span class="text-red-500">*</span></Label>
-                                <Input v-model="recvTanggal" type="date" class="mt-1 text-sm" />
+                                <DateInput v-model="recvTanggal" class="mt-1 text-sm" />
                             </div>
                             <div>
                                 <Label class="text-xs">Qty <span class="text-red-500">*</span> <span class="text-neutral-400">(maks {{ remainingToReceive }})</span></Label>

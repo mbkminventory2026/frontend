@@ -9,6 +9,7 @@ import { getWorkOrders, type WorkOrderListItem } from '@/api/work-orders/work-or
 import { createDataApproveCuttingPlan } from '@/api/data-approve-cutting/data-approve-cutting';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import DateInput from '@/components/form/DateInput.vue';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import Separator from '@/components/ui/separator/Separator.vue';
@@ -143,12 +144,10 @@ onMounted(() => {
           </div>
           <div class="space-y-1.5">
             <Label class="text-xs font-semibold text-neutral-700">Tanggal <span class="text-red-500">*</span></Label>
-            <Input
+            <DateInput
               id="tanggal-dacp"
               v-model="tanggal"
-              type="date"
               class="h-9 text-xs border-neutral-200"
-              required
             />
           </div>
         </div>

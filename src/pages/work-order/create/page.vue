@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DateInput from '@/components/form/DateInput.vue';
 import { ref, watch, onMounted, computed, reactive, nextTick } from 'vue';
 import { useRouter } from '@tanstack/vue-router';
 import {
@@ -822,7 +823,7 @@ const handleSubmit = async () => {
               </div>
               <div class="space-y-1.5">
                 <label class="text-xs font-semibold text-neutral-700">Delivery Date <span class="text-red-500">*</span></label>
-                <input v-model="step1.delivery" type="date"
+                <DateInput v-model="step1.delivery"
                   class="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition" />
               </div>
             </div>

@@ -16,6 +16,7 @@ import {
     DialogDescription,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import DateInput from '@/components/form/DateInput.vue';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { parseToInt } from '@/lib/number';
@@ -282,9 +283,8 @@ const submitReport = async () => {
                     <!-- Date Input -->
                     <div class="space-y-1.5">
                         <Label class="text-xs font-semibold text-neutral-700">Tanggal Laporan <span class="text-red-500">*</span></Label>
-                        <Input
+                        <DateInput
                             v-model="reportDate"
-                            type="date"
                             class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white"
                         />
                     </div>

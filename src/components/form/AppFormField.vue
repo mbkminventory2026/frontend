@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import AppFilePicker from '@/components/AppFilePicker.vue'
 import AppAddressPicker from '@/components/AppAddressPicker.vue'
+import DateInput from '@/components/form/DateInput.vue'
 import { 
   Select, 
   SelectContent, 
@@ -97,6 +98,17 @@ const onNumberInput = (event: Event) => {
         v-model="values[props.name]" 
         :placeholder="props.placeholder"
         class="min-h-[200px] leading-relaxed"
+        :aria-invalid="props.error ? 'true' : undefined"
+        :disabled="props.disabled"
+      />
+    </template>
+
+    <!-- Date Picker (cross-browser, replaces native type=date) -->
+    <template v-else-if="props.type === 'date'">
+      <DateInput
+        :id="props.name"
+        v-model="values[props.name]"
+        :placeholder="props.placeholder"
         :aria-invalid="props.error ? 'true' : undefined"
         :disabled="props.disabled"
       />

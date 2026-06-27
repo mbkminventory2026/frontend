@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import DateInput from '@/components/form/DateInput.vue';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
@@ -197,7 +198,7 @@ const recvWarning = computed(() => {
                     <div class="space-y-3">
                         <div>
                             <Label class="text-xs">Tanggal <span class="text-red-500">*</span></Label>
-                            <Input v-model="sjcTanggal" type="date" class="mt-1 text-sm" />
+                            <DateInput v-model="sjcTanggal" class="mt-1 text-sm" />
                         </div>
                         <div>
                             <Label class="text-xs">Qty <span class="text-red-500">*</span></Label>
@@ -228,7 +229,7 @@ const recvWarning = computed(() => {
                     <div class="space-y-3">
                         <div>
                             <Label class="text-xs">Tanggal <span class="text-red-500">*</span></Label>
-                            <Input v-model="recvTanggal" type="date" class="mt-1 text-sm" />
+                            <DateInput v-model="recvTanggal" class="mt-1 text-sm" />
                         </div>
                         <div>
                             <Label class="text-xs">Qty <span class="text-red-500">*</span></Label>

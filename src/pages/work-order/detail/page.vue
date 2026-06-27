@@ -43,6 +43,7 @@ import {
     DialogFooter,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import DateInput from '@/components/form/DateInput.vue';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { parseToInt } from '@/lib/number';
@@ -706,10 +707,9 @@ onMounted(fetchDetail);
                                         <!-- Date Input -->
                                         <div class="space-y-1.5">
                                             <Label for="reportDateInput" class="text-xs font-semibold text-neutral-700">Tanggal Laporan <span class="text-red-500">*</span></Label>
-                                            <Input
+                                            <DateInput
                                                 id="reportDateInput"
                                                 v-model="reportDate"
-                                                type="date"
                                                 :disabled="currentStageOutput > 0"
                                                 class="h-10 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white disabled:bg-neutral-50 disabled:text-neutral-500 disabled:border-neutral-200 disabled:cursor-not-allowed"
                                             />

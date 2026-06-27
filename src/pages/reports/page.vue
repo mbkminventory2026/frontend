@@ -18,6 +18,7 @@ import type { ProductionAggregateResponse, ProductionStats } from '@/schemas/pro
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import DateInput from '@/components/form/DateInput.vue';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { formatDate } from '@/lib/formatter';
@@ -710,7 +711,7 @@ onMounted(() => {
 
           <div class="space-y-1.5">
             <Label class="text-xs font-semibold text-neutral-700">Tanggal Laporan <span class="text-red-500">*</span></Label>
-            <Input id="tanggal" v-model="tanggal" type="date" class="h-9 text-xs border-neutral-200" required />
+            <DateInput id="tanggal" v-model="tanggal" class="h-9 text-xs border-neutral-200" />
           </div>
         </div>
 

@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import DateInput from '@/components/form/DateInput.vue';
 
 // ─── Router & Params ────────────────────────────────────────────────────────
 const router = useRouter();
@@ -252,9 +253,8 @@ onMounted(() => {
                 <label class="text-sm font-medium text-neutral-700">
                   Tanggal Laporan <span class="text-red-500">*</span>
                 </label>
-                <Input
+                <DateInput
                   v-model="tanggal"
-                  type="date"
                   class="h-9 text-sm border-neutral-200 focus-visible:ring-2 focus-visible:ring-neutral-800 bg-white"
                 />
               </div>

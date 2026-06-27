@@ -2,7 +2,8 @@
 import { computed, h, onMounted, ref, watch } from 'vue'
 import { useNavigate, useSearch } from '@tanstack/vue-router'
 import type { ColumnDef } from '@tanstack/vue-table'
-import { CalendarIcon, EyeIcon, RefreshCcwIcon, SearchIcon } from 'lucide-vue-next'
+import { EyeIcon, RefreshCcwIcon, SearchIcon } from 'lucide-vue-next'
+import DateInput from '@/components/form/DateInput.vue'
 import { toast } from 'vue-sonner'
 
 import DataTable from '@/components/DataTable.vue'
@@ -39,8 +40,6 @@ const selectedModule = ref('all')
 const selectedEntityType = ref('all')
 const dateFrom = ref('')
 const dateTo = ref('')
-const dateFromInput = ref<HTMLInputElement | null>(null)
-const dateToInput = ref<HTMLInputElement | null>(null)
 
 const isDetailOpen = ref(false)
 const isDetailLoading = ref(false)
@@ -157,15 +156,6 @@ const formatSnapshotBlock = (value: unknown) => {
     return 'Tidak ada snapshot data.'
   }
   return JSON.stringify(value, null, 2)
-}
-
-const openDatePicker = (target: HTMLInputElement | null) => {
-  if (!target) return
-
-  target.focus()
-  if (typeof target.showPicker === 'function') {
-    target.showPicker()
-  }
 }
 
 const fetchData = async () => {
@@ -445,40 +435,12 @@ onMounted(() => {
         <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-end">
           <div class="space-y-2">
             <label class="text-sm font-medium text-slate-700">Dari</label>
-            <div class="relative">
-              <input
-                ref="dateFromInput"
-                v-model="dateFrom"
-                type="date"
-                class="border-input bg-background h-9 w-full rounded-md border px-3 pr-11 text-sm text-slate-700 shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-              >
-              <button
-                type="button"
-                class="absolute inset-y-0 right-0 inline-flex w-10 items-center justify-center text-slate-500 transition hover:text-slate-700"
-                @click="openDatePicker(dateFromInput)"
-              >
-                <CalendarIcon class="h-4 w-4" />
-              </button>
-            </div>
+            <DateInput v-model="dateFrom" class="w-full" />
           </div>
 
           <div class="space-y-2">
             <label class="text-sm font-medium text-slate-700">Sampai</label>
-            <div class="relative">
-              <input
-                ref="dateToInput"
-                v-model="dateTo"
-                type="date"
-                class="border-input bg-background h-9 w-full rounded-md border px-3 pr-11 text-sm text-slate-700 shadow-xs outline-none transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]"
-              >
-              <button
-                type="button"
-                class="absolute inset-y-0 right-0 inline-flex w-10 items-center justify-center text-slate-500 transition hover:text-slate-700"
-                @click="openDatePicker(dateToInput)"
-              >
-                <CalendarIcon class="h-4 w-4" />
-              </button>
-            </div>
+            <DateInput v-model="dateTo" class="w-full" />
           </div>
 
           <div class="flex flex-wrap items-center gap-3 lg:justify-end">

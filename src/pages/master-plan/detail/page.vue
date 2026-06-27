@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import DateInput from '@/components/form/DateInput.vue';
 import { ref, computed, onMounted } from 'vue';
 import { useParams, useRouter } from '@tanstack/vue-router';
 import {
@@ -554,16 +555,13 @@ const usedShellIds = computed(() => new Set(plan.value?.items.map(i => i.id_wo_s
                     <div v-if="canEdit" class="flex flex-wrap items-center gap-2 pt-1">
                         <div class="flex items-center gap-1 text-sm text-neutral-500">
                             <span>Dari</span>
-                            <input
+                            <DateInput
                                 v-model="dateRangeStart[item.id_master_plan_item]"
-                                type="date"
                                 class="border border-neutral-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-400"
                             />
                             <span>s/d</span>
-                            <input
+                            <DateInput
                                 v-model="dateRangeEnd[item.id_master_plan_item]"
-                                type="date"
-                                :min="dateRangeStart[item.id_master_plan_item]"
                                 class="border border-neutral-300 rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-neutral-400"
                             />
                         </div>

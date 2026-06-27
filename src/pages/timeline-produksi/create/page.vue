@@ -6,7 +6,7 @@ import { getProductionLines, getProductionStatusPlans, type ProductionLine, type
 import { getPOClients, getPOClientById, type POClientListItem } from '@/api/po-clients/po-clients';
 import { getWorkOrderById, type WorkOrderShell } from '@/api/work-orders/work-orders';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import DateInput from '@/components/form/DateInput.vue';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card } from '@/components/ui/card';
@@ -223,7 +223,7 @@ const submitForm = async () => {
 
           <div class="space-y-1.5 lg:col-span-1">
             <Label class="text-xs font-semibold text-neutral-700">Tanggal Disusun <span class="text-red-500">*</span></Label>
-            <Input v-model="form.tanggalDisusun" type="date" class="h-9 text-xs border-neutral-200" required />
+            <DateInput v-model="form.tanggalDisusun" class="h-9 text-xs border-neutral-200" />
           </div>
 
           <div class="space-y-1.5 lg:col-span-3">
@@ -296,7 +296,7 @@ const submitForm = async () => {
               <div class="space-y-1.5 p-3 bg-neutral-100/50 rounded-lg border border-neutral-200">
                 <Label class="text-[10px] font-bold text-neutral-600 uppercase">Gelar Cutting</Label>
                 <div class="space-y-2 mt-2">
-                  <Input v-model="sp.tglGelarCutting" type="date" class="h-8 text-[11px] border-neutral-200 bg-white" title="Tanggal Rencana" />
+                  <DateInput v-model="sp.tglGelarCutting" class="h-8 text-[11px] border-neutral-200 bg-white" />
                   <select v-model="sp.statusGelarCutting" class="w-full rounded-lg border border-neutral-200 bg-white px-2 py-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition cursor-pointer h-8">
                     <option value="">Status...</option>
                     <option v-for="s in productionStatusPlans" :key="s.id_production_status_plan" :value="s.name">{{ s.name }}</option>
@@ -306,7 +306,7 @@ const submitForm = async () => {
               <div class="space-y-1.5 p-3 bg-neutral-100/50 rounded-lg border border-neutral-200">
                 <Label class="text-[10px] font-bold text-neutral-600 uppercase">Embro</Label>
                 <div class="space-y-2 mt-2">
-                  <Input v-model="sp.tglEmbroo" type="date" class="h-8 text-[11px] border-neutral-200 bg-white" title="Tanggal Rencana" />
+                  <DateInput v-model="sp.tglEmbroo" class="h-8 text-[11px] border-neutral-200 bg-white" />
                   <select v-model="sp.statusEmbroo" class="w-full rounded-lg border border-neutral-200 bg-white px-2 py-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition cursor-pointer h-8">
                     <option value="">Status...</option>
                     <option v-for="s in productionStatusPlans" :key="s.id_production_status_plan" :value="s.name">{{ s.name }}</option>
@@ -316,7 +316,7 @@ const submitForm = async () => {
               <div class="space-y-1.5 p-3 bg-neutral-100/50 rounded-lg border border-neutral-200">
                 <Label class="text-[10px] font-bold text-neutral-600 uppercase">Loading Sewing</Label>
                 <div class="space-y-2 mt-2">
-                  <Input v-model="sp.tglLoadingSewing" type="date" class="h-8 text-[11px] border-neutral-200 bg-white" title="Tanggal Rencana" />
+                  <DateInput v-model="sp.tglLoadingSewing" class="h-8 text-[11px] border-neutral-200 bg-white" />
                   <select v-model="sp.statusLoadingSewing" class="w-full rounded-lg border border-neutral-200 bg-white px-2 py-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition cursor-pointer h-8">
                     <option value="">Status...</option>
                     <option v-for="s in productionStatusPlans" :key="s.id_production_status_plan" :value="s.name">{{ s.name }}</option>
@@ -326,7 +326,7 @@ const submitForm = async () => {
               <div class="space-y-1.5 p-3 bg-neutral-100/50 rounded-lg border border-neutral-200">
                 <Label class="text-[10px] font-bold text-neutral-600 uppercase">Finishing</Label>
                 <div class="space-y-2 mt-2">
-                  <Input v-model="sp.tglFinishingPacking" type="date" class="h-8 text-[11px] border-neutral-200 bg-white" title="Tanggal Rencana" />
+                  <DateInput v-model="sp.tglFinishingPacking" class="h-8 text-[11px] border-neutral-200 bg-white" />
                   <select v-model="sp.statusFinishingPacking" class="w-full rounded-lg border border-neutral-200 bg-white px-2 py-1 text-[11px] focus:outline-none focus:ring-2 focus:ring-neutral-900/20 focus:border-neutral-400 transition cursor-pointer h-8">
                     <option value="">Status...</option>
                     <option v-for="s in productionStatusPlans" :key="s.id_production_status_plan" :value="s.name">{{ s.name }}</option>
