@@ -1,7 +1,10 @@
 export interface SuratJalanInternalListItem {
   id_surat_jalan_internal: number;
+  id_wo?: number | null;
   no_dokumen: string;
   deskripsi: string;
+  buyer?: string;
+  model?: string;
   packing_list_count: number;
   created_at: string;
 }
@@ -24,8 +27,12 @@ export interface SuratJalanInternalShellRow {
 
 export interface SuratJalanInternalDetailResponse {
   id_surat_jalan_internal: number;
+  id_wo?: number | null;
   no_dokumen: string;
   deskripsi: string;
+  buyer?: string;
+  model?: string;
+  wo_qty?: number;
   created_at: string;
   packing_lists: SuratJalanInternalPackingListRow[];
   wo_shells: SuratJalanInternalShellRow[];
@@ -33,6 +40,7 @@ export interface SuratJalanInternalDetailResponse {
 
 export interface SuratJalanInternalCreateResponse {
   id_surat_jalan_internal: number;
+  id_wo: number;
   no_dokumen: string;
   deskripsi: string;
   created_at: string;

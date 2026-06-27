@@ -5,7 +5,6 @@ import { PlusIcon, EyeIcon } from 'lucide-vue-next';
 
 import { getSuratJalanInternals } from '@/api/surat-jalan-internal/surat-jalan-internal';
 import type { SuratJalanInternalListItem } from '@/schemas/surat-jalan-internal/response';
-
 import { suratJalanInternalSchema } from '@/pages/surat-jalan-internal/schema';
 
 import DataTable from '@/components/DataTable.vue';
@@ -56,6 +55,9 @@ const { table, searchTerm, onSearch, clearFilter } = useTable<SuratJalanInternal
         { header: 'Tanggal Dibuat', accessorKey: 'created_at', cell: ({ row }) => formatDate(row.original.created_at) },
         { header: 'ID SJ', accessorKey: 'id_surat_jalan_internal' },
         { header: 'No. Dokumen', accessorKey: 'no_dokumen', cell: ({ row }) => row.original.no_dokumen || '—' },
+        { header: 'ID WO', accessorKey: 'id_wo', cell: ({ row }) => row.original.id_wo ? `#${row.original.id_wo}` : '—' },
+        { header: 'Buyer', accessorKey: 'buyer', cell: ({ row }) => row.original.buyer || '—' },
+        { header: 'Model', accessorKey: 'model', cell: ({ row }) => row.original.model || '—' },
         { header: 'Deskripsi', accessorKey: 'deskripsi', cell: ({ row }) => row.original.deskripsi || '—' },
         { header: 'Jml Packing List', accessorKey: 'packing_list_count', cell: ({ row }) => row.original.packing_list_count ?? 0 },
         { 
@@ -92,7 +94,7 @@ onMounted(() => {
     <div class="flex items-center justify-between">
       <div>
         <h2 class="text-2xl font-bold tracking-tight">Surat Jalan Internal</h2>
-        <p class="text-muted-foreground">Kelola dokumen surat jalan pengiriman internal</p>
+        <p class="text-muted-foreground">Kelola dokumen surat jalan pengiriman internal per Work Order</p>
       </div>
       <Button 
         v-if="hasPermission('SURAT_JALAN_INTERNAL_CREATE')" 

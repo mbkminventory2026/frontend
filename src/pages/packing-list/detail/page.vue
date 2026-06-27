@@ -135,6 +135,22 @@ onMounted(() => {
                         <ArrowLeftIcon class="w-4 h-4 mr-2" /> Kembali
                     </Button>
                     <Button
+                        v-if="detail.id_surat_jalan_internal"
+                        @click="router.navigate({ to: '/surat-jalan-internal/$id', params: { id: String(detail.id_surat_jalan_internal) } })"
+                        variant="outline"
+                        class="flex-1 md:flex-none border-indigo-300 text-indigo-600 hover:bg-indigo-50 shadow-xs"
+                    >
+                        <LayersIcon class="w-4 h-4 mr-2" /> Lihat SJ Internal (#{{ detail.id_surat_jalan_internal }})
+                    </Button>
+                    <Button
+                        v-else
+                        @click="router.navigate({ to: '/surat-jalan-internal/create', search: { id_wo: detail.id_wo } })"
+                        variant="outline"
+                        class="flex-1 md:flex-none border-indigo-300 text-indigo-600 hover:bg-indigo-50 shadow-xs"
+                    >
+                        <LayersIcon class="w-4 h-4 mr-2" /> Buat SJ Internal
+                    </Button>
+                    <Button
                         :disabled="isExportingExcel"
                         @click="handleExportExcel"
                         variant="outline"
