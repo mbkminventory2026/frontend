@@ -53,6 +53,26 @@ export const getSuratJalanInternals = async (params: {
   };
 };
 
+export const downloadSuratJalanInternalExcel = async (id: string | number) => {
+  if (!id) throw new Error("ID is required");
+
+  const response = await apiClient.get(
+    `/api/v1/surat-jalan-internals/${id}/export/excel`,
+    {
+      responseType: "blob",
+    }
+  );
+
+  const contentDisposition = response.headers["content-disposition"] as string | undefined;
+  const matchedFileName = contentDisposition?.match(/filename="([^"]+)"/i);
+  const fileName = matchedFileName?.[1] || `surat-jalan-internal-${id}.xlsx`;
+
+  return {
+    blob: response.data as Blob,
+    fileName,
+  };
+};
+
 export const assignPackingListToSJ = async (
   idSJ: number,
   req: AssignPackingListRequest

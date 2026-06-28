@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { h, ref, watch, onMounted } from 'vue';
 import { useSearch, useRouter } from '@tanstack/vue-router';
-import { PlusIcon, EyeIcon } from 'lucide-vue-next';
+import { PlusIcon, EyeIcon, DownloadIcon } from 'lucide-vue-next';
+import { toast } from 'vue-sonner';
 
-import { getSuratJalanInternals } from '@/api/surat-jalan-internal/surat-jalan-internal';
+import { downloadSuratJalanInternalExcel, getSuratJalanInternals } from '@/api/surat-jalan-internal/surat-jalan-internal';
 import type { SuratJalanInternalListItem } from '@/schemas/surat-jalan-internal/response';
 import { suratJalanInternalSchema } from '@/pages/surat-jalan-internal/schema';
 
@@ -21,6 +22,7 @@ const router = useRouter();
 const data = ref<SuratJalanInternalListItem[]>([]);
 const totalCount = ref(0);
 const isLoading = ref(false);
+const isExportingMap = ref<Record<number, boolean>>({});
 
 const fetchData = async () => {
     isLoading.value = true;
@@ -48,6 +50,26 @@ const fetchData = async () => {
     }
 }
 
+const handleExportExcel = async (id: number) => {
+    isExportingMap.value[id] = true;
+    try {
+        const result = await downloadSuratJalanInternalExcel(id);
+        const objectUrl = window.URL.createObjectURL(result.blob);
+        const link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = result.fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(objectUrl);
+        toast.success('Export Excel Surat Jalan Internal berhasil diunduh.');
+    } catch (error: any) {
+        toast.error(error?.response?.data?.message || 'Gagal mengunduh export Excel Surat Jalan Internal.');
+    } finally {
+        isExportingMap.value[id] = false;
+    }
+}
+
 const { table, searchTerm, onSearch, clearFilter } = useTable<SuratJalanInternalListItem, typeof suratJalanInternalSchema>({
     data: data,
     rowCount: totalCount,
@@ -71,7 +93,17 @@ const { table, searchTerm, onSearch, clearFilter } = useTable<SuratJalanInternal
                         size: 'sm',
                         class: 'flex gap-2 items-center',
                         onClick: () => router.navigate({ to: '/surat-jalan-internal/$id', params: { id: id.toString() } })
-                    }, () => [h(EyeIcon, { class: 'w-4 h-4' }), 'Lihat Rincian'])
+                    }, () => [h(EyeIcon, { class: 'w-4 h-4' }), 'Lihat Rincian']),
+                    h(Button, {
+                        variant: 'outline',
+                        size: 'sm',
+                        class: 'flex gap-2 items-center text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50/50',
+                        disabled: isExportingMap.value[id] || false,
+                        onClick: () => handleExportExcel(id)
+                    }, () => [
+                        h(DownloadIcon, { class: 'w-4 h-4' }),
+                        isExportingMap.value[id] ? 'Exporting...' : 'Export'
+                    ])
                 ]);
             } 
         }

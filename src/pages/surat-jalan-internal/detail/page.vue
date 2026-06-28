@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useParams, useRouter } from '@tanstack/vue-router';
-import { ArrowLeftIcon, PrinterIcon, LayersIcon } from 'lucide-vue-next';
+import { ArrowLeftIcon, PrinterIcon, LayersIcon, DownloadIcon } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
-import { getSuratJalanInternalById } from '@/api/surat-jalan-internal/surat-jalan-internal';
+import { downloadSuratJalanInternalExcel, getSuratJalanInternalById } from '@/api/surat-jalan-internal/surat-jalan-internal';
 import type { SuratJalanInternalDetailResponse } from '@/schemas/surat-jalan-internal/response';
 
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ const id = computed(() => Number(params.value.id));
 
 const detail = ref<SuratJalanInternalDetailResponse | null>(null);
 const isLoading = ref(true);
+const isExportingExcel = ref(false);
 
 const fetchDetail = async () => {
   isLoading.value = true;
@@ -32,6 +33,26 @@ const fetchDetail = async () => {
 
 const handlePrint = () => {
   window.print();
+};
+
+const handleExportExcel = async () => {
+  isExportingExcel.value = true;
+  try {
+    const result = await downloadSuratJalanInternalExcel(id.value);
+    const objectUrl = window.URL.createObjectURL(result.blob);
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = result.fileName;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(objectUrl);
+    toast.success('Export Excel Surat Jalan Internal berhasil diunduh.');
+  } catch (error: any) {
+    toast.error(error?.response?.data?.message || 'Gagal mengunduh export Excel Surat Jalan Internal.');
+  } finally {
+    isExportingExcel.value = false;
+  }
 };
 
 onMounted(() => {
@@ -56,9 +77,20 @@ onMounted(() => {
           <p class="text-sm text-slate-500 mt-0.5">Rincian pengiriman internal dan rincian barang WO Shell</p>
         </div>
       </div>
-      <Button variant="outline" @click="handlePrint" class="rounded-xl border-slate-300 shadow-xs flex gap-2 items-center">
-        <PrinterIcon class="w-4 h-4 text-slate-700" /> Cetak Surat Jalan
-      </Button>
+      <div class="flex items-center gap-2">
+        <Button
+          variant="outline"
+          :disabled="isExportingExcel"
+          @click="handleExportExcel"
+          class="rounded-xl border-emerald-300 text-emerald-700 shadow-xs flex gap-2 items-center hover:bg-emerald-50"
+        >
+          <DownloadIcon class="w-4 h-4" />
+          {{ isExportingExcel ? 'Mengunduh...' : 'Export Excel' }}
+        </Button>
+        <Button variant="outline" @click="handlePrint" class="rounded-xl border-slate-300 shadow-xs flex gap-2 items-center">
+          <PrinterIcon class="w-4 h-4 text-slate-700" /> Cetak Surat Jalan
+        </Button>
+      </div>
     </div>
 
     <div v-if="isLoading" class="py-16 text-center text-slate-500">
