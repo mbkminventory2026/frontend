@@ -74,11 +74,11 @@ watch(() => values.value.idWo, async (newVal) => {
                 item: mli.item || mli.description,
                 unit: mli.unit,
                 qty: mli.qty > 0 ? mli.qty : 1,
-                estPrice: mli.est_price > 0 ? formatRupiah(mli.est_price) : 'Rp 0',
+                estPrice: mli.est_price > 0 ? formatRupiah(mli.est_price) : '',
                 description: mli.description,
             }));
         } else {
-            values.value.items = [{ item: '', description: '', qty: 1, unit: '', estPrice: 'Rp 0', materialId: null, isCustom: true }];
+            values.value.items = [{ item: '', description: '', qty: 1, unit: '', estPrice: '', materialId: null, isCustom: true }];
         }
     } catch (e) {
         console.error('Gagal mengambil material Work Order:', e);
@@ -97,7 +97,7 @@ const addItem = () => {
         description: '',
         qty: 1,
         unit: '',
-        estPrice: 'Rp 0',
+        estPrice: '',
         materialId: null,
         isCustom: !values.value.idWo
     });
@@ -114,7 +114,7 @@ const resetRowSelection = (rowItem: any) => {
     rowItem.description = '';
     rowItem.qty = 1;
     rowItem.unit = '';
-    rowItem.estPrice = 'Rp 0';
+    rowItem.estPrice = '';
     rowItem.materialId = null;
     rowItem.isCustom = false;
 };
@@ -142,7 +142,7 @@ const onMaterialSelect = (event: Event, rowItem: any) => {
         rowItem.description = '';
         rowItem.unit = '';
         rowItem.qty = 1;
-        rowItem.estPrice = 'Rp 0';
+        rowItem.estPrice = '';
     } else if (val) {
         const matId = Number(val);
         const mli = woMaterials.value.find((m) => m.id_material_list_item === matId);
@@ -152,7 +152,7 @@ const onMaterialSelect = (event: Event, rowItem: any) => {
             rowItem.item = mli.item || mli.description;
             rowItem.unit = mli.unit;
             rowItem.qty = mli.qty > 0 ? mli.qty : 1;
-            rowItem.estPrice = mli.est_price > 0 ? formatRupiah(mli.est_price) : 'Rp 0';
+            rowItem.estPrice = mli.est_price > 0 ? formatRupiah(mli.est_price) : '';
             rowItem.description = mli.description;
         }
     } else {
@@ -196,6 +196,25 @@ const handleEstPriceInput = (event: Event, item: any) => {
     target.value = formatted;
 };
 
+const getPRInternalSaveErrorMessage = (error: any) => {
+    const fallbackMessage = 'Gagal menyimpan PR Internal.';
+    const responseData = error?.response?.data;
+
+    if (Array.isArray(responseData?.error) && responseData.error.length > 0) {
+        const firstError = responseData.error[0];
+        if (firstError?.field === 'items') {
+            return 'Harap periksa kembali daftar item PR, termasuk estimasi harga pada setiap baris.';
+        }
+        return firstError?.message || responseData?.message || fallbackMessage;
+    }
+
+    if (responseData?.message === 'bad request') {
+        return 'Harap lengkapi seluruh data PR Internal dengan benar, termasuk estimasi harga setiap item.';
+    }
+
+    return responseData?.message || fallbackMessage;
+};
+
 // Computed totals
 const totalFormQty = computed(() => {
     if (!values.value.items) return 0;
@@ -209,8 +228,6 @@ const grandFormTotal = computed(() => {
     }, 0);
 });
 
-// Override the save to map payload correctly
-const originalSave = form.save;
 form.save = async () => {
     // Validate header
     if (!values.value.tanggal || !values.value.nama || !values.value.departemen || !values.value.vendorName || !values.value.projek || !values.value.idWo) {
@@ -223,9 +240,14 @@ form.save = async () => {
         toast.error("Minimal harus terdapat satu item PR.");
         return;
     }
-    for (const item of values.value.items) {
+    for (const [index, item] of values.value.items.entries()) {
         if (!item.item || !item.unit || parseToInt(item.qty) <= 0) {
-            toast.error("Harap lengkapi semua baris item (Nama Item, Satuan, dan Qty > 0).");
+            toast.error(`Baris item ke-${index + 1} belum lengkap. Nama item, satuan, dan qty wajib diisi.`);
+            return;
+        }
+
+        if (parseRupiahToNumber(item.estPrice) <= 0) {
+            toast.error(`Estimasi harga pada baris item ke-${index + 1} wajib diisi dan harus lebih dari Rp 0.`);
             return;
         }
     }
@@ -248,7 +270,18 @@ form.save = async () => {
         })),
     };
 
-    return originalSave(payload);
+    isSaving.value = true;
+    try {
+        await createPRInternal(payload);
+        toast.success('PR Internal berhasil diterbitkan.');
+        router.navigate({ to: '/pr-internal' });
+        return;
+    } catch (error: any) {
+        toast.error(getPRInternalSaveErrorMessage(error));
+        return;
+    } finally {
+        isSaving.value = false;
+    }
 };
 
 onMounted(async () => {
@@ -276,7 +309,7 @@ onMounted(async () => {
         vendorTelp: '',
         projek: '',
         idWo: '',
-        items: [{ item: '', description: '', qty: 1, unit: '', estPrice: 'Rp 0', materialId: null, isCustom: true }],
+        items: [{ item: '', description: '', qty: 1, unit: '', estPrice: '', materialId: null, isCustom: true }],
     };
 });
 </script>
