@@ -2,20 +2,13 @@
 import { computed, h, onMounted, ref, watch } from 'vue'
 import { useNavigate, useSearch } from '@tanstack/vue-router'
 import type { ColumnDef } from '@tanstack/vue-table'
-import { EyeIcon, RefreshCcwIcon, SearchIcon } from 'lucide-vue-next'
+import { RefreshCcwIcon, SearchIcon } from 'lucide-vue-next'
 import DateInput from '@/components/form/DateInput.vue'
 import { toast } from 'vue-sonner'
 
 import DataTable from '@/components/DataTable.vue'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
 import {
   Select,
   SelectContent,
@@ -24,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { getActivityLogById, getActivityLogs, type ActivityLogDetail, type ActivityLogListItem } from '@/api/activity-logs/activity-logs'
+import { getActivityLogs, type ActivityLogListItem } from '@/api/activity-logs/activity-logs'
 import { historyLogSchema, stripHistoryLogDefaults } from '@/pages/history-log/schema'
 import { useTable } from '@/composables/useTable'
 
@@ -40,10 +33,6 @@ const selectedModule = ref('all')
 const selectedEntityType = ref('all')
 const dateFrom = ref('')
 const dateTo = ref('')
-
-const isDetailOpen = ref(false)
-const isDetailLoading = ref(false)
-const selectedDetail = ref<ActivityLogDetail | null>(null)
 
 const actionOptions = [
   { label: 'Semua Aksi', value: 'all' },
@@ -64,6 +53,7 @@ const moduleLabels: Record<string, string> = {
   'master-data': 'Master Data',
   'transaction-documents': 'Transaction Documents',
   'work-order-production': 'Work Order Production',
+  'warehouse-delivery': 'Logistik & Pengiriman',
 }
 
 const entityTypeLabels: Record<string, string> = {
@@ -80,6 +70,28 @@ const entityTypeLabels: Record<string, string> = {
   pr_internals: 'PR Internals',
   po_internals: 'PO Internals',
   work_orders: 'Work Orders',
+  packing_lists: 'Packing Lists',
+  surat_jalan_internals: 'Surat Jalan Internal',
+  surat_jalan_clients: 'Surat Jalan Client',
+  received: 'Received',
+  inventory_receipts: 'Inventory Receipts',
+  rekonsiliasi_materials: 'Rekonsiliasi Materials',
+  master_plans: 'Master Plans',
+  master_plan_items: 'Master Plan Items',
+  marker_plans: 'Marker Plans',
+  spreading_cutting_plans: 'Spreading & Cutting Plans',
+  data_approve_cutting_plans: 'Data Approve Cutting Plans',
+  timeline_plans: 'Timeline Plans',
+  material_lists: 'Material Lists',
+  material_list_items: 'Material List Items',
+  rekonsiliasis: 'Rekonsiliasi Material',
+  report_cutting: 'Report Cutting',
+  report_sewing: 'Report Sewing',
+  report_qc_finish: 'Report QC Finish',
+  report_packing: 'Report Packing',
+  report_pengiriman: 'Report Pengiriman',
+  factory_reports: 'Factory Reports',
+  retur_clients: 'Retur Client',
 }
 
 const moduleOptions = [
@@ -89,6 +101,7 @@ const moduleOptions = [
   { label: 'Master Data', value: 'master-data' },
   { label: 'Transaction Documents', value: 'transaction-documents' },
   { label: 'Work Order Production', value: 'work-order-production' },
+  { label: 'Logistik & Pengiriman', value: 'warehouse-delivery' },
 ]
 
 const entityTypeOptions = [
@@ -105,6 +118,28 @@ const entityTypeOptions = [
   { label: 'PR Internals', value: 'pr_internals' },
   { label: 'PO Internals', value: 'po_internals' },
   { label: 'Work Orders', value: 'work_orders' },
+  { label: 'Packing Lists', value: 'packing_lists' },
+  { label: 'Surat Jalan Internal', value: 'surat_jalan_internals' },
+  { label: 'Surat Jalan Client', value: 'surat_jalan_clients' },
+  { label: 'Received', value: 'received' },
+  { label: 'Inventory Receipts', value: 'inventory_receipts' },
+  { label: 'Rekonsiliasi Materials', value: 'rekonsiliasi_materials' },
+  { label: 'Master Plans', value: 'master_plans' },
+  { label: 'Master Plan Items', value: 'master_plan_items' },
+  { label: 'Marker Plans', value: 'marker_plans' },
+  { label: 'Spreading & Cutting Plans', value: 'spreading_cutting_plans' },
+  { label: 'Data Approve Cutting Plans', value: 'data_approve_cutting_plans' },
+  { label: 'Timeline Plans', value: 'timeline_plans' },
+  { label: 'Material Lists', value: 'material_lists' },
+  { label: 'Material List Items', value: 'material_list_items' },
+  { label: 'Rekonsiliasi Material', value: 'rekonsiliasis' },
+  { label: 'Report Cutting', value: 'report_cutting' },
+  { label: 'Report Sewing', value: 'report_sewing' },
+  { label: 'Report QC Finish', value: 'report_qc_finish' },
+  { label: 'Report Packing', value: 'report_packing' },
+  { label: 'Report Pengiriman', value: 'report_pengiriman' },
+  { label: 'Factory Reports', value: 'factory_reports' },
+  { label: 'Retur Client', value: 'retur_clients' },
 ]
 
 const actionTone = (action: string) => {
@@ -126,8 +161,6 @@ const formatDateTime = (value?: string) => {
   }).format(date)
 }
 
-const formatFieldLabel = (value: string) => value.split('_').join(' ')
-
 const formatActionLabel = (value?: string) => {
   if (!value) return '-'
   return actionLabels[value] ?? value
@@ -141,21 +174,6 @@ const formatModuleLabel = (value?: string) => {
 const formatEntityTypeLabel = (value?: string) => {
   if (!value) return '-'
   return entityTypeLabels[value] ?? value
-}
-
-const formatValue = (value: unknown) => {
-  if (value == null || value === '') return '-'
-  if (typeof value === 'boolean') return value ? 'Ya' : 'Tidak'
-  if (typeof value === 'object') return JSON.stringify(value, null, 2)
-  return String(value)
-}
-
-const formatSnapshotBlock = (value: unknown) => {
-  if (value == null) return 'Tidak ada snapshot data.'
-  if (typeof value === 'object' && !Array.isArray(value) && Object.keys(value as Record<string, unknown>).length === 0) {
-    return 'Tidak ada snapshot data.'
-  }
-  return JSON.stringify(value, null, 2)
 }
 
 const fetchData = async () => {
@@ -192,22 +210,6 @@ const fetchData = async () => {
     toast.error('Riwayat aktivitas gagal dimuat')
   } finally {
     isLoading.value = false
-  }
-}
-
-const openDetail = async (id: number) => {
-  isDetailOpen.value = true
-  isDetailLoading.value = true
-  selectedDetail.value = null
-
-  try {
-    selectedDetail.value = await getActivityLogById(id)
-  } catch (error) {
-    console.error('Gagal memuat detail history log:', error)
-    toast.error('Detail aktivitas gagal dimuat')
-    isDetailOpen.value = false
-  } finally {
-    isDetailLoading.value = false
   }
 }
 
@@ -251,23 +253,6 @@ const columns: ColumnDef<ActivityLogListItem>[] = [
         h('p', { class: 'font-medium text-slate-800' }, formatEntityTypeLabel(row.original.entity_type)),
         h('p', { class: 'text-xs text-slate-500' }, row.original.entity_label || row.original.entity_id || '-'),
       ]),
-  },
-  {
-    id: 'detail',
-    header: 'Detail',
-    enableSorting: false,
-    cell: ({ row }) =>
-      h(
-        Button,
-        {
-          variant: 'outline',
-          size: 'sm',
-          onClick: () => openDetail(row.original.id),
-        },
-        {
-          default: () => [h(EyeIcon, { class: 'mr-1 h-4 w-4' }), 'Lihat'],
-        },
-      ),
   },
 ]
 
@@ -470,7 +455,7 @@ onMounted(() => {
     <Card class="border-slate-200 shadow-sm">
       <CardHeader>
         <CardTitle>Daftar Aktivitas</CardTitle>
-        <CardDescription>Buka detail untuk melihat perubahan field sebelum dan sesudah proses berlangsung.</CardDescription>
+        <CardDescription>Daftar aktivitas yang tercatat berdasarkan filter yang sedang aktif.</CardDescription>
       </CardHeader>
       <CardContent class="p-0">
         <DataTable
@@ -481,90 +466,5 @@ onMounted(() => {
         />
       </CardContent>
     </Card>
-
-    <Dialog v-model:open="isDetailOpen">
-      <DialogContent class="max-h-[85vh] overflow-y-auto sm:max-w-4xl">
-        <DialogHeader>
-          <DialogTitle>Detail Aktivitas</DialogTitle>
-          <DialogDescription v-if="selectedDetail">
-            {{ formatActionLabel(selectedDetail.action) }} | {{ formatEntityTypeLabel(selectedDetail.entity_type) }} | {{ selectedDetail.entity_label || selectedDetail.entity_id }}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div v-if="isDetailLoading" class="py-10 text-center text-sm text-slate-500">
-          Memuat detail aktivitas...
-        </div>
-
-        <div v-else-if="selectedDetail" class="space-y-6">
-          <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Aksi</p>
-              <div class="mt-2">
-                <span :class="['inline-flex rounded-full px-3 py-1 text-xs font-semibold tracking-wide', actionTone(selectedDetail.action)]">
-                  {{ formatActionLabel(selectedDetail.action) }}
-                </span>
-              </div>
-            </div>
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Modul</p>
-              <p class="mt-1 text-base font-semibold text-slate-900">{{ formatModuleLabel(selectedDetail.module) }}</p>
-              <p class="text-sm text-slate-500">{{ formatEntityTypeLabel(selectedDetail.entity_type) }}</p>
-            </div>
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Aktor</p>
-              <p class="mt-1 text-base font-semibold text-slate-900">{{ selectedDetail.actor_username }}</p>
-              <p class="text-sm text-slate-500">{{ selectedDetail.actor_role }}</p>
-            </div>
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Waktu & Route</p>
-              <p class="mt-1 text-base font-semibold text-slate-900">{{ formatDateTime(selectedDetail.created_at) }}</p>
-              <p class="text-sm text-slate-500">{{ selectedDetail.method }} {{ selectedDetail.route }}</p>
-            </div>
-          </div>
-
-          <div class="space-y-3">
-            <div class="flex items-center justify-between gap-3">
-              <h3 class="text-sm font-semibold uppercase tracking-wide text-slate-600">Perubahan Field</h3>
-              <span class="inline-flex rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600">
-                {{ selectedDetail.changed_fields?.length || 0 }} field berubah
-              </span>
-            </div>
-            <div v-if="selectedDetail.changed_fields?.length" class="space-y-3">
-              <div
-                v-for="field in selectedDetail.changed_fields"
-                :key="`${field.field}-${String(field.before)}-${String(field.after)}`"
-                class="rounded-2xl border border-slate-200 bg-white p-4"
-              >
-                <p class="text-sm font-semibold text-slate-900">{{ formatFieldLabel(field.field) }}</p>
-                <div class="mt-3 grid gap-3 md:grid-cols-2">
-                  <div class="rounded-xl border border-rose-100 bg-rose-50 p-3">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-rose-600">Sebelum</p>
-                    <pre class="mt-2 whitespace-pre-wrap break-words text-xs text-slate-700">{{ formatValue(field.before) }}</pre>
-                  </div>
-                  <div class="rounded-xl border border-emerald-100 bg-emerald-50 p-3">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-emerald-700">Sesudah</p>
-                    <pre class="mt-2 whitespace-pre-wrap break-words text-xs text-slate-700">{{ formatValue(field.after) }}</pre>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div v-else class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
-              Tidak ada perubahan field yang tercatat untuk log ini.
-            </div>
-          </div>
-
-          <div class="grid gap-4 lg:grid-cols-2">
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p class="text-sm font-semibold text-slate-900">Data Sebelum</p>
-              <pre class="mt-3 whitespace-pre-wrap break-words text-xs text-slate-700">{{ formatSnapshotBlock(selectedDetail.before_data) }}</pre>
-            </div>
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <p class="text-sm font-semibold text-slate-900">Data Sesudah</p>
-              <pre class="mt-3 whitespace-pre-wrap break-words text-xs text-slate-700">{{ formatSnapshotBlock(selectedDetail.after_data) }}</pre>
-            </div>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
   </div>
 </template>
