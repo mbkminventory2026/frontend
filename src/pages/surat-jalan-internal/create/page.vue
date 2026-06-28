@@ -213,7 +213,7 @@ onMounted(() => {
             </span>
 
             <span v-if="selectedPlIds.size === 0" class="text-sm text-slate-400 italic self-center">
-              Belum ada Packing List dipilih
+              Belum ada Packing List
             </span>
           </div>
 
