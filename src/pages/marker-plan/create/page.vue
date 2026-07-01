@@ -444,7 +444,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="container mx-auto py-8 space-y-8 max-w-7xl">
+  <div class="px-4 sm:px-6 py-8 space-y-8">
     <!-- Header -->
     <div class="flex items-center gap-4 border-b pb-5 border-neutral-100 justify-between">
       <div class="flex items-center gap-3">
@@ -617,30 +617,36 @@ onMounted(async () => {
             <div class="space-y-2">
               <Label class="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Ratio Marker & Spreading Plan</Label>
               <div class="overflow-x-auto border border-neutral-200 rounded-lg shadow-inner bg-white">
-                <table class="w-full text-left border-collapse text-xs min-w-[1600px]">
+                <table class="w-full text-left border-collapse text-xs min-w-[1900px]">
                   <thead class="bg-neutral-50 border-b border-neutral-200 text-[10px] uppercase font-bold text-neutral-500">
                     <tr>
-                      <th class="px-3 py-2.5 w-[3%]">No</th>
-                      <!-- Dynamic size headers -->
-                      <th v-for="sz in (getComponentShell(comp)?.sizes || [])" :key="sz.id_wo_shell_size" class="px-3 py-2.5 text-center w-[5%] bg-neutral-100/50">
-                        Sz {{ sz.size }}
+                      <th class="px-3 py-2.5 min-w-[36px]">No</th>
+                      <!-- Gelaran di kiri, sebelum size -->
+                      <th class="px-3 py-2.5 min-w-[90px] bg-sky-50 text-sky-700">Gelaran</th>
+                      <!-- Dynamic size headers dengan qty referensi -->
+                      <th
+                        v-for="sz in (getComponentShell(comp)?.sizes || [])"
+                        :key="sz.id_wo_shell_size"
+                        class="px-3 py-2.5 text-center min-w-[80px] bg-amber-50 text-amber-700"
+                      >
+                        <div>Sz {{ sz.size }}</div>
+                        <div class="text-[9px] font-normal text-amber-500 normal-case tracking-normal">(WO: {{ sz.qty }} pcs)</div>
                       </th>
-                      <th class="px-3 py-2.5 w-[6%]">Total QTY</th>
-                      <th class="px-3 py-2.5 w-[6%]">Gelaran</th>
-                      <th class="px-3 py-2.5 w-[6%]">Sisa</th>
-                      <th class="px-3 py-2.5 w-[5%]">Plot</th>
-                      <th class="px-3 py-2.5 w-[6%]">Lebar Kain</th>
-                      <th class="px-3 py-2.5 w-[11%]">Panjang Marker</th>
-                      <th class="px-3 py-2.5 w-[6%]">Net Cons</th>
-                      <th class="px-3 py-2.5 w-[6%]">Efficiency (%)</th>
-                      <th class="px-3 py-2.5 w-[6%]">Allowance (%)</th>
-                      <th class="px-3 py-2.5 w-[7%]">Cons+Allow (Yds)</th>
-                      <th class="px-3 py-2.5 w-[6%]">Cons Buyer</th>
-                      <th class="px-3 py-2.5 w-[6%]">Diff</th>
-                      <th class="px-3 py-2.5 w-[7%]">Total Need Fabric</th>
-                      <th class="px-3 py-2.5 w-[7%]">Total Need+Allow</th>
-                      <th class="px-3 py-2.5 w-[8%]">Ket</th>
-                      <th class="px-3 py-2.5 text-center w-[4%]">Aksi</th>
+                      <th class="px-3 py-2.5 min-w-[90px] bg-neutral-100 text-neutral-600">Total QTY</th>
+                      <th class="px-3 py-2.5 min-w-[80px] bg-neutral-100 text-neutral-600">Sisa</th>
+                      <th class="px-3 py-2.5 min-w-[70px]">Plot</th>
+                      <th class="px-3 py-2.5 min-w-[90px]">Lebar Kain</th>
+                      <th class="px-3 py-2.5 min-w-[140px]">Panjang Marker</th>
+                      <th class="px-3 py-2.5 min-w-[90px]">Net Cons</th>
+                      <th class="px-3 py-2.5 min-w-[90px]">Efficiency (%)</th>
+                      <th class="px-3 py-2.5 min-w-[90px]">Allowance (%)</th>
+                      <th class="px-3 py-2.5 min-w-[100px]">Cons+Allow (Yds)</th>
+                      <th class="px-3 py-2.5 min-w-[90px]">Cons Buyer</th>
+                      <th class="px-3 py-2.5 min-w-[80px]">Diff</th>
+                      <th class="px-3 py-2.5 min-w-[110px]">Total Need Fabric</th>
+                      <th class="px-3 py-2.5 min-w-[110px]">Total Need+Allow</th>
+                      <th class="px-3 py-2.5 min-w-[120px]">Ket</th>
+                      <th class="px-3 py-2.5 text-center min-w-[48px]">Aksi</th>
                     </tr>
                   </thead>
                   <tbody v-if="comp.ratios.length === 0" class="text-neutral-800">
@@ -653,45 +659,51 @@ onMounted(async () => {
                   <tbody v-else class="divide-y divide-neutral-150 text-neutral-800">
                     <tr v-for="(ratio, ratioIdx) in comp.ratios" :key="ratioIdx" class="hover:bg-neutral-50/30 transition-colors">
                       <!-- No -->
-                      <td class="p-2 text-center font-mono font-medium">
+                      <td class="px-3 py-2 text-center font-mono font-medium">
                         {{ ratioIdx + 1 }}
                       </td>
-                      
+
+                      <!-- Gelaran (dipindah ke kiri) -->
+                      <td class="px-2 py-2 bg-sky-50/40">
+                        <Input v-model="ratio.plan_spreading_gelaran" type="number" min="0" step="1" class="h-8 text-xs border-sky-200 font-mono text-right bg-white w-full" required />
+                      </td>
+
                       <!-- Dynamic size inputs (ratio_plan) -->
-                      <td v-for="szIn in ratio.sizes" :key="szIn.id_wo_shell_size" class="p-2 bg-neutral-50/20">
-                        <Input v-model="szIn.ratio_plan" type="number" min="0" step="1" class="h-8 text-xs border-neutral-200 font-mono text-center bg-white" required />
+                      <td v-for="szIn in ratio.sizes" :key="szIn.id_wo_shell_size" class="px-2 py-2 bg-amber-50/30">
+                        <Input v-model="szIn.ratio_plan" type="number" min="0" step="1" class="h-8 text-xs border-amber-200 font-mono text-center bg-white w-full" required />
                       </td>
 
                       <!-- Total QTY -->
-                      <td class="p-2">
-                        <Input :value="calculateTotalQty(ratio)" type="text" class="h-8 text-xs border-neutral-100 bg-neutral-50 font-mono text-right text-neutral-600" disabled />
-                      </td>
-
-                      <!-- Gelaran -->
-                      <td class="p-2">
-                        <Input v-model="ratio.plan_spreading_gelaran" type="number" min="0" step="1" class="h-8 text-xs border-neutral-200 font-mono text-right" required />
+                      <td class="px-2 py-2 bg-neutral-50">
+                        <Input :value="calculateTotalQty(ratio)" type="text" class="h-8 text-xs border-neutral-100 bg-neutral-100 font-mono text-right text-neutral-700 font-semibold w-full" disabled />
                       </td>
 
                       <!-- Sisa -->
-                      <td class="p-2">
-                        <Input :value="calculateSisa(comp, ratioIdx)" type="text" class="h-8 text-xs border-neutral-100 bg-neutral-50 font-mono text-right text-neutral-600" disabled />
+                      <td class="px-2 py-2 bg-neutral-50">
+                        <Input
+                          :value="calculateSisa(comp, ratioIdx)"
+                          type="text"
+                          class="h-8 text-xs border-neutral-100 font-mono text-right w-full"
+                          :class="calculateSisa(comp, ratioIdx) < 0 ? 'bg-red-50 text-red-600' : 'bg-neutral-100 text-neutral-600'"
+                          disabled
+                        />
                       </td>
 
                       <!-- Plot -->
-                      <td class="p-2">
-                        <Input v-model="ratio.plot" type="number" min="0" step="1" class="h-8 text-xs border-neutral-200 font-mono text-right" required />
+                      <td class="px-2 py-2">
+                        <Input v-model="ratio.plot" type="number" min="0" step="1" class="h-8 text-xs border-neutral-200 font-mono text-right w-full" required />
                       </td>
 
                       <!-- Lebar Kain -->
-                      <td class="p-2">
-                        <Input v-model="ratio.lebar_kain" type="number" min="0" step="0.1" class="h-8 text-xs border-neutral-200 font-mono text-right" required />
+                      <td class="px-2 py-2">
+                        <Input v-model="ratio.lebar_kain" type="number" min="0" step="0.1" class="h-8 text-xs border-neutral-200 font-mono text-right w-full" required />
                       </td>
 
                       <!-- Panjang Marker -->
-                      <td class="p-2">
-                        <div class="flex items-center gap-1 min-w-[110px]">
+                      <td class="px-2 py-2">
+                        <div class="flex items-center gap-1">
                           <Input v-model="ratio.panjang_marker" type="number" min="0" step="0.001" class="h-8 text-xs border-neutral-200 font-mono text-right w-full" required />
-                          <select v-model="ratio.panjang_marker_unit" class="h-8 text-[10px] rounded-md border border-neutral-200 bg-white px-1">
+                          <select v-model="ratio.panjang_marker_unit" class="h-8 text-[10px] rounded-md border border-neutral-200 bg-white px-1 flex-shrink-0">
                             <option value="yard">yd</option>
                             <option value="meter">m</option>
                             <option value="inch">in</option>
@@ -700,52 +712,58 @@ onMounted(async () => {
                       </td>
 
                       <!-- Net Cons -->
-                      <td class="p-2">
-                        <Input :value="calculateNetCons(ratio).toFixed(3)" type="text" class="h-8 text-xs border-neutral-100 bg-neutral-50 font-mono text-right text-neutral-600" disabled />
+                      <td class="px-2 py-2 bg-neutral-50">
+                        <Input :value="calculateNetCons(ratio).toFixed(3)" type="text" class="h-8 text-xs border-neutral-100 bg-neutral-100 font-mono text-right text-neutral-600 w-full" disabled />
                       </td>
 
                       <!-- Efficiency -->
-                      <td class="p-2">
-                        <Input v-model="ratio.efficiency_marker" type="number" min="0" max="100" step="0.01" class="h-8 text-xs border-neutral-200 font-mono text-right" required />
+                      <td class="px-2 py-2">
+                        <Input v-model="ratio.efficiency_marker" type="number" min="0" max="100" step="0.01" class="h-8 text-xs border-neutral-200 font-mono text-right w-full" required />
                       </td>
 
                       <!-- Allowance -->
-                      <td class="p-2">
-                        <Input v-model="ratio.allowance" type="number" min="0" step="0.01" class="h-8 text-xs border-neutral-200 font-mono text-right" required />
+                      <td class="px-2 py-2">
+                        <Input v-model="ratio.allowance" type="number" min="0" step="0.01" class="h-8 text-xs border-neutral-200 font-mono text-right w-full" required />
                       </td>
 
                       <!-- Cons+Allow (Yds) -->
-                      <td class="p-2">
-                        <Input :value="calculateConsPlusAllow(ratio).toFixed(3)" type="text" class="h-8 text-xs border-neutral-100 bg-neutral-50 font-mono text-right text-neutral-600" disabled />
+                      <td class="px-2 py-2 bg-neutral-50">
+                        <Input :value="calculateConsPlusAllow(ratio).toFixed(3)" type="text" class="h-8 text-xs border-neutral-100 bg-neutral-100 font-mono text-right text-neutral-600 w-full" disabled />
                       </td>
 
                       <!-- Cons Buyer -->
-                      <td class="p-2">
-                        <Input v-model="ratio.cons_buyer" type="number" min="0" step="0.001" placeholder="Optional" class="h-8 text-xs border-neutral-200 font-mono text-right" />
+                      <td class="px-2 py-2">
+                        <Input v-model="ratio.cons_buyer" type="number" min="0" step="0.001" placeholder="–" class="h-8 text-xs border-neutral-200 font-mono text-right w-full" />
                       </td>
 
                       <!-- Diff -->
-                      <td class="p-2">
-                        <Input :value="calculateDiff(ratio).toFixed(3)" type="text" class="h-8 text-xs border-neutral-100 bg-neutral-50 font-mono text-right text-neutral-600" disabled />
+                      <td class="px-2 py-2 bg-neutral-50">
+                        <Input
+                          :value="calculateDiff(ratio).toFixed(3)"
+                          type="text"
+                          class="h-8 text-xs border-neutral-100 font-mono text-right w-full"
+                          :class="calculateDiff(ratio) > 0 ? 'bg-red-50 text-red-600' : 'bg-neutral-100 text-neutral-600'"
+                          disabled
+                        />
                       </td>
 
                       <!-- Total Need Fabric -->
-                      <td class="p-2">
-                        <Input :value="calculateTotalNeedFabric(ratio).toFixed(3)" type="text" class="h-8 text-xs border-neutral-100 bg-neutral-50 font-mono text-right text-neutral-600" disabled />
+                      <td class="px-2 py-2 bg-neutral-50">
+                        <Input :value="calculateTotalNeedFabric(ratio).toFixed(3)" type="text" class="h-8 text-xs border-neutral-100 bg-neutral-100 font-mono text-right text-neutral-600 w-full" disabled />
                       </td>
 
                       <!-- Total Need Fabric+Allow -->
-                      <td class="p-2">
-                        <Input :value="calculateTotalNeedFabricAllow(ratio).toFixed(3)" type="text" class="h-8 text-xs border-neutral-100 bg-neutral-50 font-mono text-right text-neutral-600" disabled />
+                      <td class="px-2 py-2 bg-neutral-50">
+                        <Input :value="calculateTotalNeedFabricAllow(ratio).toFixed(3)" type="text" class="h-8 text-xs border-neutral-100 bg-neutral-100 font-mono text-right text-neutral-600 w-full" disabled />
                       </td>
 
                       <!-- Ket -->
-                      <td class="p-2">
-                        <Input v-model="ratio.ket" type="text" placeholder="Catatan" class="h-8 text-xs border-neutral-200 bg-white" />
+                      <td class="px-2 py-2">
+                        <Input v-model="ratio.ket" type="text" placeholder="Catatan" class="h-8 text-xs border-neutral-200 bg-white w-full" />
                       </td>
 
                       <!-- Delete Row button -->
-                      <td class="p-2 text-center">
+                      <td class="px-2 py-2 text-center">
                         <Button
                           type="button"
                           variant="ghost"
