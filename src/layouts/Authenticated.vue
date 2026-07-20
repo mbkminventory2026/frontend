@@ -25,7 +25,6 @@ import {
   Boxes,
   Users,
   Truck,
-  Sparkles,
   Shield,
   Factory,
   ClipboardList,
@@ -212,12 +211,6 @@ const navMainItems = computed(() => {
       icon: LayoutDashboard,
       isActive: true,
       permission: "DASHBOARD_READ",
-    },
-    {
-      title: "Estimasi AI (AI)",
-      url: "/ai-estimation",
-      icon: Sparkles,
-      permission: "AI_ESTIMATION_READ",
     },
     {
       title: masterDataTitle,
