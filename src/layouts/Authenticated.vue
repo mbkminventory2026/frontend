@@ -30,6 +30,7 @@ import {
   ClipboardList,
   ClipboardCheck,
   Building,
+  ArchiveRestore,
 } from "lucide-vue-next"
 import { useAuthStore } from "@/store/authStore"
 import { usePermission } from '@/composables/usePermission'
@@ -160,6 +161,12 @@ const navMainItems = computed(() => {
           },
         ],
       },
+      {
+        title: "Manajemen Backup",
+        url: "/system-backups",
+        icon: ArchiveRestore,
+        permission: "SYSTEM_BACKUP_READ",
+      },
     ]
 
     return adminSistemItems
@@ -277,6 +284,12 @@ const navMainItems = computed(() => {
           permission: "PERMISSION_READ",
         },
       ],
+    },
+    {
+      title: "Manajemen Backup",
+      url: "/system-backups",
+      icon: ArchiveRestore,
+      permission: "SYSTEM_BACKUP_READ",
     },
     {
       title: "Logistik & Transaksi",
