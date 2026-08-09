@@ -65,8 +65,13 @@ export interface MaterialListItem {
   qty: number;
   unit: string;
   est_price: number;
-  id_wo_shell?: number;
-  id_wo_trim?: number;
+  id_wo_shell?: number | null;
+  id_wo_trim?: number | null;
+  category?: "FABRIC" | "SEWING" | "PACKING" | null;
+  cons_per_pc?: number | null;
+  qty_wo_scope?: "WHOLE_WO" | "SIZE" | "COLOR" | "COLOR_SIZE" | null;
+  id_qty_wo_shell?: number | null;
+  id_qty_wo_size?: number | null;
   created_at: string;
   qty_surat_jalan: number;
   qty_received: number;

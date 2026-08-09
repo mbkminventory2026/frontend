@@ -415,29 +415,69 @@ watch(currentStageOutput, (newVal) => {
 // ─── Add Material List Item ───────────────────────────────────────────────────
 const addItemDialogOpen = ref(false);
 const addItemTargetMLId = ref<number | null>(null);
-const addItemForm = ref<CreateMaterialListItemPayload>({ item: '', description: '', qty: 0, unit: '', est_price: 0 });
+type QtyWoScope = CreateMaterialListItemPayload['qty_wo_scope'];
+interface AddItemForm {
+    item: string; description: string; qty: number; unit: string; est_price: number;
+    id_wo_shell: number | null; id_wo_trim: number | null; category: CreateMaterialListItemPayload['category'] | '';
+    cons_per_pc: string; qty_wo_scope: QtyWoScope | ''; id_qty_wo_shell: number | null; id_qty_wo_size: number | null;
+}
+const newAddItemForm = (): AddItemForm => ({ item: '', description: '', qty: 0, unit: '', est_price: 0, id_wo_shell: null, id_wo_trim: null, category: '', cons_per_pc: '', qty_wo_scope: '', id_qty_wo_shell: null, id_qty_wo_size: null });
+const addItemForm = ref<AddItemForm>(newAddItemForm());
 const isSubmittingAddItem = ref(false);
+const addConsModified = ref(false);
+const addApplicabilitySizes = computed(() => {
+    if (addItemForm.value.qty_wo_scope === 'COLOR_SIZE' && addItemForm.value.id_qty_wo_shell) {
+        return detail.value?.shells.find(shell => shell.id_wo_shell === addItemForm.value.id_qty_wo_shell)?.sizes ?? [];
+    }
+    return detail.value?.shells.flatMap(shell => shell.sizes) ?? [];
+});
+
+const prefillAddConsumption = () => {
+    if (addConsModified.value) return;
+    const trim = detail.value?.trims.find(value => value.id_wo_trim === addItemForm.value.id_wo_trim);
+    const shell = detail.value?.shells.find(value => value.id_wo_shell === addItemForm.value.id_wo_shell);
+    const consumption = trim?.cons ?? shell?.cons;
+    if (consumption !== undefined && consumption !== null) addItemForm.value.cons_per_pc = String(consumption);
+};
+watch(() => [addItemForm.value.id_wo_shell, addItemForm.value.id_wo_trim], prefillAddConsumption);
+watch(() => addItemForm.value.id_qty_wo_shell, () => {
+    if (addItemForm.value.qty_wo_scope !== 'COLOR_SIZE') return;
+    const allowed = addApplicabilitySizes.value.some(size => size.id_wo_shell_size === addItemForm.value.id_qty_wo_size);
+    if (!allowed) addItemForm.value.id_qty_wo_size = null;
+});
+watch(() => addItemForm.value.qty_wo_scope, (scope) => {
+    if (scope === 'WHOLE_WO') { addItemForm.value.id_qty_wo_shell = null; addItemForm.value.id_qty_wo_size = null; }
+    if (scope === 'SIZE') addItemForm.value.id_qty_wo_shell = null;
+    if (scope === 'COLOR') addItemForm.value.id_qty_wo_size = null;
+});
 
 const openAddItemDialog = (idML: number) => {
     addItemTargetMLId.value = idML;
-    addItemForm.value = { item: '', description: '', qty: 0, unit: '', est_price: 0 };
+    addItemForm.value = newAddItemForm();
+    addConsModified.value = false;
     addItemDialogOpen.value = true;
 };
 
 const submitAddItem = async () => {
     if (!addItemTargetMLId.value) return;
-    if (!addItemForm.value.item || !addItemForm.value.unit) {
-        toast.error('Item dan unit wajib diisi.');
+    const form = addItemForm.value;
+    const cons = form.cons_per_pc === '' ? null : Number(form.cons_per_pc);
+    if (!form.item || !form.unit || !form.category || !form.qty_wo_scope) {
+        toast.error('Item, unit, kategori, dan berlaku untuk QTY WO wajib diisi.');
         return;
     }
+    if (!Number.isFinite(cons ?? 0) || (cons !== null && cons < 0)) { toast.error('CONS./PC tidak boleh negatif.'); return; }
+    if (form.qty_wo_scope === 'SIZE' && !form.id_qty_wo_size) { toast.error('Pilih ukuran QTY WO.'); return; }
+    if (form.qty_wo_scope === 'COLOR' && !form.id_qty_wo_shell) { toast.error('Pilih warna QTY WO.'); return; }
+    if (form.qty_wo_scope === 'COLOR_SIZE' && (!form.id_qty_wo_shell || !form.id_qty_wo_size)) { toast.error('Pilih warna dan ukuran QTY WO.'); return; }
     isSubmittingAddItem.value = true;
     try {
         await createMaterialListItem(addItemTargetMLId.value, {
-            item: addItemForm.value.item,
-            description: addItemForm.value.description || '',
-            qty: Number(addItemForm.value.qty) || 0,
-            unit: addItemForm.value.unit,
-            est_price: Number(addItemForm.value.est_price) || 0,
+            item: form.item, description: form.description || '', qty: Number(form.qty) || 0, unit: form.unit,
+            est_price: Number(form.est_price) || 0, id_wo_shell: form.id_wo_shell, id_wo_trim: form.id_wo_trim,
+            category: form.category as CreateMaterialListItemPayload['category'], cons_per_pc: cons, qty_wo_scope: form.qty_wo_scope as QtyWoScope,
+            id_qty_wo_shell: form.qty_wo_scope === 'COLOR' || form.qty_wo_scope === 'COLOR_SIZE' ? form.id_qty_wo_shell : null,
+            id_qty_wo_size: form.qty_wo_scope === 'SIZE' || form.qty_wo_scope === 'COLOR_SIZE' ? form.id_qty_wo_size : null,
         });
         toast.success('Item berhasil ditambahkan.');
         addItemDialogOpen.value = false;
@@ -1397,6 +1437,20 @@ onMounted(fetchDetail);
                 <div>
                     <Label class="text-xs">Est. Harga (Rp)</Label>
                     <Input v-model="addItemForm.est_price" type="number" min="0" placeholder="0" class="mt-1 text-sm" />
+                </div>
+                <div class="border-t pt-3 space-y-3">
+                    <p class="text-xs font-semibold text-neutral-700">Sumber Material</p>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><Label class="text-xs">Shell sumber</Label><select v-model="addItemForm.id_wo_shell" class="mt-1 h-9 w-full rounded-md border border-neutral-200 bg-white px-2 text-sm"><option :value="null">Tidak dipilih</option><option v-for="shell in detail?.shells ?? []" :key="shell.id_wo_shell" :value="shell.id_wo_shell">{{ shell.color }} — {{ shell.deskripsi }}</option></select></div>
+                        <div><Label class="text-xs">Trim sumber</Label><select v-model="addItemForm.id_wo_trim" class="mt-1 h-9 w-full rounded-md border border-neutral-200 bg-white px-2 text-sm"><option :value="null">Tidak dipilih</option><option v-for="trim in detail?.trims ?? []" :key="trim.id_wo_trim" :value="trim.id_wo_trim">{{ trim.item }} — {{ trim.color }}</option></select></div>
+                    </div>
+                </div>
+                <div class="border-t pt-3 space-y-3">
+                    <div><Label class="text-xs">Kategori <span class="text-red-500">*</span></Label><select v-model="addItemForm.category" class="mt-1 h-9 w-full rounded-md border border-neutral-200 bg-white px-2 text-sm"><option value="">Pilih kategori</option><option value="FABRIC">FABRIC</option><option value="SEWING">SEWING</option><option value="PACKING">PACKING</option></select></div>
+                    <div><Label class="text-xs">CONS./PC</Label><Input v-model="addItemForm.cons_per_pc" type="number" min="0" step="0.001" placeholder="Opsional" class="mt-1 text-sm" @input="addConsModified = true" /></div>
+                    <div><Label class="text-xs">Berlaku untuk QTY WO <span class="text-red-500">*</span></Label><select v-model="addItemForm.qty_wo_scope" class="mt-1 h-9 w-full rounded-md border border-neutral-200 bg-white px-2 text-sm"><option value="">Pilih cakupan</option><option value="WHOLE_WO">Seluruh WO</option><option value="SIZE">Size</option><option value="COLOR">Warna</option><option value="COLOR_SIZE">Warna + Size</option></select></div>
+                    <div v-if="addItemForm.qty_wo_scope === 'COLOR' || addItemForm.qty_wo_scope === 'COLOR_SIZE'"><Label class="text-xs">Warna QTY WO <span class="text-red-500">*</span></Label><select v-model="addItemForm.id_qty_wo_shell" class="mt-1 h-9 w-full rounded-md border border-neutral-200 bg-white px-2 text-sm"><option :value="null">Pilih warna shell</option><option v-for="shell in detail?.shells ?? []" :key="shell.id_wo_shell" :value="shell.id_wo_shell">{{ shell.color }} (Shell #{{ shell.id_wo_shell }})</option></select></div>
+                    <div v-if="addItemForm.qty_wo_scope === 'SIZE' || addItemForm.qty_wo_scope === 'COLOR_SIZE'"><Label class="text-xs">Size QTY WO <span class="text-red-500">*</span></Label><select v-model="addItemForm.id_qty_wo_size" class="mt-1 h-9 w-full rounded-md border border-neutral-200 bg-white px-2 text-sm" :disabled="addItemForm.qty_wo_scope === 'COLOR_SIZE' && !addItemForm.id_qty_wo_shell"><option :value="null">Pilih size</option><option v-for="size in addApplicabilitySizes" :key="size.id_wo_shell_size" :value="size.id_wo_shell_size">{{ size.size }}</option></select></div>
                 </div>
             </div>
             <DialogFooter class="gap-2">

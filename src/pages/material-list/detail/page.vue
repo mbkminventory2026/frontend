@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { useParams, useRouter } from '@tanstack/vue-router';
 import {
     ArrowLeftIcon, PackageIcon, TruckIcon, ClipboardListIcon,
@@ -8,7 +8,8 @@ import {
 import { toast } from 'vue-sonner';
 
 import { apiClient } from '@/lib/apiClient';
-import { createSuratJalanClient, createReceived } from '@/api/material-list/material-list';
+import { createSuratJalanClient, createReceived, getMaterialListItems, updateMaterialListItem, type UpdateMaterialListItemPayload } from '@/api/material-list/material-list';
+import { getWorkOrderById, type WorkOrderDetailResponse } from '@/api/work-orders/work-orders';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import DateInput from '@/components/form/DateInput.vue';
@@ -37,6 +38,13 @@ interface MLIDetail {
     qty: number;
     unit: string;
     est_price: number;
+    id_wo_shell: number | null;
+    id_wo_trim: number | null;
+    category: 'FABRIC' | 'SEWING' | 'PACKING' | null;
+    cons_per_pc: number | null;
+    qty_wo_scope: 'WHOLE_WO' | 'SIZE' | 'COLOR' | 'COLOR_SIZE' | null;
+    id_qty_wo_shell: number | null;
+    id_qty_wo_size: number | null;
     created_at: string;
     qty_surat_jalan: number;
     qty_received: number;
@@ -53,6 +61,13 @@ interface History { surat_jalan: HistoryEntry[]; received: HistoryEntry[]; }
 const detail = ref<MLIDetail | null>(null);
 const history = ref<History>({ surat_jalan: [], received: [] });
 const isLoading = ref(true);
+const workOrder = ref<WorkOrderDetailResponse | null>(null);
+const isEditOpen = ref(false);
+const isSubmittingEdit = ref(false);
+const stageTouched = ref(new Set<string>());
+const editConsModified = ref(false);
+const sourceIdsLoaded = ref(false);
+const editForm = ref({ item: '', description: '', qty: 0, unit: '', est_price: 0, id_wo_shell: null as number | null, id_wo_trim: null as number | null, category: '' as MLIDetail['category'] | '', cons_per_pc: '', qty_wo_scope: '' as MLIDetail['qty_wo_scope'] | '', id_qty_wo_shell: null as number | null, id_qty_wo_size: null as number | null });
 
 const fetchDetail = async () => {
     isLoading.value = true;
@@ -61,8 +76,14 @@ const fetchDetail = async () => {
             apiClient.get(`/api/v1/material-list-items/${id.value}`),
             apiClient.get(`/api/v1/material-list-items/${id.value}/history`),
         ]);
-        detail.value = detailRes.data as MLIDetail;
+        const itemDetail = detailRes.data as MLIDetail;
+        const materialList = await getMaterialListItems(itemDetail.id_material_list);
+        const sourceItem = (materialList?.items as Array<{ id_material_list_item: number; id_wo_shell?: number | null; id_wo_trim?: number | null }> | undefined)
+            ?.find(value => value.id_material_list_item === itemDetail.id_material_list_item);
+        sourceIdsLoaded.value = sourceItem !== undefined;
+        detail.value = { ...itemDetail, id_wo_shell: sourceItem?.id_wo_shell ?? null, id_wo_trim: sourceItem?.id_wo_trim ?? null };
         history.value = histRes.data as History;
+        workOrder.value = await getWorkOrderById(itemDetail.id_wo);
     } catch {
         toast.error('Gagal memuat detail item.');
     } finally {
@@ -84,6 +105,60 @@ const progressRecv = computed(() => qtyWo.value > 0 ? Math.min(100, Math.round((
 
 const canCreate = computed(() => hasPermission('INVENTORY_RECEIVE'));
 const canDelete = computed(() => hasPermission('INVENTORY_RECEIVE'));
+const canEdit = computed(() => hasPermission('MATERIAL_LIST_UPDATE') && !detail.value?.ml_is_locked);
+const applicabilityShellLabel = computed(() => {
+    const shellId = detail.value?.id_qty_wo_shell;
+    if (!shellId) return null;
+    const shell = workOrder.value?.shells.find(value => value.id_wo_shell === shellId);
+    return shell ? `${shell.color} (Shell #${shell.id_wo_shell})` : `Shell #${shellId}`;
+});
+const editApplicabilitySizes = computed(() => {
+    if (editForm.value.qty_wo_scope === 'COLOR_SIZE' && editForm.value.id_qty_wo_shell) return workOrder.value?.shells.find(shell => shell.id_wo_shell === editForm.value.id_qty_wo_shell)?.sizes ?? [];
+    return workOrder.value?.shells.flatMap(shell => shell.sizes) ?? [];
+});
+const openEdit = () => {
+    if (!detail.value) return;
+    const value = detail.value;
+    editForm.value = { item: value.item, description: value.description, qty: value.qty, unit: value.unit, est_price: value.est_price, id_wo_shell: value.id_wo_shell, id_wo_trim: value.id_wo_trim, category: value.category ?? '', cons_per_pc: value.cons_per_pc === null ? '' : String(value.cons_per_pc), qty_wo_scope: value.qty_wo_scope ?? '', id_qty_wo_shell: value.id_qty_wo_shell, id_qty_wo_size: value.id_qty_wo_size };
+    stageTouched.value = new Set(); editConsModified.value = false; isEditOpen.value = true;
+};
+const touchStage = (key: string) => stageTouched.value.add(key);
+watch(() => editForm.value.id_qty_wo_shell, () => {
+    if (editForm.value.qty_wo_scope === 'COLOR_SIZE' && !editApplicabilitySizes.value.some(size => size.id_wo_shell_size === editForm.value.id_qty_wo_size)) editForm.value.id_qty_wo_size = null;
+});
+watch(() => editForm.value.qty_wo_scope, (scope) => {
+    if (scope === 'WHOLE_WO') { editForm.value.id_qty_wo_shell = null; editForm.value.id_qty_wo_size = null; }
+    if (scope === 'SIZE') editForm.value.id_qty_wo_shell = null;
+    if (scope === 'COLOR') editForm.value.id_qty_wo_size = null;
+});
+watch(() => [editForm.value.id_wo_shell, editForm.value.id_wo_trim], () => {
+    if (editConsModified.value || editForm.value.cons_per_pc !== '') return;
+    const trim = workOrder.value?.trims.find(value => value.id_wo_trim === editForm.value.id_wo_trim);
+    const shell = workOrder.value?.shells.find(value => value.id_wo_shell === editForm.value.id_wo_shell);
+    const consumption = trim?.cons ?? shell?.cons;
+    if (consumption !== undefined && consumption !== null) editForm.value.cons_per_pc = String(consumption);
+});
+const submitEdit = async () => {
+    if (!detail.value) return;
+    const form = editForm.value; const cons = form.cons_per_pc === '' ? null : Number(form.cons_per_pc);
+    if (!form.item || !form.unit) { toast.error('Item dan unit wajib diisi.'); return; }
+    if (!Number.isFinite(cons ?? 0) || (cons !== null && cons < 0)) { toast.error('CONS./PC tidak boleh negatif.'); return; }
+    if (stageTouched.value.has('scope')) {
+        if (!form.qty_wo_scope) { toast.error('Pilih berlaku untuk QTY WO.'); return; }
+        if (form.qty_wo_scope === 'SIZE' && !form.id_qty_wo_size) { toast.error('Pilih size QTY WO.'); return; }
+        if (form.qty_wo_scope === 'COLOR' && !form.id_qty_wo_shell) { toast.error('Pilih warna QTY WO.'); return; }
+        if (form.qty_wo_scope === 'COLOR_SIZE' && (!form.id_qty_wo_shell || !form.id_qty_wo_size)) { toast.error('Pilih warna dan size QTY WO.'); return; }
+    }
+    const payload: UpdateMaterialListItemPayload = { item: form.item, description: form.description, qty: Number(form.qty) || 0, unit: form.unit, est_price: Number(form.est_price) || 0 };
+    if (sourceIdsLoaded.value) { payload.id_wo_shell = form.id_wo_shell; payload.id_wo_trim = form.id_wo_trim; }
+    if (stageTouched.value.has('category')) payload.category = form.category || null;
+    if (stageTouched.value.has('cons')) payload.cons_per_pc = cons;
+    if (stageTouched.value.has('scope')) { payload.qty_wo_scope = form.qty_wo_scope || null; payload.id_qty_wo_shell = form.qty_wo_scope === 'COLOR' || form.qty_wo_scope === 'COLOR_SIZE' ? form.id_qty_wo_shell : null; payload.id_qty_wo_size = form.qty_wo_scope === 'SIZE' || form.qty_wo_scope === 'COLOR_SIZE' ? form.id_qty_wo_size : null; }
+    isSubmittingEdit.value = true;
+    try { await updateMaterialListItem(detail.value.id_material_list_item, payload); toast.success('Item material list diperbarui.'); isEditOpen.value = false; await fetchDetail(); }
+    catch (error: unknown) { const response = (error as { response?: { data?: { message?: string } } }).response; toast.error(response?.data?.message || 'Gagal memperbarui item.'); }
+    finally { isSubmittingEdit.value = false; }
+};
 
 // ─── SJC Form ───────────────────────────────────────────
 const sjcTanggal = ref('');
@@ -197,7 +272,14 @@ const executeDelete = async () => {
                         <p class="text-2xl font-bold">{{ detail.qty }}</p>
                         <p class="text-xs text-neutral-500">{{ detail.unit }}</p>
                         <p v-if="detail.est_price > 0" class="text-xs text-neutral-400 mt-1">Rp {{ detail.est_price.toLocaleString('id-ID') }}</p>
+                        <Button v-if="canEdit" variant="outline" size="sm" class="mt-2" @click="openEdit">Edit Item</Button>
                     </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-xs text-neutral-600">
+                    <span>Kategori: <strong>{{ detail.category ?? 'Belum ditentukan' }}</strong></span>
+                    <span>CONS./PC: <strong>{{ detail.cons_per_pc ?? '—' }}</strong></span>
+                    <span>Berlaku QTY WO: <strong>{{ detail.qty_wo_scope ?? 'Belum ditentukan' }}</strong></span>
+                    <span v-if="applicabilityShellLabel">Warna QTY WO: <strong>{{ applicabilityShellLabel }}</strong></span>
                 </div>
                 <Separator class="my-3" />
                 <div class="space-y-2.5">
@@ -382,6 +464,20 @@ const executeDelete = async () => {
     </div>
 
     <!-- Received Confirmation Dialog -->
+    <Dialog :open="isEditOpen" @update:open="isEditOpen = $event">
+        <DialogContent class="max-w-lg max-h-[85vh] overflow-y-auto">
+            <DialogHeader><DialogTitle>Edit Item Material List</DialogTitle><DialogDescription>Sumber Material dan Berlaku untuk QTY WO adalah konsep terpisah.</DialogDescription></DialogHeader>
+            <div class="space-y-3 py-2">
+                <div class="grid grid-cols-2 gap-3"><div><Label class="text-xs">Item *</Label><Input v-model="editForm.item" class="mt-1" /></div><div><Label class="text-xs">Unit *</Label><Input v-model="editForm.unit" class="mt-1" /></div></div>
+                <div><Label class="text-xs">Deskripsi</Label><Input v-model="editForm.description" class="mt-1" /></div>
+                <div class="grid grid-cols-2 gap-3"><div><Label class="text-xs">Qty</Label><Input v-model="editForm.qty" type="number" min="0" class="mt-1" /></div><div><Label class="text-xs">Est. Harga</Label><Input v-model="editForm.est_price" type="number" min="0" class="mt-1" /></div></div>
+                <div class="border-t pt-3 space-y-2"><p class="text-xs font-semibold">Sumber Material</p><div class="grid grid-cols-2 gap-3"><div><Label class="text-xs">Shell sumber</Label><select v-model="editForm.id_wo_shell" class="mt-1 h-9 w-full rounded-md border px-2 text-sm"><option :value="null">Tidak dipilih</option><option v-for="shell in workOrder?.shells ?? []" :key="shell.id_wo_shell" :value="shell.id_wo_shell">{{ shell.color }} — {{ shell.deskripsi }}</option></select></div><div><Label class="text-xs">Trim sumber</Label><select v-model="editForm.id_wo_trim" class="mt-1 h-9 w-full rounded-md border px-2 text-sm"><option :value="null">Tidak dipilih</option><option v-for="trim in workOrder?.trims ?? []" :key="trim.id_wo_trim" :value="trim.id_wo_trim">{{ trim.item }} — {{ trim.color }}</option></select></div></div></div>
+                <div class="border-t pt-3 space-y-3"><div><Label class="text-xs">Kategori</Label><select v-model="editForm.category" class="mt-1 h-9 w-full rounded-md border px-2 text-sm" @change="touchStage('category')"><option value="">Belum ditentukan</option><option value="FABRIC">FABRIC</option><option value="SEWING">SEWING</option><option value="PACKING">PACKING</option></select></div><div><Label class="text-xs">CONS./PC</Label><Input v-model="editForm.cons_per_pc" type="number" min="0" step="0.001" class="mt-1" @input="editConsModified = true; touchStage('cons')" /></div><div><Label class="text-xs">Berlaku untuk QTY WO</Label><select v-model="editForm.qty_wo_scope" class="mt-1 h-9 w-full rounded-md border px-2 text-sm" @change="touchStage('scope')"><option value="">Belum ditentukan</option><option value="WHOLE_WO">Seluruh WO</option><option value="SIZE">Size</option><option value="COLOR">Warna</option><option value="COLOR_SIZE">Warna + Size</option></select></div><div v-if="editForm.qty_wo_scope === 'COLOR' || editForm.qty_wo_scope === 'COLOR_SIZE'"><Label class="text-xs">Warna QTY WO *</Label><select v-model="editForm.id_qty_wo_shell" class="mt-1 h-9 w-full rounded-md border px-2 text-sm" @change="touchStage('scope')"><option :value="null">Pilih warna shell</option><option v-for="shell in workOrder?.shells ?? []" :key="shell.id_wo_shell" :value="shell.id_wo_shell">{{ shell.color }} (Shell #{{ shell.id_wo_shell }})</option></select></div><div v-if="editForm.qty_wo_scope === 'SIZE' || editForm.qty_wo_scope === 'COLOR_SIZE'"><Label class="text-xs">Size QTY WO *</Label><select v-model="editForm.id_qty_wo_size" class="mt-1 h-9 w-full rounded-md border px-2 text-sm" :disabled="editForm.qty_wo_scope === 'COLOR_SIZE' && !editForm.id_qty_wo_shell" @change="touchStage('scope')"><option :value="null">Pilih size</option><option v-for="size in editApplicabilitySizes" :key="size.id_wo_shell_size" :value="size.id_wo_shell_size">{{ size.size }}</option></select></div></div>
+            </div>
+            <DialogFooter><Button variant="outline" @click="isEditOpen = false" :disabled="isSubmittingEdit">Batal</Button><Button @click="submitEdit" :disabled="isSubmittingEdit">{{ isSubmittingEdit ? 'Menyimpan...' : 'Simpan' }}</Button></DialogFooter>
+        </DialogContent>
+    </Dialog>
+
     <Dialog :open="isConfirmOpen" @update:open="isConfirmOpen = $event">
         <DialogContent class="max-w-sm">
             <DialogHeader>

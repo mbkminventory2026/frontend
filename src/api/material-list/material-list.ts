@@ -78,9 +78,36 @@ export interface CreateMaterialListItemPayload {
   qty: number;
   unit: string;
   est_price?: number;
+  id_wo_shell?: number | null;
+  id_wo_trim?: number | null;
+  category: "FABRIC" | "SEWING" | "PACKING";
+  cons_per_pc?: number | null;
+  qty_wo_scope: "WHOLE_WO" | "SIZE" | "COLOR" | "COLOR_SIZE";
+  id_qty_wo_shell: number | null;
+  id_qty_wo_size: number | null;
 }
 
 export const createMaterialListItem = async (idML: number, payload: CreateMaterialListItemPayload) => {
   const response = await apiClient.post(`/api/v1/material-lists/${idML}/items`, payload);
+  return response.data;
+};
+
+export interface UpdateMaterialListItemPayload {
+  item: string;
+  description: string;
+  qty: number;
+  unit: string;
+  est_price: number;
+  id_wo_shell?: number | null;
+  id_wo_trim?: number | null;
+  category?: "FABRIC" | "SEWING" | "PACKING" | null;
+  cons_per_pc?: number | null;
+  qty_wo_scope?: "WHOLE_WO" | "SIZE" | "COLOR" | "COLOR_SIZE" | null;
+  id_qty_wo_shell?: number | null;
+  id_qty_wo_size?: number | null;
+}
+
+export const updateMaterialListItem = async (id: number, payload: UpdateMaterialListItemPayload) => {
+  const response = await apiClient.patch(`/api/v1/material-list-items/${id}`, payload);
   return response.data;
 };
