@@ -50,6 +50,22 @@ export const getMaterialListItems = async (id: number) => {
   return response.data;
 };
 
+export const downloadMaterialListExcel = async (id: string | number) => {
+  if (!id) throw new Error("ID is required");
+
+  const response = await apiClient.get(`/api/v1/material-lists/${id}/export/excel`, {
+    responseType: "blob",
+  });
+
+  const contentDisposition = response.headers["content-disposition"] as string | undefined;
+  const matchedFileName = contentDisposition?.match(/filename="([^"]+)"/i);
+
+  return {
+    blob: response.data as Blob,
+    fileName: matchedFileName?.[1] || "MATERIAL_LIST.xlsx",
+  };
+};
+
 export interface CreateSuratJalanClientPayload {
   tanggal: string;
   qty: number;

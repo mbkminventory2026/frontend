@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue';
+import { isAxiosError } from 'axios';
 import { useRouter } from '@tanstack/vue-router';
 import {
     ClipboardListIcon, SearchIcon, ChevronDownIcon, ChevronRightIcon,
-    LockIcon, UnlockIcon, PackageIcon, TruckIcon,
+    LockIcon, UnlockIcon, PackageIcon, TruckIcon, DownloadIcon,
 } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
-import { getMaterialLists, getMaterialListItems, type MaterialListPageItem } from '@/api/material-list/material-list';
+import { downloadMaterialListExcel, getMaterialLists, getMaterialListItems, type MaterialListPageItem } from '@/api/material-list/material-list';
+import { usePermission } from '@/composables/usePermission';
 import type { MaterialListItem } from '@/api/work-orders/work-orders';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +20,7 @@ import { Spinner } from '@/components/ui/spinner';
 
 // ─── State ─────────────────────────────────────────────
 const router = useRouter();
+const { hasPermission } = usePermission();
 const data = ref<MaterialListPageItem[]>([]);
 const totalCount = ref(0);
 const isLoading = ref(false);
@@ -30,6 +33,56 @@ const pageSize = 20;
 const expandedIds = ref<Set<number>>(new Set());
 const itemsCache = ref<Map<number, MaterialListItem[]>>(new Map());
 const loadingItems = ref<Set<number>>(new Set());
+const exportingIds = ref<Set<number>>(new Set());
+
+const exportErrorMessage = async (error: unknown) => {
+    if (!isAxiosError(error) || error.response?.status !== 409) {
+        return 'Gagal mengunduh export Excel Material List.';
+    }
+
+    const payload = error.response.data;
+    if (!(payload instanceof Blob)) {
+        return 'Gagal mengunduh export Excel Material List.';
+    }
+
+    try {
+        const body = await payload.text();
+        const parsed = JSON.parse(body) as { error?: { code?: string } };
+        if (parsed.error?.code === 'marker_plan_conflict') {
+            return 'Material List tidak dapat diekspor karena terdapat lebih dari satu Marker Plan untuk warna yang sama.';
+        }
+        if (parsed.error?.code === 'material_list_export_data_conflict') {
+            return 'Material List tidak dapat diekspor karena data export tidak konsisten.';
+        }
+    } catch {
+        return 'Gagal mengunduh export Excel Material List.';
+    }
+    return 'Gagal mengunduh export Excel Material List.';
+};
+
+const handleExportExcel = async (id: number) => {
+    if (exportingIds.value.has(id)) return;
+
+    exportingIds.value.add(id);
+    let objectUrl: string | undefined;
+    let link: HTMLAnchorElement | undefined;
+    try {
+        const result = await downloadMaterialListExcel(id);
+        objectUrl = window.URL.createObjectURL(result.blob);
+        link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = result.fileName;
+        document.body.appendChild(link);
+        link.click();
+        toast.success('Export Excel Material List berhasil diunduh.');
+    } catch (error: unknown) {
+        toast.error(await exportErrorMessage(error));
+    } finally {
+        link?.remove();
+        if (objectUrl) window.URL.revokeObjectURL(objectUrl);
+        exportingIds.value.delete(id);
+    }
+};
 
 // ─── Fetch ML list ──────────────────────────────────────
 const fetchData = async () => {
@@ -137,10 +190,11 @@ watch(totalCount, (v) => { totalPages.value = Math.ceil(v / pageSize); });
                 class="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden"
             >
                 <!-- ML Header Row -->
-                <button
-                    class="w-full text-left px-4 py-3.5 flex items-center gap-3 hover:bg-neutral-50 transition-colors"
-                    @click="toggleExpand(ml)"
-                >
+                <div class="w-full px-4 py-3.5 flex items-center gap-3 hover:bg-neutral-50 transition-colors">
+                    <button
+                        class="flex min-w-0 flex-1 items-center gap-3 text-left"
+                        @click="toggleExpand(ml)"
+                    >
                     <component
                         :is="expandedIds.has(ml.id_material_list) ? ChevronDownIcon : ChevronRightIcon"
                         class="w-4 h-4 text-neutral-400 shrink-0"
@@ -159,6 +213,7 @@ watch(totalCount, (v) => { totalPages.value = Math.ceil(v / pageSize); });
                         </div>
                         <div class="text-xs text-neutral-500 mt-0.5">{{ ml.name }} &middot; {{ ml.item_count }} item</div>
                     </div>
+                    </button>
                     <!-- Progress summary -->
                     <div class="hidden sm:flex flex-col items-end gap-1 text-xs text-neutral-500 shrink-0 min-w-[140px]">
                         <div class="flex items-center gap-1.5 w-full">
@@ -172,7 +227,19 @@ watch(totalCount, (v) => { totalPages.value = Math.ceil(v / pageSize); });
                             <span class="w-8 text-right">{{ pct(ml.total_qty_received, ml.wo_qty) }}%</span>
                         </div>
                     </div>
-                </button>
+                    <Button
+                        v-if="hasPermission('MATERIAL_LIST_READ')"
+                        size="sm"
+                        variant="outline"
+                        class="shrink-0 text-xs h-8 px-2"
+                        :disabled="exportingIds.has(ml.id_material_list)"
+                        @click="handleExportExcel(ml.id_material_list)"
+                    >
+                        <Spinner v-if="exportingIds.has(ml.id_material_list)" class="mr-1.5 w-3.5 h-3.5" />
+                        <DownloadIcon v-else class="mr-1.5 w-3.5 h-3.5" />
+                        {{ exportingIds.has(ml.id_material_list) ? 'Exporting...' : 'Export' }}
+                    </Button>
+                </div>
 
                 <!-- ML Items Table (expanded) -->
                 <div v-if="expandedIds.has(ml.id_material_list)" class="border-t border-neutral-100">
