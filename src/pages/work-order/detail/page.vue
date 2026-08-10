@@ -1222,7 +1222,7 @@ onMounted(fetchDetail);
                                         </div>
                                         <div class="flex items-center gap-2">
                                             <button
-                                                v-if="!ml.is_locked && hasPermission('WO_UPDATE')"
+                                                v-if="!ml.is_locked && hasPermission('MATERIAL_LIST_UPDATE')"
                                                 class="text-[10px] text-white bg-neutral-800 hover:bg-neutral-700 font-medium flex items-center gap-0.5 px-2 py-1 rounded"
                                                 @click="openAddItemDialog(ml.id_material_list)"
                                             >
