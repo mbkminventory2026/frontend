@@ -442,7 +442,7 @@ const prefillAddConsumption = () => {
 watch(() => [addItemForm.value.id_wo_shell, addItemForm.value.id_wo_trim], prefillAddConsumption);
 watch(() => addItemForm.value.id_qty_wo_shell, () => {
     if (addItemForm.value.qty_wo_scope !== 'COLOR_SIZE') return;
-    const allowed = addApplicabilitySizes.value.some(size => size.id_wo_shell_size === addItemForm.value.id_qty_wo_size);
+    const allowed = addApplicabilitySizes.value.some(size => size.id_size === addItemForm.value.id_qty_wo_size);
     if (!allowed) addItemForm.value.id_qty_wo_size = null;
 });
 watch(() => addItemForm.value.qty_wo_scope, (scope) => {
@@ -1450,7 +1450,7 @@ onMounted(fetchDetail);
                     <div><Label class="text-xs">CONS./PC</Label><Input v-model="addItemForm.cons_per_pc" type="number" min="0" step="0.001" placeholder="Opsional" class="mt-1 text-sm" @input="addConsModified = true" /></div>
                     <div><Label class="text-xs">Berlaku untuk QTY WO <span class="text-red-500">*</span></Label><select v-model="addItemForm.qty_wo_scope" class="mt-1 h-9 w-full rounded-md border border-neutral-200 bg-white px-2 text-sm"><option value="">Pilih cakupan</option><option value="WHOLE_WO">Seluruh WO</option><option value="SIZE">Size</option><option value="COLOR">Warna</option><option value="COLOR_SIZE">Warna + Size</option></select></div>
                     <div v-if="addItemForm.qty_wo_scope === 'COLOR' || addItemForm.qty_wo_scope === 'COLOR_SIZE'"><Label class="text-xs">Warna QTY WO <span class="text-red-500">*</span></Label><select v-model="addItemForm.id_qty_wo_shell" class="mt-1 h-9 w-full rounded-md border border-neutral-200 bg-white px-2 text-sm"><option :value="null">Pilih warna shell</option><option v-for="shell in detail?.shells ?? []" :key="shell.id_wo_shell" :value="shell.id_wo_shell">{{ shell.color }} (Shell #{{ shell.id_wo_shell }})</option></select></div>
-                    <div v-if="addItemForm.qty_wo_scope === 'SIZE' || addItemForm.qty_wo_scope === 'COLOR_SIZE'"><Label class="text-xs">Size QTY WO <span class="text-red-500">*</span></Label><select v-model="addItemForm.id_qty_wo_size" class="mt-1 h-9 w-full rounded-md border border-neutral-200 bg-white px-2 text-sm" :disabled="addItemForm.qty_wo_scope === 'COLOR_SIZE' && !addItemForm.id_qty_wo_shell"><option :value="null">Pilih size</option><option v-for="size in addApplicabilitySizes" :key="size.id_wo_shell_size" :value="size.id_wo_shell_size">{{ size.size }}</option></select></div>
+                    <div v-if="addItemForm.qty_wo_scope === 'SIZE' || addItemForm.qty_wo_scope === 'COLOR_SIZE'"><Label class="text-xs">Size QTY WO <span class="text-red-500">*</span></Label><select v-model="addItemForm.id_qty_wo_size" class="mt-1 h-9 w-full rounded-md border border-neutral-200 bg-white px-2 text-sm" :disabled="addItemForm.qty_wo_scope === 'COLOR_SIZE' && !addItemForm.id_qty_wo_shell"><option :value="null">Pilih size</option><option v-for="size in addApplicabilitySizes" :key="size.id_wo_shell_size" :value="size.id_size">{{ size.size }}</option></select></div>
                 </div>
             </div>
             <DialogFooter class="gap-2">

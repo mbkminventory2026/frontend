@@ -66,6 +66,24 @@ export const downloadMaterialListExcel = async (id: string | number) => {
   };
 };
 
+export const downloadMaterialListImportTemplate = async (id: string | number) => {
+  if (!id) throw new Error("ID is required");
+  const response = await apiClient.get(`/api/v1/material-lists/${id}/import/excel/template`, { responseType: "blob" });
+  const contentDisposition = response.headers["content-disposition"] as string | undefined;
+  const matchedFileName = contentDisposition?.match(/filename="([^"]+)"/i);
+  return { blob: response.data as Blob, fileName: matchedFileName?.[1] || "MATERIAL_LIST_IMPORT.xlsx" };
+};
+
+export interface MaterialListImportResult { id_material_list: number; created_count: number; }
+
+export const importMaterialListExcel = async (id: string | number, file: File) => {
+  if (!id) throw new Error("ID is required");
+  const formData = new FormData();
+  formData.append("file", file);
+  const response = await apiClient.post<MaterialListImportResult>(`/api/v1/material-lists/${id}/import/excel`, formData);
+  return response.data;
+};
+
 export interface CreateSuratJalanClientPayload {
   tanggal: string;
   qty: number;

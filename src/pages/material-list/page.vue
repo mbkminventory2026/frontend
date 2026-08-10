@@ -4,11 +4,11 @@ import { isAxiosError } from 'axios';
 import { useRouter } from '@tanstack/vue-router';
 import {
     ClipboardListIcon, SearchIcon, ChevronDownIcon, ChevronRightIcon,
-    LockIcon, UnlockIcon, PackageIcon, TruckIcon, DownloadIcon,
+    LockIcon, UnlockIcon, PackageIcon, TruckIcon, DownloadIcon, UploadIcon,
 } from 'lucide-vue-next';
 import { toast } from 'vue-sonner';
 
-import { downloadMaterialListExcel, getMaterialLists, getMaterialListItems, type MaterialListPageItem } from '@/api/material-list/material-list';
+import { downloadMaterialListExcel, downloadMaterialListImportTemplate, getMaterialLists, getMaterialListItems, importMaterialListExcel, type MaterialListPageItem } from '@/api/material-list/material-list';
 import { usePermission } from '@/composables/usePermission';
 import type { MaterialListItem } from '@/api/work-orders/work-orders';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,7 @@ import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 // ─── State ─────────────────────────────────────────────
 const router = useRouter();
@@ -34,6 +35,16 @@ const expandedIds = ref<Set<number>>(new Set());
 const itemsCache = ref<Map<number, MaterialListItem[]>>(new Map());
 const loadingItems = ref<Set<number>>(new Set());
 const exportingIds = ref<Set<number>>(new Set());
+const downloadingTemplateIds = ref<Set<number>>(new Set());
+const importingIds = ref<Set<number>>(new Set());
+const importFileInput = ref<HTMLInputElement | null>(null);
+const importTargetId = ref<number | null>(null);
+interface ImportRowError { row: number; column: string; code?: string; message: string; }
+interface ImportErrorBody { message?: string; error?: { code?: string; row_errors?: ImportRowError[]; error_count?: number; truncated?: boolean; }; }
+const importValidationErrors = ref<ImportRowError[]>([]);
+const importErrorCount = ref(0);
+const importErrorsTruncated = ref(false);
+const isImportErrorDialogOpen = ref(false);
 
 const exportErrorMessage = async (error: unknown) => {
     if (!isAxiosError(error) || error.response?.status !== 409) {
@@ -84,6 +95,96 @@ const handleExportExcel = async (id: number) => {
     }
 };
 
+const handleDownloadImportTemplate = async (id: number) => {
+    if (downloadingTemplateIds.value.has(id)) return;
+    downloadingTemplateIds.value.add(id);
+    let objectUrl: string | undefined;
+    let link: HTMLAnchorElement | undefined;
+    try {
+        const result = await downloadMaterialListImportTemplate(id);
+        objectUrl = window.URL.createObjectURL(result.blob);
+        link = document.createElement('a');
+        link.href = objectUrl;
+        link.download = result.fileName;
+        document.body.appendChild(link);
+        link.click();
+        toast.success('Template import Material List berhasil diunduh.');
+    } catch {
+        toast.error('Gagal mengunduh template import Material List.');
+    } finally {
+        link?.remove();
+        if (objectUrl) window.URL.revokeObjectURL(objectUrl);
+        downloadingTemplateIds.value.delete(id);
+    }
+};
+
+const refreshMaterialListItems = async (id: number) => {
+    const res = await getMaterialListItems(id);
+    itemsCache.value.set(id, res?.items ?? []);
+};
+
+const clearImportValidationErrors = () => {
+    importValidationErrors.value = [];
+    importErrorCount.value = 0;
+    importErrorsTruncated.value = false;
+    isImportErrorDialogOpen.value = false;
+};
+
+const openImportChooser = (id: number) => {
+    if (importingIds.value.has(id)) return;
+    clearImportValidationErrors();
+    importTargetId.value = id;
+    importFileInput.value?.click();
+};
+
+const showImportError = (error: unknown) => {
+    if (!isAxiosError<ImportErrorBody>(error)) { toast.error('Gagal mengimpor Excel Material List.'); return; }
+    const status = error.response?.status;
+    const body = error.response?.data;
+    const details = body?.error;
+    const rowErrors = details?.row_errors ?? [];
+    if ((status === 400 || status === 409) && rowErrors.length > 0) {
+        importValidationErrors.value = rowErrors;
+        importErrorCount.value = details?.error_count ?? rowErrors.length;
+        importErrorsTruncated.value = details?.truncated === true;
+        isImportErrorDialogOpen.value = true;
+    } else if (status === 413) toast.error('File terlalu besar. Maksimum 2 MiB.');
+    else if (status === 409 && details?.code === 'material_list_locked') toast.error('Material List terkunci dan tidak dapat diimpor.');
+    else if (status === 404) toast.error('Material List tidak ditemukan.');
+    else if (status && status >= 500) toast.error('Gagal mengimpor Excel Material List.');
+    else toast.error(body?.message || 'Gagal mengimpor Excel Material List.');
+};
+
+const handleImportFileChange = async (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    const id = importTargetId.value;
+    if (!file || !id) { input.value = ''; importTargetId.value = null; return; }
+    if (!file.name.toLowerCase().endsWith('.xlsx')) { toast.error('File harus berformat .xlsx.'); input.value = ''; importTargetId.value = null; return; }
+    importingIds.value.add(id);
+    try {
+        const result = await importMaterialListExcel(id, file);
+        clearImportValidationErrors();
+        toast.success(`${result.created_count} item Material List berhasil diimpor.`);
+        data.value = data.value.map((materialList) => materialList.id_material_list === id
+            ? { ...materialList, item_count: materialList.item_count + result.created_count }
+            : materialList);
+    } catch (error: unknown) {
+        showImportError(error);
+        return;
+    } finally {
+        input.value = '';
+        importTargetId.value = null;
+        importingIds.value.delete(id);
+    }
+
+    try {
+        await refreshMaterialListItems(id);
+    } catch {
+        toast.error('Import berhasil, tetapi item Material List gagal disegarkan.');
+    }
+};
+
 // ─── Fetch ML list ──────────────────────────────────────
 const fetchData = async () => {
     isLoading.value = true;
@@ -128,8 +229,7 @@ const toggleExpand = async (ml: MaterialListPageItem) => {
 
     loadingItems.value.add(id);
     try {
-        const res = await getMaterialListItems(id);
-        itemsCache.value.set(id, res?.items ?? []);
+        await refreshMaterialListItems(id);
     } catch {
         toast.error('Gagal memuat item material list.');
         expandedIds.value.delete(id);
@@ -147,6 +247,7 @@ watch(totalCount, (v) => { totalPages.value = Math.ceil(v / pageSize); });
 
 <template>
     <div class="container mx-auto py-6 max-w-6xl space-y-4">
+        <input ref="importFileInput" type="file" accept=".xlsx" class="hidden" @change="handleImportFileChange" />
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div class="flex items-center gap-2">
@@ -239,6 +340,30 @@ watch(totalCount, (v) => { totalPages.value = Math.ceil(v / pageSize); });
                         <DownloadIcon v-else class="mr-1.5 w-3.5 h-3.5" />
                         {{ exportingIds.has(ml.id_material_list) ? 'Exporting...' : 'Export' }}
                     </Button>
+                    <Button
+                        v-if="hasPermission('MATERIAL_LIST_UPDATE')"
+                        size="sm"
+                        variant="outline"
+                        class="shrink-0 text-xs h-8 px-2"
+                        :disabled="downloadingTemplateIds.has(ml.id_material_list)"
+                        @click="handleDownloadImportTemplate(ml.id_material_list)"
+                    >
+                        <Spinner v-if="downloadingTemplateIds.has(ml.id_material_list)" class="mr-1.5 w-3.5 h-3.5" />
+                        <DownloadIcon v-else class="mr-1.5 w-3.5 h-3.5" />
+                        {{ downloadingTemplateIds.has(ml.id_material_list) ? 'Mengunduh...' : 'Unduh Template Import' }}
+                    </Button>
+                    <Button
+                        v-if="hasPermission('MATERIAL_LIST_UPDATE')"
+                        size="sm"
+                        variant="outline"
+                        class="shrink-0 text-xs h-8 px-2"
+                        :disabled="ml.is_locked || importingIds.has(ml.id_material_list)"
+                        @click="openImportChooser(ml.id_material_list)"
+                    >
+                        <Spinner v-if="importingIds.has(ml.id_material_list)" class="mr-1.5 w-3.5 h-3.5" />
+                        <UploadIcon v-else class="mr-1.5 w-3.5 h-3.5" />
+                        {{ importingIds.has(ml.id_material_list) ? 'Mengimpor...' : 'Import Excel' }}
+                    </Button>
                 </div>
 
                 <!-- ML Items Table (expanded) -->
@@ -299,6 +424,22 @@ watch(totalCount, (v) => { totalPages.value = Math.ceil(v / pageSize); });
                 </div>
             </div>
         </div>
+
+        <Dialog :open="isImportErrorDialogOpen" @update:open="isImportErrorDialogOpen = $event">
+            <DialogContent class="max-w-lg max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle>Validasi import Material List</DialogTitle>
+                    <DialogDescription>Perbaiki data pada template lalu impor kembali.</DialogDescription>
+                </DialogHeader>
+                <div class="space-y-2 text-sm">
+                    <div v-for="error in importValidationErrors" :key="`${error.row}-${error.column}-${error.message}`" class="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-red-800">
+                        <span class="font-medium">Row {{ error.row }} | {{ error.column }}</span><span> | {{ error.message }}</span>
+                    </div>
+                    <p v-if="importErrorsTruncated || importErrorCount > importValidationErrors.length" class="text-xs text-neutral-500">Masih terdapat error lain yang tidak ditampilkan.</p>
+                </div>
+                <DialogFooter><Button @click="isImportErrorDialogOpen = false">Tutup</Button></DialogFooter>
+            </DialogContent>
+        </Dialog>
 
         <!-- Pagination -->
         <div v-if="totalPages > 1" class="flex items-center justify-between pt-2">
