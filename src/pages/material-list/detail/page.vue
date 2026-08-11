@@ -136,7 +136,10 @@ watch(() => [editForm.value.id_wo_shell, editForm.value.id_wo_trim], () => {
     const trim = workOrder.value?.trims.find(value => value.id_wo_trim === editForm.value.id_wo_trim);
     const shell = workOrder.value?.shells.find(value => value.id_wo_shell === editForm.value.id_wo_shell);
     const consumption = trim?.cons ?? shell?.cons;
-    if (consumption !== undefined && consumption !== null) editForm.value.cons_per_pc = String(consumption);
+    if (consumption !== undefined && consumption !== null) {
+        editForm.value.cons_per_pc = String(consumption);
+        touchStage('cons');
+    }
 });
 const submitEdit = async () => {
     if (!detail.value) return;
